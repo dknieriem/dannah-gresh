@@ -1,0 +1,12 @@
+<?php list( $selected_source, $distance_center_style, $distance_source_style, $distance_order_center ) = $vars; ?>
+<select name="_wpv_settings[distance_order][source]" class="js-wpv-posts-distance-order-source" autocomplete="off"
+        style="<?php echo $distance_source_style ?>"
+>
+	<option value="fixed" <?php selected( $selected_source, 'fixed' ); ?>><?php _e('Fixed', 'toolset-maps') ?></option>
+	<option value="visitor_location" <?php selected( $selected_source, 'visitor_location' ); ?>><?php _e('Visitor location', 'toolset-maps') ?></option>
+</select>
+<input type="text" autocomplete="off" name="_wpv_settings[distance_order][center]"
+       class="js-wpv-posts-distance-order-center js-toolset-maps-address-autocomplete"
+       style="<?php echo $distance_center_style ?>"
+       value="<?php echo esc_attr( $distance_order_center ) ?>"
+/>

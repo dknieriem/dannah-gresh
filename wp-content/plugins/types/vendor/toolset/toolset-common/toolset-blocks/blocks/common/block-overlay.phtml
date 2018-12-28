@@ -1,0 +1,9 @@
+<div class="block-overlay">
+    <div class="block-overlay-content">
+        <div class="logo"></div>
+        <p>
+            <?php echo sprintf( esc_html( __( 'This is the preview of the %1s %2s.', 'wpv-views' ) ), '"<strong>' . esc_html( $overlay_atts['title'] ) . '</strong>"', $overlay_atts['type'] ); ?>
+        </p>
+        <?php echo '<a href="' . esc_attr( $overlay_atts['link'] ) . '" target="_blank" class="button">' . esc_html( sprintf( __( 'Edit %1s', 'wpv-views' ), $overlay_atts['type'] ) ) . '</a>'; ?>
+    </div>
+</div>

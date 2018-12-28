@@ -1,0 +1,17 @@
+.elementor-widget-toolset-view-warning {
+	color: #8a6d3b;
+	background-color: #fcf8e3;
+	padding: 15px;
+	border-left: 5px solid #f9f0c3;
+	position: relative;
+	text-align: left;
+}
+
+.elementor-widget-toolset-view-warning ol,
+.elementor-widget-toolset-view-warning ul {
+	padding: inherit;
+}
+
+.elementor-widget-toolset-view-warning li {
+	list-style: initial;
+}

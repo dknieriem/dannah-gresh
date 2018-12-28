@@ -1,0 +1,45 @@
+div.elementor-widget-toolset-view {
+	min-height: 120px;
+}
+
+div.elementor-widget-toolset-view .logo {
+	font-size: 48px !important;
+}
+
+div.elementor-widget-toolset-view .toolset-page-builder-modules-overlay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
+div.elementor-widget-toolset-view:hover .toolset-page-builder-modules-overlay {
+	background: rgba( 246, 201, 86, 0.7 );
+}
+
+div.elementor-widget-toolset-view .toolset-page-builder-modules-overlay-content {
+	color: #000;
+	display: none;
+	position: sticky;
+	position: -webkit-sticky;
+	top: 50px;
+	width: 80%;
+	margin: 5px auto;
+	text-align: center;
+	padding: 5px;
+	border: 1px solid #f05a28;
+	background: rgba( 255, 255, 255, 0.7 );
+}
+
+div.elementor-widget-toolset-view:hover .toolset-page-builder-modules-overlay-content {
+	display: block;
+}
+
+div.elementor-widget-toolset-view .toolset-page-builder-modules-overlay-content p {
+	margin: 0;
+}
+
+div.elementor-widget-toolset-view .toolset-page-builder-modules-elementor-view-widget-no-view-selected {
+	text-align: center;
+}
