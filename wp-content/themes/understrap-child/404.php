@@ -42,6 +42,18 @@ $container   = get_theme_mod( 'understrap_container_type' );
             </div>
         </div>
     </section>
+    <section class="page-section page-section--teal" style="background-image: url('<?php echo get_site_url();?>/wp-content/uploads/2018/08/watercolor-teal-flourish.png'); background-repeat: no-repeat; background-size:70%; background-position: top center;">
+        <div class="page-section__content-wrapper">
+            <div class="row">
+                <div class="page-section__single-column text-center">
+                    <h1 class="heading heading--white">Trying to find something in particular?</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12"><?php get_search_form();?></div>
+            </div>
+        </div>
+    </section>
 
 
 
