@@ -337,6 +337,7 @@ if ( ! function_exists( 'wpv_add_time_functions' ) ) {
 
 if ( ! function_exists( 'wpv_condition' ) ) {
 	function wpv_condition( $atts, $post_to_check = null ) {
+		/** @var $evaluate string */
 		extract(
 				shortcode_atts( array('evaluate' => FALSE), $atts )
 		);
@@ -546,7 +547,7 @@ if ( ! function_exists( 'wpv_eval_check_syntax' ) ) {
 	function wpv_eval_check_syntax( $code ) {
 		try {
 			return @eval( 'return true;' . $code );
-		} catch( ParseError $parse_error ) {
+		} catch( ParseError $parse_error ) { // @codingStandardsIgnoreLine
 			// PHP7 compatibility, eval() changed it's behaviour:
 			//
 			// http://php.net/manual/en/function.eval.php
@@ -716,5 +717,19 @@ if( !function_exists( 'toolset_array_merge_recursive_distinct' ) ) {
 
 		return $merged;
 	}
+}
 
+
+if( ! function_exists( 'toolset_snippet_security_check' ) ) {
+
+	/**
+	 * Helper function to be called in Code Snippets in order to make sure it cannot be
+	 * executed manually outside of the correct context.
+	 *
+	 * @return bool
+	 * @since Types 3.1.2
+	 */
+	function toolset_snippet_security_check() {
+		return (bool) apply_filters( 'toolset_is_snippet_being_executed', false );
+	}
 }

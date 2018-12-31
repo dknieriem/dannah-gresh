@@ -217,8 +217,8 @@ class Toolset_Association_Intermediary_Post_Persistence {
 	 */
 	public function create_empty_association_intermediary_post( $association ) {
 		$intermediary_id = (int) $this->create_intermediary_post(
-			$association->get_element( new Toolset_Relationship_Role_Parent() )->get_id(),
-			$association->get_element( new Toolset_Relationship_Role_Child() )->get_id()
+			$association->get_element( new Toolset_Relationship_Role_Parent() )->get_default_language_id(),
+			$association->get_element( new Toolset_Relationship_Role_Child() )->get_default_language_id()
 		);
 		if ( $intermediary_id ) {
 			$database_operations = new Toolset_Relationship_Database_Operations();
@@ -236,11 +236,17 @@ class Toolset_Association_Intermediary_Post_Persistence {
 	 * @param IToolset_Association $association
 	 */
 	public function maybe_delete_intermediary_post( IToolset_Association $association ) {
-		if ( $association->has_intermediary_post() ) {
-			$intermediary_id = $association->get_element( new Toolset_Relationship_Role_Intermediary() )
-				->get_default_language_id();
-			$this->delete_intermediary_post( $intermediary_id );
+		if ( ! $association->has_intermediary_post() ) {
+			return;
 		}
+
+		if ( ! $association->get_definition()->is_autodeleting_intermediary_posts() ) {
+			return;
+		}
+
+		$intermediary_id = $association->get_element( new Toolset_Relationship_Role_Intermediary() )
+			->get_default_language_id();
+		$this->delete_intermediary_post( $intermediary_id );
 	}
 
 

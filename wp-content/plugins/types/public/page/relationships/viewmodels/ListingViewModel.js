@@ -45,7 +45,7 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
      */
     self.createItemViewModels = function(itemModels) {
         self.items(_.map(itemModels, function(itemModel) {
-            return new Types.page.relationships.viewmodels.RelationshipViewModel(itemModel, self.itemActions);
+            return new Types.page.relationships.viewmodels.RelationshipViewModel(itemModel, self.itemActions, self);
         }));
     };
 
@@ -74,45 +74,14 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
 
 
     /**
-     * Robust handling of AJAX responses with display messages.
-     *
-     * Display a single message, multiple messages or a default one.
-     *
-     * @param {*} data Response data object, which may contain the "message" or "messages" property.
-     * @param {string} messageType 'error'|'info'
-     * @param {string} defaultMessage
-     */
-    self.displayMessagesFromAjax = function(data, messageType, defaultMessage) {
-
-        var messageText = data.message || defaultMessage;
-
-        // If we have an array of messages, use that instead.
-        if(_.has(data, 'messages') && _.isArray(data.messages)) {
-            var messages = _.without(data.messages, '');
-            if (0 === messages.length) {
-                // keep the default text
-            } else if (1 === messages.length) {
-                messageText = (messages[0]);
-            } else {
-                // This will display a simple list of messages.
-                messageText = Types.page.relationships.templates.renderUnderscore('messageMultiple', {
-                    messages: messages
-                });
-            }
-        }
-
-        self.displayMessage(messageText, messageType);
-
-    };
-
-    /**
      * Shows Add New Relationship Wizard
      *
      * @since m2m
      */
     self.onAddNew = function() {
         Types.page.relationships.main.showAddNewRelationshipWizard();
-    }
+    };
+
 
     /**
      * Resets the wizardModel
@@ -121,12 +90,13 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
       self.wizardModel(new Types.page.relationships.viewmodels.WizardViewModel(self));
     };
 
+
     /**
      * Closes the wizard dialog
      */
     self.onExitWizard = function() {
       Toolset.hooks.doAction( 'types-relationships-wizard-close' );
-    }
+    };
 
 
     /**
@@ -134,10 +104,12 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
      */
     self.initWizard = function() {
       Toolset.hooks.doAction( 'types-relationships-wizard-init' );
-    }
+    };
 
 
     var previousScreenState = 'listing';
+
+
     /**
      * Handles history navigation
      *
@@ -152,12 +124,16 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
         switch(state.screen) {
             case 'addNew':
                 Types.page.relationships.main.showAddNewRelationshipWizard();
+                break;
             default:
+                break;
         }
         previousScreenState = state.screen;
     });
 
-    self.wizardModel =ko.observable(new Types.page.relationships.viewmodels.WizardViewModel(self));
+
+    self.wizardModel = ko.observable(new Types.page.relationships.viewmodels.WizardViewModel(self));
+
 
     /**
      * Delete a relationship via AJAX, update the collection of viewmodels and show the result.
@@ -215,6 +191,55 @@ Types.page.relationships.viewmodels.ListingViewModel = function(relationshipMode
 
         ajax.doAjax(ajax.action.delete, relationshipDefinition.getModel(), handleSuccess, handleFailure);
     };
+
+
+    /**
+     * Offer bulk actions for the listing.
+     *
+     * @since 3.0.5
+     */
+    self.bulkActions = ko.observableArray([
+        {
+            value: '-1',
+            displayName: Types.page.relationships.strings['bulkAction']['select']
+        },
+        {
+            value: 'merge',
+            displayName: Types.page.relationships.strings['bulkAction']['merge'],
+            handler: function(relationships) {
+                var dialog = new Types.page.relationships.viewmodels.dialogs.MergeRelationships(relationships);
+                dialog.display();
+            }
+        }
+    ]);
+
+
+    /**
+     * Determine whether a particular bulk action is ready to be executed.
+     *
+     * @since 3.0.5
+     */
+    self.isBulkActionAllowed = ko.pureComputed(function () {
+        switch(self.selectedBulkAction()) {
+            case '-1':
+                return false;
+            case 'merge':
+                return (self.selectedItems().length === 2);
+            default:
+                return (self.selectedItems().length > 0);
+        }
+    });
+
+    var parentAllowSelectAllVisibleItems = self.allowSelectAllVisibleItems;
+        
+    self.allowSelectAllVisibleItems = ko.pureComputed(function() {
+        if(self.selectedBulkAction() === 'merge') {
+            return false;
+        }
+
+        return parentAllowSelectAllVisibleItems();
+    });
+
 
     self.init();
 

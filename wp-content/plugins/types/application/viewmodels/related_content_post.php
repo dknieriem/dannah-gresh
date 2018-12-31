@@ -17,15 +17,6 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 	private $rows_found;
 
 
-	/**
-	 * Stores the arguments of get_related_content() in order to use them in the filters
-	 *
-	 * @var array
-	 * @see get_related_content
-	 * @since m2m
-	 */
-	private $get_related_content_arguments;
-
 
 	/**
 	 * Returns the related posts
@@ -72,6 +63,9 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 			) )
 			->limit( $items_per_page );
 
+		// in this context, editing a post, the status of the post shouldn't matter to show the related items
+		$query->element_status( 'any' );
+
 		if ( $sort ) {
 			$query->order( $sort );
 		}
@@ -89,6 +83,10 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 					);
 					break;
 				case 'relationship':
+					if( $sort_by == 'intermediary-title' ) {
+						$query->order_by_title( new \Toolset_Relationship_Role_Intermediary() );
+						break;
+					}
 					$query->order_by_field_value(
 						$field_definition_factory->load_field_definition( $sort_by ),
 						new Toolset_Relationship_Role_Intermediary()
@@ -133,8 +131,7 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 
 				continue;
 			}
-			$association_query = $this->get_association_query();
-			$association_is_enabled = new Types_Page_Extension_Related_Content_Direct_Edit_Status( $uid, null, $association_query );
+			$association_is_enabled = $this->direct_edit_status_factory->create( $uid, null );
 			$intermediary_id = $association->get_intermediary_id();
 			$related_posts[] = array(
 				'uid' => $uid,
@@ -172,8 +169,9 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 	 */
 	public function get_related_content_from_uid( $association_uid ) {
 		$association_query = $this->get_association_query();
-		$association_query->add( $association_query->association_id( $association_uid ) );
-		$association = $association_query->get_results();
+		$association = $association_query->add( $association_query->association_id( $association_uid ) )
+			->add( $association_query->element_status( Toolset_Association_Query_Condition_Element_Status::STATUS_ANY ) )
+			->get_results();
 		return $this->get_related_content_data( $association );
 	}
 
@@ -211,9 +209,13 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 			'data' => array(),
 			'columns' => $this->get_fields(),
 			'fieldsListing' => $this->get_fields_listing( $role ),
+			'conditionals' => $this->get_conditional_data(),
 		);
 		$related_posts = $this->get_related_content( $post_id, $post_type, $page_number, $items_per_page, $role, $sort, $sort_by, $sort_origin );
+
 		$related_posts_array['data'] = $this->format_related_content_array( $related_posts );
+
+		$related_posts_array = array_merge( $related_posts_array, $this->get_disabled_fields_by_post( $related_posts ) );
 		return $related_posts_array;
 	}
 
@@ -240,6 +242,8 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 			$post_id = $related_post_object->get_id();
 			$post = get_post( $post_id );
 			$item['post_id'] = $post_id;
+			$item['author_id'] = intval( $related_post_object->get_underlying_object()->post_author );
+			$item['is_published'] = $related_post_object->get_underlying_object()->post_status == 'publish';
 			$item['displayName'] = $post->post_title;
 			$item['editPage'] = get_edit_post_link( $post_id, false );
 			$item['strings'] = $this->get_js_strings( $related_post );
@@ -306,6 +310,22 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 				}
 			}
 		}
+		// Intermediary post
+		if( $intermediary_type = $this->relationship->get_element_type( new \Toolset_Relationship_Role_Intermediary() ) ) {
+			$intermediary_post_type = $intermediary_type->get_types();
+			if( ! empty( $intermediary_post_type ) ) {
+				$intermediary_post_type = reset( $intermediary_post_type );
+				if( $intermediary_post_type_object = get_post_type_object( $intermediary_post_type ) ) {
+					if( $intermediary_post_type_object->show_ui ) {
+						$columns['relationship'][] = array(
+							'slug' => 'intermediary-title',
+							'displayName' => __( 'Intermediary Title', 'wpcf' ),
+						);
+					}
+				}
+			}
+		}
+
 		// Relationship fields.
 		$fields = $this->relationship->get_association_field_definitions();
 		foreach ( $fields as $field ) {
@@ -428,5 +448,145 @@ class Types_Viewmodel_Related_Content_Post extends Types_Viewmodel_Related_Conte
 			);
 		}
 		return $related_posts;
+	}
+
+
+	/**
+	 * Gets conditional data, used with conditionals.js, for display conditionals fields.
+	 *
+	 * There is data foreach field belonging to the related post: post + relationship's fields
+	 *
+	 * @return array
+	 * @since 3.0.7
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	private function get_conditional_data() {
+		// Post fields
+		$field_groups = $this->get_field_groups();
+		$field_conditionals = array();
+		foreach ( $field_groups as $field_group ) {
+			$fields = $field_group->get_field_definitions();
+			$group_conditional = $field_group->get_conditional_display_by_fields();
+			if ( ! empty( $group_conditional ) ) {
+				$field_conditionals[] = $this->transform_conditionals_array_ids( $group_conditional, 'wpcf[post][%s]' );
+			}
+			foreach ( $fields as  $field ) {
+				$conditionals = $field->get_conditional_display();
+				if ( $conditionals ) {
+					$field_conditionals[] = $this->transform_conditionals_array_ids( $conditionals, 'wpcf[post][%s]' );
+				}
+			}
+		}
+		// Relationship fields.
+		$fields = $this->relationship->get_association_field_definitions();
+		foreach ( $fields as  $field ) {
+			$conditionals = $field->get_conditional_display();
+			if ( $conditionals ) {
+				$field_conditionals[] = $this->transform_conditionals_array_ids( $conditionals, 'wpcf[relationship][%s]' );
+			}
+		}
+
+		return $field_conditionals;
+	}
+
+
+	/**
+	 * Transform conditional names/ids to work with related content field names
+	 *
+	 * @param array $conditionals Array containing fields and triggers values
+	 * @param string $pattern New name patters
+	 * @return array
+	 * @since 3.0.7
+	 */
+	private function transform_conditionals_array_ids( $conditionals, $pattern ) {
+		// Fields
+		foreach ( $conditionals['fields'] as $id => $fields ) {
+			$new_id = sprintf( $pattern, str_replace( 'wpcf-', '', $id ) );
+			foreach ( $fields['conditions'] as $i => $conditional ) {
+				$fields['conditions'][ $i ]['id'] = sprintf( $pattern, str_replace( 'wpcf-', '', $conditional['id'] ) );
+			}
+			$conditionals['fields'][ $new_id ] = $fields;
+			unset( $conditionals['fields'][ $id ] );
+		}
+
+		// Triggers
+		foreach ( $conditionals['triggers'] as $id => $triggers ) {
+			$new_id = sprintf( $pattern, str_replace( 'wpcf-', '', $id ) );
+			foreach ( $triggers as $i => $trigger ) {
+				$triggers[ $i ] = sprintf( $pattern, str_replace( 'wpcf-', '', $trigger ) );
+			}
+			$conditionals['triggers'][ $new_id ] = $triggers;
+			unset( $conditionals['triggers'][ $id ] );
+		}
+
+		return $conditionals;
+	}
+
+
+	/**
+	 * Gets field Groups
+	 *
+	 * @return Toolset_Field_Group_Post[]
+	 * @since 3.0.8
+	 */
+	private function get_field_groups() {
+		$element_type = $this->relationship->get_element_type( $this->related_element_role );
+		$post_types = $element_type->get_types();
+		$field_group_post_factory = Toolset_Field_Group_Post_Factory::get_instance();
+		$field_groups = $field_group_post_factory->get_groups_by_post_type( $post_types[0] );
+		return $field_groups;
+	}
+
+	/**
+	 * Gets disabled fields by post due to conditional groups by term, used in Related Content metabox
+	 *
+	 * Field groups can be assigned to a term, this conditions the field display
+	 * There are two different kind of results: by post and all
+	 *   - by post: if the post is not assigned to the group field term,
+	 *     the fields belonging to the group will be removed from the related content
+	 *   - all: when creating a new related content, the new post is not assigned to
+	 *     any term so needs to remove any field belonging to a group assigned to a term
+	 *
+	 * @return array [
+	 *                 'disabled_fields_by_post' => [ 'field_slug_1', 'field_slug_2' ]
+	 *                 'disabled_fields_all' => [ 'field_slug_3', 'field_slug_4' ]
+	 *               ]
+	 */
+	private function get_disabled_fields_by_post( $related_posts ) {
+		$disabled = array( 'disabled_fields_by_post' => array(), 'disabled_fields_all' => array() );
+		$field_groups = $this->get_field_groups();
+		$field_conditionals = array();
+		$terms = array();
+		foreach ( $field_groups as $field_group ) {
+			$fields = $field_group->get_field_definitions();
+			$fields_slug = array();
+			foreach ( $fields as $field ) {
+				$fields_slug[] = $field->get_slug();
+			}
+			$group_terms = get_post_meta( $field_group->get_id(), '_wp_types_group_terms', true );
+			$group_terms = ! empty( $group_terms ) && 'all' !== $group_terms
+				? array_filter( explode( ',', $group_terms ) )
+				: false;
+			if ( $group_terms ) {
+				$disabled['disabled_fields_all'] = array_merge( $disabled['disabled_fields_all'], $fields_slug );
+			}
+			foreach ( $related_posts as $related_post ) {
+				$post_id = $related_post['post']->get_id();
+				if ( ! isset( $terms[ $post_id ] ) ) {
+					$terms[ $post_id ] = toolset_ensarr( wp_get_post_categories( $post_id, array( 'fields' => 'ids' ) ) );
+				}
+				if ( $group_terms ) {
+					$terms_diff = array_intersect( $terms[ $post_id ], $group_terms );
+					if ( count( $group_terms ) !== count( $terms_diff ) ) {
+						if ( ! isset( $disabled['disabled_fields_by_post'][ $post_id ] ) ) {
+							$disabled['disabled_fields_by_post'][ $post_id ] = array();
+						}
+						$disabled['disabled_fields_by_post'][ $post_id ] = array_merge( $disabled['disabled_fields_by_post'][ $post_id ], $fields_slug );
+					}
+				}
+			}
+		}
+
+		return $disabled;
 	}
 }

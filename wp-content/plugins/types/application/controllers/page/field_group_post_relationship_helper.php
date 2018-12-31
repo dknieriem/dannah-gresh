@@ -7,9 +7,6 @@
  * When the user wants to edit association fields on the Relationships page, they're redirected to the Edit Post Field
  * Group page and after saving, they're redirected back.
  *
- * Note: This class is not covered by tests on purpose, because I expect further refactoring will be needed
- * when the Repeating field groups are implemented. After that, we should cover it with tests.
- *
  * @since m2m
  */
 class Types_Page_Field_Group_Post_Relationship_Helper {
@@ -292,25 +289,6 @@ class Types_Page_Field_Group_Post_Relationship_Helper {
 		$this->redirect_to_field_group_page( $relationship->get_slug(), $field_group->get_id() );
 	}
 
-
-	/**
-	 * For association field groups, change the Save button label to indicate a different action will take place.
-	 *
-	 * @param string $default_label
-	 *
-	 * @return string
-	 */
-	public function maybe_adjust_save_button( $default_label ) {
-		if( ! $this->is_actionable ) {
-			return $default_label;
-		}
-
-		$label = __( 'Save and return to the relationship', 'wpcf' );
-
-		return $label;
-	}
-
-
 	/**
 	 * For association field groups, hide the Delete link.
 	 *
@@ -345,18 +323,18 @@ class Types_Page_Field_Group_Post_Relationship_Helper {
 
 
 	/**
-	 * For association field groups, redirect to the Edit Relationship screen after the user clicks on the Save button
+	 * Get relationship edit url
 	 *
-	 * @param string $default_url
+	 * @return false|string
 	 *
-	 * @return string URL of the Edit Relationship screen (or the default one).
+	 * @since 3.2
 	 */
-	public function maybe_adjust_redirection_after_save( $default_url ) {
-		if( ! $this->is_actionable ) {
-			return $default_url;
+	public function get_relationship_edit_url() {
+		if( ! $relationship = $this->get_relationship_definition() ) {
+			// no relationship for the field group
+			return false;
 		}
 
-		$relationship = $this->get_relationship_definition();
 		$relationship_slug = $relationship->get_slug();
 
 		$url = $this->admin_menu->get_page_url( Types_Admin_Menu::PAGE_NAME_RELATIONSHIPS );
@@ -422,22 +400,21 @@ class Types_Page_Field_Group_Post_Relationship_Helper {
 	 * @since 2.3
 	 */
 	public function get_number_associations_without_intermediary_posts() {
+		if( ! $this->is_actionable ) {
+			return 0;
+		}
+
 		/** @var Toolset_Relationship_Definition $relationship */
 		$relationship = $this->get_relationship_definition();
 
 		if ( $relationship ) {
 			$query = new Toolset_Association_Query_V2();
-			$results = $query
-				->add(
-					$query->relationship( $relationship )
-				)
+			return $query
+				->add( $query->relationship( $relationship ) )
 				->add( new Toolset_Association_Query_Condition_Empty_Intermediary() )
-				->limit( 1 )
-				->need_found_rows()
-				->get_results();
-
-			return $query->get_found_rows();
+				->get_found_rows_directly();
 		}
+
 		return 0;
 	}
 

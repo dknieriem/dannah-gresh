@@ -4,6 +4,7 @@
  * Factory for Twig dialog boxes
  *
  * @since 2.3
+ * @deprecated Use DialogBoxFactory instead
  */
 class Toolset_Twig_Dialog_Box_Factory {
 
@@ -34,6 +35,7 @@ class Toolset_Twig_Dialog_Box_Factory {
 	 *
 	 * @return Toolset_Twig_Dialog_Box
 	 * @since 2.3
+	 * @deprecated Use DialogBoxFactory instead.
 	 */
 	public function create( $dialog_id, Twig_Environment $twig_environment, $context, $template_name, $late_register_assets = true ) {
 		return new Toolset_Twig_Dialog_Box( $dialog_id, $twig_environment, $context, $template_name, $late_register_assets );

@@ -104,6 +104,10 @@ Types.page.extension.relatedContent.viewmodels.AddNewDialogViewModel = function(
 
 		self.dialog_id = 'types-new-content-related-content-dialog-' + relatedContentModel.relationship_slug;
 
+        var maxDialogWidth = relatedContentModel.relatedContent.columns.relationship.length > 0
+            ? 1200 // with relationship fields
+            : 600; // without relationship fields
+
 		var dialog = Types.page.extension.relatedContent.main.createDialog(
 			self.dialog_id,
 			relatedContentModel.strings.misc['addNew'],
@@ -128,7 +132,8 @@ Types.page.extension.relatedContent.viewmodels.AddNewDialogViewModel = function(
 				}
 			],
 			{
-				dialogClass: 'toolset-dialog-new-related-content'
+				dialogClass: 'toolset-dialog-new-related-content',
+				width: jQuery( window ).width() < maxDialogWidth + 50 ? jQuery( window ).width() - 50 : maxDialogWidth
 			}
 		);
 
@@ -167,7 +172,25 @@ Types.page.extension.relatedContent.viewmodels.AddNewDialogViewModel = function(
 				wptRep.init();
 			}
 			wptDate.init( this );
-		}).trigger('open');
+
+			// field conditions
+            var formId = '#types-new-content-related-content-dialog-container-' + relatedContentModel.relationship_slug;
+
+            wptCondTriggers[formId] = {};
+            wptCondFields[formId] = {};
+
+            relatedContentModel.relatedContent.conditionals.forEach( function( conditional) {
+                var data = {};
+                data[formId] = conditional;
+                wptCond.addConditionals( data );
+            });
+
+            relatedContentModel.relatedContent.disabled_fields_all.forEach( function( inputId ) {
+                dialog.$el.find('[data-wpt-name="wpcf[post][' + inputId + ']"]').parents('.js-wpt-field:first').remove();
+            } );
+
+            wptCond.check(formId, Object.keys(wptCondFields[formId]));
+        }).trigger('open');
 
 		// Repetitive elements have to add [post] or [relationship] to their template.
 		jQuery(dialog.$el).find('.js-wpt-repadd').each(function() {
@@ -185,6 +208,7 @@ Types.page.extension.relatedContent.viewmodels.AddNewDialogViewModel = function(
 		});
 
 		ko.applyBindings(self, dialog.el);
+
 	};
 
 

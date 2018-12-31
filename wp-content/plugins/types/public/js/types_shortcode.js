@@ -126,6 +126,13 @@ Toolset.Types.shortcodeManager = function( $ ) {
 		 * @since m2m
 		 */
 		Toolset.hooks.addAction( 'types-action-shortcode-dialog-loaded', self.manageMetaoptions );
+
+		/**
+		 * Display the Types shortcodes modal whenever the button that inserts shortcodes inside page builder inputs is clicked.
+		 *
+		 * @since 3.0.8
+		 */
+		Toolset.hooks.addAction( 'toolset-action-display-shortcodes-modal-for-page-builders', self.displayTypesShortcodesModalForPageBuilders );
 		
 		return self;
 		
@@ -147,6 +154,9 @@ Toolset.Types.shortcodeManager = function( $ ) {
 		
 		// Gets the shared pool
 		self.templates = _.extend( Toolset.hooks.applyFilters( 'toolset-filter-get-shortcode-gui-templates', {} ), self.templates );
+
+		// Skype Template
+        self.templates.attributes.skype = wp.template( 'toolset-shortcode-attribute-skype' );
 		
 		// Register custom templates for local usage
 		if ( ! _.has( self.templates, 'info' ) ) {
@@ -798,7 +808,7 @@ Toolset.Types.shortcodeManager = function( $ ) {
 				attributes: shortcodeAttributes
 			}
 		);
-		
+
 		self.dialogs.shortcode.html( self.templates.dialog( templateData ) );
 		
 		// Initialize the dialog tabs, if needed
@@ -1141,11 +1151,25 @@ Toolset.Types.shortcodeManager = function( $ ) {
 			
 			case 'skype':
 				if ( 'raw' == checkedValue ) {
+					// legacy
 					$( '.js-toolset-shortcode-gui-attribute-wrapper-for-button_style', dialogContainer ).slideUp( 'fast' );
 					$( '.js-toolset-shortcode-gui-attribute-wrapper-for-class', dialogContainer ).slideUp( 'fast' );
+
+					// 3.1
+                    $( '.js-toolset-shortcode-gui-attribute-group-for-skype_button_style', dialogContainer ).slideUp( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-group-for-skype_chat_style', dialogContainer ).slideUp( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-wrapper-for-skype_preview', dialogContainer ).slideUp( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-wrapper-for-receiver', dialogContainer ).slideUp( 'fast' );
 				} else {
+					// legacy
 					$( '.js-toolset-shortcode-gui-attribute-wrapper-for-button_style', dialogContainer ).slideDown( 'fast' );
 					$( '.js-toolset-shortcode-gui-attribute-wrapper-for-class', dialogContainer ).slideDown( 'fast' );
+
+                    // 3.1
+                    $( '.js-toolset-shortcode-gui-attribute-group-for-skype_button_style', dialogContainer ).slideDown( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-group-for-skype_chat_style', dialogContainer ).slideDown( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-wrapper-for-skype_preview', dialogContainer ).slideDown( 'fast' );
+                    $( '.js-toolset-shortcode-gui-attribute-wrapper-for-receiver', dialogContainer ).slideDown( 'fast' );
 				}
 				break;
 			
@@ -1285,7 +1309,201 @@ Toolset.Types.shortcodeManager = function( $ ) {
 				break;
 		}
 	});
-	
+
+    /**
+	 * Skype Preview
+     */
+    self.attributeSkypeOnDialogReadyCountCalled = 0;
+    self.attributeSkypeOnDialogReady = function() {
+        // preview button
+        let skypePreviewButton = $( '#toolset-skype-preview-button' );
+
+        // check if the dialog is ready
+        if( skypePreviewButton.length === 0 ) {
+            if( self.attributeSkypeOnDialogReadyCountCalled == 50 ) {
+                // if the dialog is not loaded after 5 seconds it will never be loaded I guess
+                return;
+            }
+
+            self.attributeSkypeOnDialogReadyCountCalled += 1;
+            setTimeout( self.attributeSkypeOnDialogReady, 100 );
+            return;
+        }
+
+        // reset called count
+        self.attributeSkypeOnDialogReadyCountCalled = 0;
+
+        //
+        let skypePreviewChat = $( '#toolset-skype-preview-chat' ),
+            cssFile1Url = '//latest-swc.cdn.skype.com/v/0.80.87/css/swc-sdk.min.css',
+            cssFile2Url = '//latest-swc.cdn.skype.com/v/0.80.87/css/swc-builder.min.css',
+            interval,
+            maxTimeToWaitForCDN = 5000,
+            timeWaitedForCDN = 0,
+            intervalTime = 250,
+            tplLoading = $( '#toolset-attribute-skype-preview-loading' ),
+            tplPreviewLoaded = $( '#toolset-attribute-skype-preview-loaded' ),
+            tplPreviewOffline = $( '#toolset-attribute-skype-preview-offline' );
+
+
+        /* Interval function to check if CSS of Skype CDN was loaded */
+        function checkCSSLoadedIntervalCallback() {
+            if( timeWaitedForCDN >= maxTimeToWaitForCDN ) {
+                // waited too long for CDN
+                CSSCouldNotBeLoaded();
+                return;
+            }
+
+            // when the css is loaded the preview button will have the css 'cursor' attribute being set to 'pointer'
+            // AND the chat preview has 'overflow' set to 'hidden'
+            if( skypePreviewButton.css( 'cursor' ) == 'pointer' && skypePreviewChat.css( 'overflow' ) == 'hidden' ) {
+                CSSLoaded();
+            }
+
+            timeWaitedForCDN += intervalTime;
+        };
+
+        /* The CSS of Skype CDN was loaded successfully */
+        function CSSLoaded() {
+            clearInterval( interval );
+            previewControls();
+            tplLoading.hide();
+            tplPreviewLoaded.show();
+        }
+
+        /* Skype Preview Controls */
+        function previewControls() {
+            if( $( '#js-types-shortcode-gui-dialog-container-shortcode input[name=metaType]' ).val() != 'skype' ) {
+            	// no skype field
+				return;
+			}
+
+			let	buttonPreview = $( '#toolset-skype-preview-button' ),
+
+				// style of button (bubble / rounded / rectangle)
+				buttonStyle = $( '#types-button' ),
+
+				// button color
+				buttonColor = $( '#types-button-color' ),
+				buttonColorDefault = '#00AFF0',
+
+				// container for icon and label (only active when style of button is not bubble)
+                buttonIconLabelContainer = $( '.js-toolset-shortcode-gui-attribute-group-for-skype_button_style_enhanced' ),
+
+				// button icon
+				buttonIcon = $( '#types-button-icon' ),
+				buttonIconDefault = buttonIcon.val(),
+				buttonIconUserInput = buttonIcon.val(),
+
+				// button label
+				buttonLabel = $( '#types-button-label' ),
+				buttonLabelDefault = buttonLabel.val(),
+				buttonLabelUserInput = buttonLabel.val(),
+
+				// button link (this will get the user color as background)
+				buttonLink = $( '#toolset-skype-preview-button-link' ),
+
+				// button text (for user label)
+				buttonText = $( '#toolset-skype-preview-button-text' ),
+
+				// chat color
+				chatColor = $( '#types-chat-color' ),
+				chatColorDefault = '#80ddff',
+
+				// chat message (will get the chat color as background)
+				chatMessageMe = $( '#toolset-attribute-skype-preview-loaded .message.me' ),
+
+				// chat send button
+				chatSendButton = $( '#toolset-attribute-skype-preview-loaded .sendButton' ),
+
+				// regex for hex color (supports 3 and 6 digits formats)
+                regexHexColor = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+
+			// button style
+			buttonStyle.on( 'change', function() {
+				buttonPreview.attr( 'class', 'skype-button ' + buttonStyle.val() );
+
+				switch( buttonStyle.val() ) {
+                    case 'bubble':
+                        buttonIconLabelContainer.slideUp( 'fast' );
+                        buttonIconUserInput = buttonIcon.val();
+                        buttonLabelUserInput = buttonLabel.val();
+                        buttonIcon.val( buttonIconDefault );
+                        buttonLabel.val( buttonLabelDefault );
+                        break;
+                    default:
+                        buttonIconLabelContainer.slideDown( 'fast' );
+                        buttonIcon.val( buttonIconUserInput ).trigger( 'change' );
+                        buttonLabel.val( buttonLabelUserInput );
+				}
+			} );
+
+			// button icon
+			buttonIcon.on( 'change', function() {
+                buttonIconUserInput = buttonIcon.val();
+
+				switch( buttonIcon.val() ) {
+					case 'disabled':
+                        buttonPreview.addClass( 'textonly' );
+                        break;
+					default:
+						buttonPreview.removeClass( 'textonly' );
+				}
+			} );
+
+			// button label
+			buttonLabel.on( 'keydown keyup', function() {
+                buttonLabelUserInput = buttonLabel.val();
+
+				switch( buttonLabel.val() ) {
+					case '':
+						buttonText.html( 'Contact us' );
+						break;
+					default:
+						buttonText.html( buttonLabel.val() );
+				}
+			} );
+
+			// button color
+			buttonColor.on( 'keydown keyup', function() {
+				let color = buttonColor.val();
+
+				if( color != buttonColorDefault && color.match( regexHexColor ) ) {
+					buttonLink.css( 'background-color', color );
+				} else {
+					buttonLink.removeAttr( 'style' );
+				}
+			 } );
+
+			// chat color
+			chatColor.on( 'keydown keyup', function() {
+				let color = chatColor.val().toLowerCase();
+
+				if( color != chatColorDefault && color.match( regexHexColor ) ) {
+					chatMessageMe.css( 'background-color', color );
+					chatSendButton.css( 'background-color', 'rgb(105, 118, 123)' );
+				} else {
+                    chatMessageMe.removeAttr( 'style' );
+                    chatSendButton.removeAttr( 'style' );
+				}
+			} );
+		}
+
+        /* The CSS of Skype CDN could not be loeaded */
+        function CSSCouldNotBeLoaded() {
+            clearInterval( interval );
+            tplLoading.hide();
+            tplPreviewOffline.show();
+        }
+
+        /* Start the Builder, by loading the Skype CSS files */
+        $( '<link>' ).attr( { rel: "stylesheet", type: "text/css", href: cssFile1Url } ).appendTo("head");
+        $( '<link>' ).attr( { rel: "stylesheet", type: "text/css", href: cssFile2Url } ).appendTo("head");
+
+        interval = setInterval( checkCSSLoadedIntervalCallback, intervalTime );
+    }
+
 	/**
 	 * Clean the attributes list from metaXXXX pairs, before composing the shortcode.
 	 *
@@ -1390,7 +1608,6 @@ Toolset.Types.shortcodeManager = function( $ ) {
 					shortcodeAttributeValues['title'] = false;
 					shortcodeAttributeValues['alt'] = false;
 					shortcodeAttributeValues['align'] = false;
-					shortcodeAttributeValues['resize'] = false;
 					shortcodeAttributeValues['proportional'] = false;
 					shortcodeAttributeValues['padding_color'] = false;
 					shortcodeAttributeValues['class'] = false;
@@ -1445,9 +1662,18 @@ Toolset.Types.shortcodeManager = function( $ ) {
 					_.has( shortcodeAttributeValues, 'output' ) 
 					&& 'raw' == shortcodeAttributeValues.output 
 				) {
+					// legacy
 					shortcodeAttributeValues['button_style'] = false;
 					shortcodeAttributeValues['class'] = false;
 					shortcodeAttributeValues['style'] = false;
+
+					// 3.1
+                    shortcodeAttributeValues['button'] = false;
+                    shortcodeAttributeValues['button-color'] = false;
+                    shortcodeAttributeValues['button-icon'] = false;
+                    shortcodeAttributeValues['button-label'] = false;
+                    shortcodeAttributeValues['chat-color'] = false;
+                    shortcodeAttributeValues['receiver'] = false;
 				}
 				break;
 			case 'url':
@@ -1737,7 +1963,7 @@ Toolset.Types.shortcodeManager = function( $ ) {
 	 *
 	 * @since 2.0
 	 */
-	$( document ).on( 'toolset:types:wysiwygFieldInited', function( event, editorId ) {
+	$( document ).on( 'toolset:types:wysiwygFieldInited toolset:forms:wysiwygFieldInited', function( event, editorId ) {
 		if ( ! types_shortcode_i18n.conditions.plugins.toolsetViews ) {
 			self.addTypesButtonToDynamicEditor( editorId );
 		}
@@ -1760,6 +1986,39 @@ Toolset.Types.shortcodeManager = function( $ ) {
 
 		if ( $mediaButtons.find( '.js-types-in-toolbar' ).length == 0 ) {
 			$typesButton.appendTo( $mediaButtons );
+		}
+	};
+
+	/**
+	 * Hook a click callback to the small "plus" icon next to the Page Builders' text inputs (right now only supports
+	 * Beaver Builder) to allow Toolset shortcodes inserting.
+	 *
+	 * @since 3.1.0
+	 */
+	$( document ).on( 'click', '.js-toolset-shortcode-in-page-builder-input', function( e ) {
+		e.preventDefault();
+		Toolset.hooks.doAction( 'toolset-action-set-shortcode-gui-action', 'append' );
+		var $this = $( this ),
+			$toolsetShortcodeInPageBuilderInputWrapper = $this.parent( '.js-toolset-shortcode-in-page-builder-input-wrapper' ),
+			$toolsetShortcodeInPageBuilderInputWrapperTarget = $toolsetShortcodeInPageBuilderInputWrapper.find( '.js-toolset-shortcode-in-page-builder-input-target' );
+		if (
+			$toolsetShortcodeInPageBuilderInputWrapper.length > 0
+			&& $toolsetShortcodeInPageBuilderInputWrapperTarget.length > 0
+		) {
+			// Set the selector of the text input where the shortcode will be inserted.
+			Toolset.hooks.doAction( 'toolset-action-set-selector-to-append-shortcode', $toolsetShortcodeInPageBuilderInputWrapperTarget );
+		}
+		return false;
+	});
+
+	/**
+	 * Displays the Types shortcodes modal whenever the button that inserts shortcodes inside page builder inputs is clicked.
+	 *
+	 * @since 3.0.8
+	 */
+	self.displayTypesShortcodesModalForPageBuilders = function() {
+		if ( ! types_shortcode_i18n.conditions.plugins.toolsetViews ) {
+			self.openTypesDialog();
 		}
 	};
 	

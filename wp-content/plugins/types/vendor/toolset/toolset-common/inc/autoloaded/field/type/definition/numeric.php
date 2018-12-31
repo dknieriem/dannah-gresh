@@ -45,7 +45,7 @@ final class Toolset_Field_Type_Definition_Numeric extends Toolset_Field_Type_Def
 		// Get the original setting or a default one.
 		$validation_setting = toolset_ensarr(
 			toolset_getnest( $definition_array, array( 'data', 'validate', 'number' ) ),
-			array( 'active' => true, 'message' => __( 'Please enter numeric data', 'wpcf' ) ) 
+			array( 'active' => true, 'message' => __( 'Please enter numeric data', 'wpv-views' ) ) 
 		);
 		
 		// Force the activation of this validation.

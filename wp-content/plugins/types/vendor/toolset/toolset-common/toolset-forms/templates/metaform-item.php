@@ -5,7 +5,7 @@
  */
 $has_output_bootstrap = (isset( $cfg['attribute']['output'] ) && $cfg['attribute']['output'] == 'bootstrap');
 
-if ( is_admin() ) {
+if ( Toolset_Utils::is_real_admin() ) {
 	?>
     <div class="js-wpt-field-item wpt-field-item">
 		<?php echo $out; ?>

@@ -22,7 +22,7 @@ class Types_View_Decorator_Image implements Types_Interface_Value {
 			return '';
 		}
 
-		if( strpos( $value, '<img' ) !== false || ( isset( $params['url'] ) && $params['url'] == 'true' ) ) {
+		if( strpos( $value, '<img' ) !== false || ( isset( $params['url'] ) && $params['url'] ) ) {
 			// already a rendered image or raw url is wished
 			return $value;
 		}

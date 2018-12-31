@@ -131,12 +131,14 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 			'fields' => 'all',
 
 			'posts_per_page' => $this->get_items_per_page(),
-			'paged' => $this->get_page()
+			'paged' => $this->get_page(),
 		);
 
 		$search_string = $this->get_search_string();
 		if( ! empty( $search_string ) ) {
 			$query_args['s'] = $search_string;
+			$query_args['orderby'] = 'title';
+			$query_args['order'] = 'ASC';
 		}
 
 		$elements_to_exclude = $this->get_exclude_elements();
@@ -181,8 +183,19 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 			$augment_query_for_cardinality_limits->before_query();
 		}
 
+		// Make sure the order of the results is correct. See the PostResultOrder class for details.
+		$augment_query_orderby = $this->query_factory->post_result_order_adjustments(
+			$this->relationship,
+			$this->target_role,
+			$this->for_element,
+			$join_manager
+		);
+		$augment_query_orderby->before_query();
+
 		$query = $this->query_factory->wp_query( $query_args );
 		$results = $query->get_posts();
+
+		$augment_query_orderby->after_query();
 
 		if( $check_distinct_relationships ) {
 			/** @noinspection PhpUndefinedVariableInspection */
@@ -309,7 +322,7 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 	public function check_single_element( IToolset_Element $association_candidate, $check_is_already_associated = true ) {
 
 		if( ! $this->relationship->get_element_type( $this->target_role )->is_match( $association_candidate ) ) {
-			return new Toolset_Result( false, __( 'The element has a wrong type or a domain for this relationship.', 'wpcf' ) );
+			return new Toolset_Result( false, __( 'The element has a wrong type or a domain for this relationship.', 'wpv-views' ) );
 		}
 
 		if( $check_is_already_associated
@@ -317,7 +330,7 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 			&& $this->is_element_already_associated( $association_candidate )
 		) {
 			return new Toolset_Result( false,
-				__( 'These two elements are already associated and the relationship doesn\'t allow non-distinct associations.', 'wpcf' )
+				__( 'These two elements are already associated and the relationship doesn\'t allow non-distinct associations.', 'wpv-views' )
 			);
 		}
 
@@ -361,7 +374,7 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 			if( is_string( $filtered_result ) ) {
 				$message = esc_html( $filtered_result );
 			} else {
-				$message = __( 'The association was disabled by a third-party filter.', 'wpcf' );
+				$message = __( 'The association was disabled by a third-party filter.', 'wpv-views' );
 			}
 			return new Toolset_Result( false, $message );
 		}
@@ -412,7 +425,7 @@ class Toolset_Potential_Association_Query_Posts implements IToolset_Potential_As
 			$association_count = $this->get_number_of_already_associated_elements( $role, $element );
 			if( $association_count >= $maximum_limit ) {
 				$message = sprintf(
-					__( 'The element %s has already the maximum allowed amount of associations (%d) as %s in the relationship %s.', 'wpcf' ),
+					__( 'The element %s has already the maximum allowed amount of associations (%d) as %s in the relationship %s.', 'wpv-views' ),
 					$element->get_title(),
 					$maximum_limit, // this will be always a meaningful number - for INFINITY, this block is skipped entirely.
 					$this->relationship->get_role_name( $role ),

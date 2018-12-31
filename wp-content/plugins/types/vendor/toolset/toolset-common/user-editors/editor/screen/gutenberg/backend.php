@@ -1,42 +1,25 @@
 <?php
 
 /**
- * Backend Editor class for the Gutenberg editor.
+ * Backend Editor class for Gutenberg.
  *
- * Handles all the functionality needed to allow the Gutenberg to work with Content Template editing on the backend.
+ * Handles all the functionality needed to allow Gutenberg to work with Content Template editing on the backend.
  *
  * @since 2.5.9
  */
-
 class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 	extends Toolset_User_Editors_Editor_Screen_Abstract {
 
-	/**
-	 * @var Toolset_Constants
-	 */
-	protected $constants;
-
-	/**
-	 * Toolset_User_Editors_Editor_Screen_Gutenberg_Backend constructor.
-	 *
-	 * @param Toolset_Constants|null $constants
-	 */
-	public function __construct( Toolset_Constants $constants = null ) {
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-
-		$this->constants->define( 'GUTENBERG_SCREEN_ID', 'gutenberg' );
-	}
-
 	public function initialize() {
+		parent::initialize();
+
 		add_action( 'init', array( $this, 'register_assets' ), 50 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_assets' ), 50 );
 
-		add_action( 'edit_form_advanced', array( $this, 'register_assets_for_gutenberg_compatibility' ) );
+		add_action( 'block_editor_meta_box_hidden_fields', array( $this, 'register_assets_for_gutenberg_compatibility' ) );
 
 		add_filter( 'toolset_filter_toolset_registered_user_editors', array( $this, 'register_user_editor' ) );
-		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes', array( $this, 'layout_template_attribute' ), 10, 3 );
+		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes', array( $this, 'layout_template_attribute' ), 10, 2 );
 
 		add_action( 'wpv_action_wpv_ct_inline_user_editor_buttons', array( $this, 'register_inline_editor_action_buttons' ) );
 	}
@@ -67,10 +50,9 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 
 	public function register_assets() {
 
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
+		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
 
 		// Content Template own edit screen assets
-
 		$toolset_assets_manager->register_style(
 			'toolset-user-editors-gutenberg-style',
 			TOOLSET_COMMON_URL . '/user-editors/editor/screen/gutenberg/backend.css',
@@ -96,7 +78,6 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 		);
 
 		// Content Template as inline object assets
-
 		$toolset_assets_manager->register_script(
 			'toolset-user-editors-gutenberg-layout-template-script',
 			TOOLSET_COMMON_URL . '/user-editors/editor/screen/gutenberg/backend_layout_template.js',
@@ -160,7 +141,6 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 	 *
 	 * @since 2.5.1
 	 */
-
 	public function html_output() {
 
 		if ( ! isset( $_GET['ct_id'] ) ) {
@@ -186,7 +166,7 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 	}
 
 	public function register_inline_editor_action_buttons( $content_template ) {
-		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'GUTENBERG_SCREEN_ID' ) );
+		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Gutenberg::GUTENBERG_SCREEN_ID );
 		?>
 		<button
 			class="button button-secondary js-wpv-ct-apply-user-editor js-wpv-ct-apply-user-editor-<?php echo esc_attr( $this->editor->get_id() ); ?>"
@@ -204,10 +184,15 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 	 * On a Content Template used inside a View or WPA loop output, we set which builder it is using
 	 * so we can link to the CT edit page with the right builder instantiated.
 	 *
+	 * @param array   $attributes
+	 * @param WP_POST $content_template
+	 *
+	 * @return array
+	 *
 	 * @since 2.5.1
 	 */
-	public function layout_template_attribute( $attributes, $content_template, $view_id ) {
-		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'GUTENBERG_SCREEN_ID' ) );
+	public function layout_template_attribute( $attributes, $content_template ) {
+		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Gutenberg::GUTENBERG_SCREEN_ID );
 		if ( $content_template_has_gutenberg ) {
 			$attributes['builder'] = $this->editor->get_id();
 		}
@@ -215,7 +200,7 @@ class Toolset_User_Editors_Editor_Screen_Gutenberg_Backend
 	}
 
 	public function register_assets_for_gutenberg_compatibility( $content_template ) {
-		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'GUTENBERG_SCREEN_ID' ) );
+		$content_template_has_gutenberg = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Gutenberg::GUTENBERG_SCREEN_ID );
 		if ( $content_template_has_gutenberg ) {
 			do_action( 'toolset_enqueue_scripts', array( 'toolset-user-editors-gutenberg-script' ) );
 			do_action( 'toolset_enqueue_styles', array( 'toolset-user-editors-gutenberg-editor-style' ) );

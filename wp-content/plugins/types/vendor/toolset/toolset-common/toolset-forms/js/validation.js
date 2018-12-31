@@ -35,6 +35,21 @@ var wptValidation = (function ($) {
         });
 
         /**
+         * add method to validate usernames
+         */
+        $.validator.addMethod("username", function (value, element, param) {
+            return ( value == "" || /^[a-zA-Z0-9\_\-]+$/i.test(value) );
+        });
+
+        /**
+		 * Added mock "mime_type" validator method because it is presents in wpt-data-validate
+		 * on file-related fields. Just in case!
+		 */
+		$.validator.addMethod("mime_type", function (value, element, param) {
+			return true;
+		});
+
+        /**
          * add equalto method
          */
         $.validator.addMethod("equalto", function (value, element, param) {
@@ -48,7 +63,7 @@ var wptValidation = (function ($) {
          * add skype to validator method
          */
         $.validator.addMethod("skype", function (value, element, param) {
-            return ( value == "" || /^([a-z0-9\.\_\,\-\#]+)$/i.test(value) );
+            return ( value == "" || /^([a-z0-9\:\.\_\,\-\#]+)$/i.test(value) );
         });
 
         /**
@@ -301,10 +316,6 @@ var wptValidation = (function ($) {
 
         if (typeof jQuery('.wpt-suggest-taxonomy-term') && jQuery('.wpt-suggest-taxonomy-term').length) {
             jQuery('.wpt-suggest-taxonomy-term').hide();
-        }
-
-        if (typeof credFrontEndViewModel !== 'undefined') {
-            credFrontEndViewModel.reloadTinyMCE();
         }
     });
 

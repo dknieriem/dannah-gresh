@@ -36,7 +36,8 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		'map_distance_radius_url_param_name'      => '',
 		'map_distance_unit_url_param_name'        => '',
 		'map_distance_center_shortcode_attr_name' => 'mapcenter',
-		'map_distance_compare_field'              => null
+		'map_distance_compare_field'              => null,
+		'map_distance_what_to_show'               => 'inside',
 	);
 
 	function __construct() {
@@ -61,8 +62,6 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 			add_action( 'wp_ajax_wpv_filter_maps_distance_delete', array( $this, 'delete_callback' ) );
 			add_filter( 'wpv_filter_wpv_shortcodes_gui_data', array( $this,	'register_gui_data'	) );
 		}
-
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_script' ) );
 
 		add_filter( 'wpv_filter_query', array( $this, 'check_if_query_needed' ), 10, 3 );
 
@@ -125,22 +124,14 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 	}
 
 	/**
-	 * Registers for translation, either using Views filter, or a workaround for Views < 2.5.2
+	 * Registers for translation using Views filter
      * @since 1.4.2
 	 */
 	public function register_for_translation() {
-        if (
-		    class_exists( 'WP_Views' )
-            && defined( 'WPV_VERSION' )
-            && version_compare( WPV_VERSION, '2.5.2', '>=' )
-        ) {
-			add_filter(
-                'wpv_filter_get_fake_shortcodes_for_attributes_translation',
-                array( $this, 'add_shortcode_atts_for_translation' )
-            );
-        } else {
-            $this->load_translation_class();
-        }
+		add_filter(
+            'wpv_filter_get_fake_shortcodes_for_attributes_translation',
+            array( $this, 'add_shortcode_atts_for_translation' )
+        );
 	}
 
 	/**
@@ -176,15 +167,6 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 				);
 			}
 		}
-	}
-
-	/**
-	 * Requires translation class (late enough, so Views autoloader kicks in and the class it depends on is available).
-     * @since 1.4
-     * @deprecated 1.4.2 (& Views 2.5.2)
-	 */
-	public function load_translation_class() {
-		require_once 'wpv-maps-wpml-shortcodes-translation.php';
 	}
 
 	/**
@@ -232,12 +214,12 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 			$attributes[]             = array(
 				'query_type'   => $view_settings['query_type'][0],
 				'filter_type'  => 'maps_distance',
-				'filter_label' => __( 'Map Distance Center', 'wpv-views' ),
+				'filter_label' => __( 'Map Distance Center', 'toolset-maps' ),
 				'value'        => '',
 				'attribute'    => $distance_filter_settings['map_distance_center_shortcode_attr_name'],
 				'expected'     => 'string',
 				'placeholder'  => '30.013056, 31.208853',
-				'description'  => __( 'Please type a comma separated latitude, longitude', 'wpv-views' )
+				'description'  => __( 'Please type a comma separated latitude, longitude', 'toolset-maps' )
 			);
 		}
 
@@ -271,7 +253,7 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		);
 
 		wp_register_style(
-            'toolset-maps-views-filter-distance-frontend-css',
+            'toolset-maps-views-filter-distance-backend-css',
             TOOLSET_ADDON_MAPS_URL . '/resources/css/views_filter_distance_backend.css',
             array(),
             TOOLSET_ADDON_MAPS_VERSION
@@ -298,16 +280,12 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 	}
 
 	function enqueue_backend_scripts() {
-	    wp_enqueue_style( 'toolset-maps-views-filter-distance-frontend-css' );
+	    wp_enqueue_style( 'toolset-maps-views-filter-distance-backend-css' );
 
 		if ( isset( $_GET['page'] ) && $_GET['page'] == 'views-editor' ) {
 			wp_enqueue_script( 'toolset-maps-views-filter-distance-backend-js' );
+			Toolset_Addon_Maps_Common::maybe_enqueue_azure_css();
 		}
-	}
-
-	function enqueue_frontend_script() {
-		wp_enqueue_script( 'toolset-maps-views-filter-distance-frontend-js' );
-		wp_enqueue_style( 'toolset-maps-views-filter-distance-frontend-css' );
 	}
 
 	/**
@@ -383,7 +361,7 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
             </div>
             <div class="js-wpv-filter-toolset-messages"></div>
             <span class="filter-doc-help">
-				<?php echo sprintf( __( '%sLearn about filtering by Distance%s', 'wpv-views' ),
+				<?php echo sprintf( __( '%sLearn about filtering by Distance%s', 'toolset-maps' ),
 					$link,
 					' &raquo;</a>'
 				); ?>
@@ -401,118 +379,52 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 
 		$view_settings     = wp_parse_args( $view_settings, $defaults );
 		$distance_settings = $view_settings['map_distance_filter'];
-		?>
-        <h4><?php _e( 'How to filter', 'toolset-maps' ); ?></h4>
-        <ul class="wpv-filter-options-set">
-			<?php
-			self::render_map_distance_compare_field( $distance_settings );
-			self::render_map_distance( $distance_settings );
-			self::render_map_distance_center( $distance_settings );
-			?>
-</ul>
-		<div class="filter-helper js-wpv-author-helper"></div>
-		<?php
-	}
-
-	static function render_map_distance_compare_field( array $distance_settings ) {
 		$args = array(
 			'field_type' => array( 'google_address' ),
 			'filter'     => 'types'
 		);
 		$address_fields = apply_filters( 'types_filter_query_field_definitions', array(), $args );
-		?>
-        <li>
-            <label for="wpv-filter-maps-compare-field"><?php _e( 'Field to compare to', 'toolset-maps' ); ?></label>
-            <select id="wpv-filter-maps-compare-field" name="map_distance_compare_field"
-                    class="js-filter-maps-compare-field">
-				<?php
-				foreach ( $address_fields['posts'] as $field ) {
-					echo '<option value="' . esc_attr( $field['slug'] ) . '" '
-                         . selected( $distance_settings['map_distance_compare_field'], $field['slug'] ) . '>'
-                         . stripslashes( $field['name'] ) . '</option>';
-				}
-				?>
-            </select>
-        </li>
-		<?php
-    }
+		$map_distance = esc_attr(
+			!empty( $distance_settings['map_distance'] )
+				? $distance_settings['map_distance']
+				: self::$distance_filter_options['map_distance']
+		);
 
-	static function render_map_distance( array $distance_settings ) {
-	    ?>
-        <li>
-            <label for="wpv-filter-maps-distance"><?php _e( 'Filter Radius', 'toolset-maps' ); ?></label>
-            <input type="number"
-                   class="js-wpv-filter-maps-distance wpt-form-textfield form-textfield textfield"
-                   id="wpv-filter-maps-distance" name="map_distance"
-                   value="<?php echo esc_attr( !empty( $distance_settings['map_distance'] ) ? $distance_settings['map_distance'] : self::$distance_filter_options['map_distance'] ); ?>"
-                   autocomplete="off"/>
-            <select class="js-wpv-filter-maps-distance-unit" id="wpv-filter-maps-distance-unit"
-                    name="map_distance_unit">
-                <option value="km" <?php selected( $distance_settings['map_distance_unit'], 'km' ); ?>>
-                    km
-                </option>
-                <option value="mi" <?php selected( $distance_settings['map_distance_unit'], 'mi' ); ?>>
-                    mi
-                </option>
-            </select>
-        </li>
-        <?php
-    }
+		// Compatibility with old views, which don't have this saved
+		if ( array_key_exists( 'map_distance_what_to_show', $distance_settings ) ) {
+			$what_to_show = $distance_settings['map_distance_what_to_show'];
+		} else {
+			$what_to_show = self::$distance_filter_options['map_distance_what_to_show'];
+		}
 
-    static function render_map_distance_center( array $distance_settings ) {
 		?>
-        <li>
-            <label>
-                <input class="js-filter-center-source" type="radio" name="map_center_source"
-                       value="address" <?php checked( 'address', $distance_settings['map_center_source'] ); ?>/>
-                <?php _e('Distance center is set using a fixed location:', 'toolset-maps') ?></label>
-        </li>
-        <div class="wpv-filter-maps-distance-center-container">
-            <div class="toolset-google-map-container js-toolset-google-map-container">
-                <div class="toolset-google-map-inputs-container js-toolset-google-map-inputs-container">
-                    <label class="" for="js-wpv-filter-maps-address"><?php _e('Address', 'toolset-maps') ?></label>
-                    <input type="text" id="js-wpv-filter-maps-address" name="map_center_address"
-                           value="<?php echo esc_attr( isset( $distance_settings['map_distance_center'] ) ? $distance_settings['map_distance_center'] : '' ); ?>" placeholder="<?php _e('Enter address', 'toolset-maps') ?>"
-                           class="toolset-google-map js-toolset-google-map js-toolset-maps-address-autocomplete textfield"
-                           data-coordinates="" autocomplete="off"
-                    >
-                </div>
-            </div>
-        </div>
-        <li>
-            <label>
-                <input class="js-filter-center-source" type="radio" name="map_center_source"
-                   value="url_param" <?php checked( 'url_param', $distance_settings['map_center_source'] ); ?>>
-                <?php _e('Distance center is set using URL parameter:', 'toolset-maps') ?></label>
-                <input type="text"
-                    class="js-distance-center-url-param"
-                    name="map_distance_center_url_param_name"
-                    value="<?php echo( $distance_settings['map_distance_center_url_param_name'] != "" ? $distance_settings['map_distance_center_url_param_name'] : 'mapcenter' ); ?>"/>
-        </li>
-        <li>
-            <label>
-                <input class="js-filter-center-source" type="radio" name="map_center_source"
-                   value="shortcode_attr" <?php checked( 'shortcode_attr', $distance_settings['map_center_source'] ); ?>>
-                <?php _e('Distance center is set using shortcode attribute:', 'toolset-maps') ?></label>
-            <input type="text"
-                  class="js-distance-center-shortcode"
-                  name="map_distance_center_shortcode_attr_name"
-                  value="<?php echo( $distance_settings['map_distance_center_shortcode_attr_name'] != "" ? $distance_settings['map_distance_center_shortcode_attr_name'] : 'mapcenter' ); ?>"/>
-        </li>
-        <li>
-            <label>
-                <input class="js-filter-center-source" type="radio" name="map_center_source"
-                   value="user_location" <?php checked( 'user_location', $distance_settings['map_center_source'] ); ?>>
-                <?php _e('Distance center is set from user location.', 'toolset-maps') ?></label>
-        </li>
+        <h4><?php _e( 'How to filter', 'toolset-maps' ); ?></h4>
+        <ul class="wpv-filter-options-set">
+			<?php
+			echo self::render_view_static(
+				'map_distance_compare_field',
+				array( $address_fields, $distance_settings['map_distance_compare_field'] )
+			);
+			echo self::render_view_static(
+				'map_distance',
+				array( $map_distance, $distance_settings['map_distance_unit'] )
+			);
+			echo self::render_view_static(
+				'map_distance_what_to_show',
+				array( $what_to_show )
+			);
+			echo self::render_view_static( 'map_distance_center', $distance_settings );
+			?>
+		</ul>
+		<div class="filter-helper js-wpv-author-helper"></div>
 		<?php
-    }
+	}
 
 	static function update_callback() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$data = array(
 				'type'    => 'capability',
-				'message' => __( 'You do not have permissions for that.', 'wpv-views' )
+				'message' => __( 'You do not have permissions for that.', 'toolset-maps' )
 			);
 			wp_send_json_error( $data );
 		}
@@ -522,7 +434,7 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		) {
 			$data = array(
 				'type'    => 'nonce',
-				'message' => __( 'Your security credentials have expired. Please reload the page to get new ones.', 'wpv-views' )
+				'message' => __( 'Your security credentials have expired. Please reload the page to get new ones.', 'toolset-maps' )
 			);
 			wp_send_json_error( $data );
 		}
@@ -533,14 +445,14 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		) {
 			$data = array(
 				'type'    => 'id',
-				'message' => __( 'Wrong or missing ID.', 'wpv-views' )
+				'message' => __( 'Wrong or missing ID.', 'toolset-maps' )
 			);
 			wp_send_json_error( $data );
 		}
 		if ( empty( $_POST['filter_options'] ) ) {
 			$data = array(
 				'type'    => 'data_missing',
-				'message' => __( 'Wrong or missing data.', 'wpv-views' )
+				'message' => __( 'Wrong or missing data.', 'toolset-maps' )
 			);
 			wp_send_json_error( $data );
 		}
@@ -574,21 +486,42 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		}
 		$data = array(
 			'id'      => $view_id,
-			'message' => __( 'Distance filter saved', 'wpv-views' ),
+			'message' => __( 'Distance filter saved', 'toolset-maps' ),
 			'summary' => Toolset_Addon_Maps_Views_Distance_Filter::get_summary_txt( array( "map_distance_filter" => $distance_filter ) )
 		);
 		wp_send_json_success( $data );
 	}
 
-	static function get_summary_txt( $views_settings = array() ) {
-		if ( !self::get_saved_option( 'api_key' ) ) {
-		    return __( 'You need to set a valid Google Maps API key', 'toolset-maps' );
+	/**
+	 * Multi-API aware check for API keys.
+	 * @return bool
+	 */
+	protected static function is_the_right_api_key_entered() {
+		$api_used = apply_filters( 'toolset_maps_get_api_used', '' );
+
+		if ( Toolset_Addon_Maps_Common::API_GOOGLE === $api_used ) {
+			$key = apply_filters( 'toolset_filter_toolset_maps_get_api_key', '' );
+		} else {
+			$key = apply_filters( 'toolset_filter_toolset_maps_get_azure_api_key', '' );
+		}
+		return !empty( $key );
+	}
+
+	static function get_summary_txt( array $views_settings ) {
+		if ( !self::is_the_right_api_key_entered() ) {
+		    return __( 'You need to set a valid API key', 'toolset-maps' );
 		}
 
 		$distance_filter = $views_settings['map_distance_filter'];
-		if ( ! isset( $distance_filter['map_distance'] ) || ! isset( $distance_filter['map_distance_center'] ) || ! isset( $distance_filter['map_distance_unit'] ) || ! isset( $distance_filter['map_center_source'] ) ) {
-			return;
+		if (
+			! isset( $distance_filter['map_distance'] )
+			|| ! isset( $distance_filter['map_distance_center'] )
+			|| ! isset( $distance_filter['map_distance_unit'] )
+			|| ! isset( $distance_filter['map_center_source'] )
+		) {
+			return '';
 		}
+
 		if ( !$distance_filter['map_distance_unit'] ) {
 			$distance_filter['map_distance_unit'] = self::$distance_filter_options['map_distance_unit'];
         }
@@ -596,36 +529,51 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 			$distance_filter['map_distance'] = self::$distance_filter_options['map_distance'];
         }
 
-		$distance_center_summary = '';
-		$radius_summary          = $distance_filter['map_distance'] . $distance_filter['map_distance_unit'] . ' </strong> '.__( 'radius of', 'toolset-maps' ).' <strong>';
+        if ( array_key_exists( 'map_distance_what_to_show', $distance_filter ) ) {
+	        $within_or_outside = $distance_filter['map_distance_what_to_show'] === 'inside'
+		        ? __( 'within', 'toolset-maps' )
+		        : __( 'outside of', 'toolset-maps' );
+        } else {
+        	$within_or_outside = __( 'within', 'toolset-maps' );
+        }
 
 		switch ( $distance_filter['map_center_source'] ) {
 			case 'address':
-				$distance_center_summary = $radius_summary . $distance_filter['map_distance_center'];
+				$distance_center_summary = $distance_filter['map_distance_center'];
 				break;
 			case 'url_param':
-				$distance_center_summary = $radius_summary . __(' address/coordinates provided using <i>', 'toolset-maps' ) . $distance_filter['map_distance_center_url_param_name'] . __( '</i> URL parameter', 'toolset-maps' );
+				$distance_center_summary = __(' address/coordinates provided using <i>', 'toolset-maps' )
+				                           . $distance_filter['map_distance_center_url_param_name']
+				                           . __( '</i> URL parameter', 'toolset-maps' );
 				break;
 			case 'shortcode_attr':
-				$distance_center_summary = $radius_summary . __(' address/coordinates provided using <i>', 'toolset-maps' ) . $distance_filter['map_distance_center_shortcode_attr_name'] . __( '</i> shortcode attribute', 'toolset-maps' );
+				$distance_center_summary = __(' address/coordinates provided using <i>', 'toolset-maps' )
+				                           . $distance_filter['map_distance_center_shortcode_attr_name']
+				                           . __( '</i> shortcode attribute', 'toolset-maps' );
 				break;
 			case 'user_location':
-				$distance_center_summary = $radius_summary . __(' the viewing user\'s location', 'toolset-maps' );
+				$distance_center_summary = __(' the viewing user\'s location', 'toolset-maps' );
 				break;
+			default:
+				$distance_center_summary = '';
 		}
 
-		ob_start();
-		_e( 'Show posts within <strong>' . $distance_center_summary . '</strong>.', 'toolset-maps' );
-		$data = ob_get_clean();
-
-		return $data;
+		return sprintf(
+			/* translators: %1$s is either 'within' or 'outside of', %2$s is distance number, %3$s is distance unit and
+			%4$s is the distance center */
+			__( 'Show posts %1$s <strong>%2$s%3$s</strong> radius of <strong>%4$s</strong>.', 'toolset-maps' ),
+			$within_or_outside,
+			$distance_filter['map_distance'],
+			$distance_filter['map_distance_unit'],
+			$distance_center_summary
+		);
 	}
 
 	static function delete_callback() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$data = array(
 				'type'    => 'capability',
-				'message' => __( 'You do not have permissions for that.', 'wpv-views' )
+				'message' => __( 'You do not have permissions for that.', 'toolset-maps' )
 			);
 			wp_send_json_error( $data );
 		}
@@ -684,23 +632,21 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 	}
 
 	static function coords_or_address( $input ) {
+		if ( empty ( $input ) ) {
+			return false;
+		}
+
 		if ( self::validate_coords( $input ) ) {
 			return 'coords';
 		}
 
-		if ( self::validate_address( $input ) ) {
-			return 'address';
-		}
-
-		return false;
+		// It is practically impossible to validate if a string is an address or not, so if the $input is not empty and
+		// not coordinates, we have to assume address and ask API (hopefully cached) if it knows of this address.
+		return 'address';
 	}
 
 	static function validate_coords( $coords ) {
 		return preg_match( '/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?);[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/', $coords );
-	}
-
-	static function validate_address( $address ) {
-		return preg_match( '/[^A-Za-z0-9\.\/\\\\]|\..*\.|\.$/', $address );
 	}
 
 	static function get_coords_array_from_input( $input ) {
@@ -853,36 +799,38 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 
 		$posts_to_remove = array();
 
+		$args = array(
+			'domain'     => 'posts',
+			'field_type' => array( 'google_address' ),
+			'filter'     => 'types'
+		);
+
+		if (
+			isset ( $distance_filter_settings['map_distance_compare_field'] )
+			&& $distance_filter_settings['map_distance_compare_field'] != - 1
+		) {
+			$args['search'] = $distance_filter_settings['map_distance_compare_field'];
+		}
+
+		$address_fields = apply_filters( 'types_filter_query_field_definitions', array(), $args );
+
 		foreach ( $post_query->posts as $post_index => $the_post ) {
-			// TODO: refactor: this whole $address_fields getting can almost certainly go outside of foreach, as results are always the same
-		    $args = array(
-				'domain'     => 'posts',
-				'field_type' => array( 'google_address' ),
-				'filter'     => 'types'
-			);
-
-			if ( isset ( $distance_filter_settings['map_distance_compare_field'] ) && $distance_filter_settings['map_distance_compare_field'] != - 1 ) {
-				$args['search'] = $distance_filter_settings['map_distance_compare_field'];
-			}
-
-			$address_fields = apply_filters( 'types_filter_query_field_definitions', array(), $args );
-
 			//I'm leaving the logic for multiple address rule in case we use it in the future
 			if ( count( $address_fields ) > 0 ) {
 				$is_outside_radius = true;
+				$no_latlon = false;
 
 				foreach ( $address_fields as $field ) {
-					$post_address = get_post_meta( $the_post->ID, $field['meta_key'] );
+					$post_addresses = get_post_meta( $the_post->ID, $field['meta_key'] );
+					$distance_diffs = array();
 
-					if ( is_array( $post_address ) && isset( $post_address[0] ) ) {
-						$post_address = $post_address[0];
-					}
-
-					if ( ! empty( $post_address ) ) {
+					// Repeating fields: calculate all distances, then find the smallest one.
+					foreach ( $post_addresses as $post_address ) {
 						$address_coords = self::get_coords_array_from_input( $post_address );
 
 						// We may get no lat & lon if address is broken. In that case, simply skip this in filtering.
 						if ( ! self::is_valid_coords_array( $address_coords ) ) {
+							$no_latlon = true;
 						    continue;
                         }
 
@@ -897,14 +845,30 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 							$distance_filter_settings['map_distance_unit']
                         );
 
-						if ( $distance_diff < (double) $distance_filter_settings['map_distance'] ) {
-							$is_outside_radius = false;
-							break;
-						}
+						$distance_diffs[] = $distance_diff;
+					}
+
+					if (
+						! empty( $distance_diffs )
+						&& min( $distance_diffs ) < (double) $distance_filter_settings['map_distance']
+					) {
+						$is_outside_radius = false;
+						break;
 					}
 				}
 
-				if ( $is_outside_radius ) {
+				// Filter out stuff outside or inside the radius, depending on setting
+				$show_inside = (
+					// Compatibility with old views, which haven't got this setting - same as 'inside'
+					!array_key_exists( 'map_distance_what_to_show', $distance_filter_settings )
+					// And if the setting is present, check what it is
+					|| $distance_filter_settings['map_distance_what_to_show'] === 'inside'
+				);
+				if (
+					$no_latlon
+					|| ( $is_outside_radius && $show_inside )
+					|| ( !$is_outside_radius && !$show_inside )
+				) {
 					$post_query->post_count  -= 1;
 					$post_query->found_posts -= 1;
 					$posts_to_remove[]       = $post_index;
@@ -977,7 +941,7 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 		    return '';
 		}
 
-		// If a reqired att is missing, return early without content.
+		// If a required att is missing, return early without content.
 		$required_atts = array(
             'compare_field',
             'distance_center_url_param',
@@ -990,6 +954,10 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 			}
         }
 
+        // Load resources JIT
+		wp_enqueue_script( 'toolset-maps-views-filter-distance-frontend-js' );
+		wp_enqueue_style( 'toolset-maps-views-filter-distance-frontend-css' );
+
 		// Use defaults if atts are missing or empty
         $compare_fields = $this->get_comparison_address_fields();
 		$default_compare_field = reset( $compare_fields );
@@ -1001,7 +969,8 @@ class Toolset_Addon_Maps_Views_Distance_Filter extends Toolset_Maps_Views_Distan
 			'distance_radius_url_param' => self::DISTANCE_RADIUS_DEFAULT_URL_PARAM,
 			'distance_unit_url_param' => self::DISTANCE_UNIT_DEFAULT_URL_PARAM,
 			'inputs_placeholder' => self::DISTANCE_FILTER_INPUTS_PLACEHOLDER,
-			'visitor_location_button_text' => self::DISTANCE_FILTER_VISITOR_LOCATION_BUTTON_TEXT
+			'visitor_location_button_text' => self::DISTANCE_FILTER_VISITOR_LOCATION_BUTTON_TEXT,
+			'what_to_show' => self::$distance_filter_options['map_distance_what_to_show']
         ), $atts);
 
 		$distance_radius_url_param = esc_attr( $atts['distance_radius_url_param'] );
@@ -1131,7 +1100,8 @@ HTML;
 			'map_distance_radius_url_param_name'      => $attributes['distance_radius_url_param'],
 			'map_distance_unit_url_param_name'        => $attributes['distance_unit_url_param'],
 			'map_distance_center_shortcode_attr_name' => 'mapcenter',
-			'map_distance_compare_field'              => $attributes['compare_field']
+			'map_distance_compare_field'              => $attributes['compare_field'],
+			'map_distance_what_to_show'               => ( isset( $attributes['what_to_show'] ) ? $attributes['what_to_show'] : self::$distance_filter_options['map_distance_what_to_show'] ),
 		);
 
 		$view_array['map_distance_filter'] = $distance_options;
@@ -1158,6 +1128,15 @@ HTML;
 							'type'    => 'select',
 							'options' => array( 'km' => 'km', 'mi' => 'mi' ),
 							'default' => self::$distance_filter_options['map_distance_unit'],
+						),
+						'what_to_show' => array(
+							'label'     => __( 'What to show', 'toolset-maps' ),
+							'type'      => 'select',
+							'options'   => array(
+								'outside' => __( 'Outside of radius', 'toolset-maps' ),
+								'inside'  => __( 'Inside of radius', 'toolset-maps' )
+							),
+							'default'   => self::$distance_filter_options['map_distance_what_to_show']
 						),
 						'compare_field'             => array(
 							'label'    => __( 'Comparison Field', 'toolset-maps' ),
@@ -1201,7 +1180,7 @@ HTML;
 			);
         }
 
-		$dialog_label = __( 'Distance filter', 'wpv-views' );
+		$dialog_label = __( 'Distance filter', 'toolset-maps' );
 
 		$data['name']  = $dialog_label;
 		$data['label'] = $dialog_label;

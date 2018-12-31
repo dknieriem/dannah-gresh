@@ -8,7 +8,7 @@
 
 {% extends "@toolset/base.twig" %}
 
-{% block title %}{{ __( 'Toolset Debug Information' ) }}{% endblock %}
+{% block title %}{{ __( 'Toolset Debug Information', 'wpv-views' ) }}{% endblock %}
 
 {% import _self as debug %}
 
@@ -16,14 +16,14 @@
 
     {# Toolset debug information #}
     <div class="inside">
-        <p>{{ __( 'This information allows our support team to see the versions of WordPress, plugins and theme on your site. Provide this information if requested in our support forum. No passwords or other confidential information is included.', 'sitepress', 'wpv-views' ) }}</p>
+        <p>{{ __( 'This information allows our support team to see the versions of WordPress, plugins and theme on your site. Provide this information if requested in our support forum. No passwords or other confidential information is included.', 'wpv-views' ) }}</p>
         <!--suppress HtmlFormInputWithoutLabel -->
         <textarea style="font-size:10px;width:100%;height:250px;" rows="26" readonly="readonly">{{ debugInformation|raw }}</textarea>
     </div>
 
     {# Troubleshooting section #}
 
-    <h2>{{ __( 'Troubleshooting' ) }}</h2>
+    <h2>{{ __( 'Troubleshooting', 'wpv-views' ) }}</h2>
 
     <div class="toolset-page-spinner">
         <img src="{{ assets.loaderOverlay }}" />
@@ -47,7 +47,7 @@
                         <p data-bind="visible: isDangerous">
                             <label>
                                 <input type="checkbox" data-bind="checked: userConfirmed, disable: isInProgress() || isCompleted()"/>
-                                {{ __( "I have created a database backup and I know what I am doing.") }}
+                                {{ __( "I have created a database backup and I know what I am doing.", 'wpv-views' ) }}
                             </label>
                         </p>
 
@@ -62,19 +62,19 @@
 
                         <p data-bind="visible: isInProgress">
                             <strong>
-                                {{ __( 'Please do not navigate away from this page until the process ends.' ) }}
+                                {{ __( 'Please do not navigate away from this page until the process ends.', 'wpv-views' ) }}
                             </strong>
                         </p>
                         <p data-bind="visible: isCompleted">
                             <strong>
-                                {{ __( 'The action is now completed.' ) }}
+                                {{ __( 'The action is now completed.', 'wpv-views' ) }}
                             </strong>
                         </p>
 
                         <div data-bind="visible: ! isOutputEmpty() || isInProgress()">
                             <p style="font-size: small; font-family: monospace;">
                                 <label>
-                                    {{ __( 'Progress:' ) }} <br />
+                                    {{ __( 'Progress:', 'wpv-views' ) }} <br />
                                     <textarea data-bind="valueScroll: output" rows="10" readonly="readonly"
                                               style="width: 100%; font-size: small; font-family: monospace;"></textarea>
                                 </label>
@@ -86,5 +86,13 @@
             </div>
         </div>
     </div>
+
+
+    <h2>
+        {# translators: Heading in the Toolset Troubleshooting page. #}
+        {{ __( 'Installer support', 'wpv-views' ) }}
+    </h2>
+    {{ do_action( 'otgs_render_installer_support_link', { 'hide_title': true } ) }}
+
 
 {% endblock %}

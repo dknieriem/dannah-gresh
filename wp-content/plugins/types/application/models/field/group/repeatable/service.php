@@ -563,6 +563,70 @@ class Types_Field_Group_Repeatable_Service extends Types_Field_Group_Service {
 	}
 
 	/**
+	 * @param $fields_string
+	 *
+	 * @return Types_Field_Group_Repeatable[]
+	 */
+	public function get_rfgs_by_fields_string( $fields_string ) {
+		if ( strpos( $fields_string, Types_Field_Group_Repeatable::PREFIX ) === false ) {
+			// no repeatable group
+			return array();
+		}
+
+		do_action( 'toolset_do_m2m_full_init' );
+
+		$fields = explode( ',', $fields_string );
+
+		$rfg_posts = array();
+
+		foreach( $fields as $field_index => $field_slug ) {
+			if( $rfg = $this->get_object_from_prefixed_string( $field_slug ) ) {
+				$rfg_posts[] = $rfg;
+			}
+		}
+
+		return $rfg_posts;
+	}
+
+	/**
+	 * Check if group contais a rfg or prf
+	 * 
+	 * @param $group_id
+	 *
+	 * @return bool
+	 */
+	public function group_contains_rfg_or_prf( $group_id ) {
+		$group_post = get_post( $group_id );
+		$group_object = new Toolset_Field_Group_Post( $group_post );
+
+		// get all fields
+		$group_fields = $group_object->get_field_definitions();
+		$fields_type = array();
+
+		foreach( $group_fields as $field ) {
+			$fields_type[$field->get_slug()] = $field->get_type()->get_slug();
+		}
+
+		// get all field slugs (required because get_field_definitions won't return rfgs)
+		$group_field_slugs = $group_object->get_field_slugs();
+
+		foreach( (array) $group_field_slugs as $field_slug ) {
+			if ( strpos( $field_slug, Types_Field_Group_Repeatable::PREFIX ) !== false ) {
+				// rfg
+				return true;
+			}
+
+			if( isset( $fields_type[ $field_slug ] ) && $fields_type[ $field_slug ] == 'post' ) {
+				// prf
+				return true;
+			}
+		}
+
+		// no rfg and no prf
+		return false;
+	}
+
+	/**
 	 * @param $rfg_string
 	 *
 	 * @return false|WP_Post false = no link to rfg, WP_Post = RFG

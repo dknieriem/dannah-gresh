@@ -17,6 +17,10 @@ class Types_Field_Type_Skype_View_Frontend extends Types_Field_Type_View_Fronten
 	public function __construct( Types_Field_Type_Skype $entity, $params = array() ) {
 		$this->entity = $entity;
 		$this->params = $this->normalise_user_values( $params );
+
+		if( ! wp_script_is( 'skype-sdk', 'registered' ) ) {
+			wp_register_script( 'skype-sdk', '//swc.cdn.skype.com/sdk/v1/sdk.min.js' );
+		}
 	}
 
 	/**
@@ -26,12 +30,9 @@ class Types_Field_Type_Skype_View_Frontend extends Types_Field_Type_View_Fronten
 	 */
 	public function get_value() {
 		if ( ! $this->is_raw_output() ) {
-			/* TODO: new buttons are suppose to exists but there are not, meanwhile legacy decorator will be used
-			$decorator_skype = ! isset( $this->params['action'] ) && isset( $this->params['button_style'] )
-				? new Types_View_Decorator_Skype_Legacy()
-				: new Types_View_Decorator_Skype();
-			*/
-			$decorator_skype = new Types_View_Decorator_Skype_Legacy();
+			$decorator_skype = isset( $this->params['button'] ) && $this->params['button'] !== null // only used on the 3.1 skype field
+				? new Types_View_Decorator_Skype()
+				: new Types_View_Decorator_Skype_Legacy();
 
 			$this->add_decorator( $decorator_skype );
 		}

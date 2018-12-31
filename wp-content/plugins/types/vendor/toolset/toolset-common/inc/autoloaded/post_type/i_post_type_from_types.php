@@ -98,4 +98,29 @@ interface IToolset_Post_Type_From_Types extends IToolset_Post_Type {
 	 * @since 2.6.3
 	 */
 	public function set_registered_post_type( IToolset_Post_Type_Registered $registered_post_type );
+
+	/**
+	 * Set the 'show_in_rest' option of the post type.
+	 *
+	 * @param bool $value
+	 */
+	public function set_show_in_rest( $value );
+
+	/**
+	 * @return bool Corresponds with the show_in_rest option of the post type.
+	 */
+	public function has_show_in_rest();
+
+	/**
+	 * Set the 'hierarchical' option of the post type.
+	 *
+	 * @param bool $value
+	 */
+	public function set_hierarchical( $value = true );
+
+	/**
+	 * @return bool Corresponds with the hierarchical option of the post type.
+	 */
+	public function has_hierarchical();
+
 }

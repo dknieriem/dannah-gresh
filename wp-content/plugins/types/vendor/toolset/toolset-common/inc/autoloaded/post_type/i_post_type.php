@@ -127,6 +127,21 @@ interface IToolset_Post_Type {
 
 
 	/**
+	 * Check if the post type can be used in a many-to-many relationship as an intermediary post.
+	 *
+	 * @param bool $skip_check_for_existing_intermediary
+	 *
+	 * @param bool $skip_check_for_relationship_involvment
+	 *
+	 * @return Toolset_Result
+	 */
+	public function can_be_used_as_intermediary(
+		$skip_check_for_existing_intermediary = false,
+		$skip_check_for_relationship_involvment = false
+	);
+
+
+	/**
 	 * Check if the post type is already used in an existing relationship.
 	 *
 	 * Needs m2m.
@@ -135,4 +150,30 @@ interface IToolset_Post_Type {
 	 * @since 2.5.11
 	 */
 	public function is_involved_in_relationship();
+
+
+	/**
+	 * What editor should be used for posts of this type.
+	 *
+	 * Valid values are defined in the EditorMode pseudo-enum.
+	 * Note that this will return the *preferred* editor mode. The actual editor can be different depending on
+	 * factors like WordPress version, the Gutenberg plugin presence or third-party software hooking into
+	 * relevant core filters.
+	 *
+	 * @return string
+	 * @since Types 3.2.2
+	 */
+	public function get_editor_mode();
+
+
+	/**
+	 * Set what editor should be used for posts of this type.
+	 *
+	 * See get_editor_mode() for details.
+	 *
+	 * @param string $value One of the EditorMode values.
+	 * @return void
+	 * @since Types 3.2.2
+	 */
+	public function set_editor_mode( $value );
 }

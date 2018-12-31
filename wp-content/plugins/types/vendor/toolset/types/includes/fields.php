@@ -64,26 +64,40 @@ function wpcf_admin_get_templates_by_group( $group_id )
     if ( empty($group_id) ) {
         return array();
     }
-    $data = get_post_meta( $group_id, '_wp_types_group_templates', true );
-    if ( $data == 'all' ) {
+    $db_assigned_templates = get_post_meta( $group_id, '_wp_types_group_templates', true );
+    if ( $db_assigned_templates == 'all' ) {
         return array();
     }
-    $data = explode( ',', trim( $data, ',' ) );
-    $templates = get_page_templates();
-    $templates[] = 'default';
-    $templates_views = get_posts( 'post_type=view-template&numberposts=-1&status=publish' );
-    foreach ( $templates_views as $template_view ) {
-        $templates[] = $template_view->ID;
+    $db_assigned_templates = explode( ',', trim( $db_assigned_templates, ',' ) );
+    $theme_templates = get_page_templates();
+    $theme_templates[] = 'default';
+
+    $assigned_templates = array();
+
+    foreach( $db_assigned_templates as $possible_assigned_template ) {
+    	if( $key = array_search( $possible_assigned_template, $theme_templates ) ) {
+    		// a theme template
+    		$assigned_templates[] = $theme_templates[ $key ];
+    		continue;
+	    }
+
+	    if( $template_post = get_page_by_path( $possible_assigned_template, OBJECT, 'view-template' ) ) {
+		    // content template found
+		    $assigned_templates[] = $template_post->ID;
+		    continue;
+	    }
+
+	    // maybe we have the old format stored (which stores the template ids)
+	    if( is_numeric( $possible_assigned_template ) ) {
+		    if( $template_post = get_post( $possible_assigned_template ) ) {
+			    // legacy format
+			    $assigned_templates[] = $template_post->ID;
+			    continue;
+		    }
+	    }
     }
-    $result = array();
-    if ( !empty( $data ) ) {
-        foreach ( $templates as $template ) {
-            if ( in_array( $template, $data ) ) {
-                $result[] = $template;
-            }
-        }
-    }
-    return $result;
+
+    return $assigned_templates;
 }
 
 /**
@@ -201,48 +215,59 @@ function wpcf_admin_fields_delete_field( $field_id,
 }
 
 /**
- * Deletes group by ID.
- * Modified by Gen, 13.02.2013
+ * Delete Field Group by group id
  *
- * @param int $group_id
- * @param string $post_type
+ * @param $group_id
  *
- * @return int
+ * @return bool
+ *
+ * @deprecated use \OTGS\Toolset\Types\Controller\Field\Group\Post\Deletion instead
  */
-function wpcf_admin_fields_delete_group( $group_id,
-    $post_type = TYPES_CUSTOM_FIELD_GROUP_CPT_NAME ) {
-    $group = get_post( $group_id );
-    if ( empty( $group ) || $group->post_type != $post_type ) {
+function wpcf_admin_fields_delete_group( $group_id ) {
+	/** @var \OTGS\Toolset\Common\Auryn\Injector $dic */
+	if( ! $dic = apply_filters( 'toolset_dic', false ) ) {
+		// called to early
+		return false;
+	}
+
+	// get post
+    if ( ! $group = get_post( $group_id ) ) {
         return false;
     }
 
-    $fields = explode( ',', get_post_meta( $group->ID, '_wp_types_group_fields', true ) );
-    $field_group_service = new Types_Field_Group_Repeatable_Service();
-
-    $convert_rfg_into_relationship = toolset_getget( 'wpcf_convert_rfg', false );
-    if ( apply_filters( 'toolset_is_m2m_enabled', false ) ) {
-      $relationship_repository = Toolset_Relationship_Definition_Repository::get_instance();
-
-      foreach( $fields as $field_slug ) {
-          $repeatable_group = $field_group_service->get_object_from_prefixed_string( $field_slug );
-          // delete repeatable group
-          if ( $repeatable_group ) {
-              $field_group_service->delete( $repeatable_group, $convert_rfg_into_relationship !== false );
-          }
-
-          $post_reference_definition = $relationship_repository->get_definition( $field_slug );
-          if ( $post_reference_definition ) {
-              $relationship_repository->remove_definition( $post_reference_definition );
-              $field_definition_factory = Toolset_Field_Definition_Factory::get_factory_by_domain( Toolset_Element_Domain::POSTS );
-              $field_definition = $field_definition_factory->load_field_definition( $field_slug );
-              if( ! $field_definition ) {
-                  $field_definition_factory->delete_definition( $definition );
-              }
-          }
-      }
+    try {
+	    switch( $group->post_type ) {
+		    case TYPES_CUSTOM_FIELD_GROUP_CPT_NAME:
+			    /** @var \OTGS\Toolset\Types\Controller\Field\Group\Post\Deletion $group_deletion_controller */
+			    $group_deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\Post\Deletion' );
+			    $group = new Toolset_Field_Group_Post( $group );
+			    $group_deletion_controller->delete( $group );
+			    break;
+		    case TYPES_USER_META_FIELD_GROUP_CPT_NAME:
+			    /** @var \OTGS\Toolset\Types\Controller\Field\Group\User\Deletion $group_deletion_controller */
+			    $group_deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\User\Deletion' );
+			    $group = new Toolset_Field_Group_User( $group );
+			    $group_deletion_controller->delete( $group );
+			    break;
+		    case TYPES_TERM_META_FIELD_GROUP_CPT_NAME:
+			    /** @var \OTGS\Toolset\Types\Controller\Field\Group\Term\Deletion $group_deletion_controller */
+			    $group_deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\Term\Deletion' );
+			    $group = new Toolset_Field_Group_Term( $group );
+			    $group_deletion_controller->delete( $group );
+			    break;
+		    default:
+			    return false;
+	    }
+    } catch ( Exception $e ) {
+    	// class resolving issue
+    	if( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    		error_log( $e->getMessage() );
+	    }
+    	return false;
     }
 
-    wp_delete_post( $group_id, true );
+
+    return true;
 }
 
 /**
@@ -835,6 +860,18 @@ function wpcf_admin_fields_save_group_fields( $group_id, $fields, $add = false, 
  */
 function wpcf_admin_fields_save_group_post_types( $group_id, $post_types )
 {
+	// do not trust the legacy (maybe this is also used without array for $templates)
+	$post_types = is_array( $post_types )
+		? $post_types
+		: array( $post_types );
+
+	// clean up input (from some sources we get empty keys, which resulted in ',,' values on the db)
+	foreach( $post_types as $key => $post_type ) {
+		if( empty( $post_type ) ) {
+			unset( $post_types[$key] );
+		}
+	}
+
     if ( !empty($post_types) ) {
         $post_types = array_unique($post_types);
     }
@@ -848,7 +885,7 @@ function wpcf_admin_fields_save_group_post_types( $group_id, $post_types )
         update_post_meta( $group_id, '_wp_types_group_post_types', 'all' );
         return true;
     }
-    $post_types = ',' . implode( ',', (array) $post_types ) . ',';
+    $post_types = ',' . implode( ',', $post_types ) . ',';
     update_post_meta( $group_id, '_wp_types_group_post_types', $post_types );
 }
 
@@ -874,11 +911,35 @@ function wpcf_admin_fields_save_group_terms( $group_id, $terms ) {
  * @param type $terms
  */
 function wpcf_admin_fields_save_group_templates( $group_id, $templates ) {
+	// do not trust the legacy (maybe this is also used without array for $templates)
+	$templates = is_array( $templates )
+		? $templates
+		: array( $templates );
+
+	// clean up input (from some sources we get empty keys, which resulted in ',,' values on the db)
+	foreach( $templates as $key => $template ) {
+		if( empty( $template ) ) {
+			unset( $templates[$key] );
+		}
+	}
+
     if ( empty( $templates ) ) {
         update_post_meta( $group_id, '_wp_types_group_templates', 'all' );
         return true;
     }
-    $templates = ',' . implode( ',', (array) $templates ) . ',';
+
+    foreach( $templates as $key => $template_id ) {
+    	if( ! is_numeric( $template_id ) ) {
+    		// a theme page template is chosen
+    		continue;
+	    }
+
+    	if( $template_post = get_post( $template_id ) ) {
+    		$templates[$key] = $template_post->post_name;
+	    }
+    }
+
+    $templates = ',' . implode( ',', $templates ) . ',';
     update_post_meta( $group_id, '_wp_types_group_templates', strip_tags($templates) );
 }
 

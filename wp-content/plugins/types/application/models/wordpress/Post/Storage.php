@@ -90,4 +90,14 @@ class Storage {
 	public function getPostByTitle( $title, $post_type = 'page' ) {
 		return get_page_by_title( $title, OBJECT, $post_type );
 	}
+
+
+	/**
+	 * Wrapper for wp_delete_post()
+	 *
+	 * @param $post_id
+	 */
+	public function deletePostById( $post_id ) {
+		wp_delete_post( $post_id );
+	}
 }

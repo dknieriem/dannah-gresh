@@ -8,17 +8,40 @@
 class Types_View_Placeholder_Media implements Types_View_Placeholder_Interface {
 
 	/**
-	 * @param string|array $string
-	 * @param null|Types_Interface_Media $media
+	 * @param string|array $input
+	 * @param null|string|Types_Interface_Media $media
+	 *
+	 * @param Types_Media_Service|null $service
 	 *
 	 * @return mixed
 	 */
-	public function replace( $string, $media = null ) {
-		if ( ( ! is_string( $string ) && ! is_array( $string ) )
-		     || ! $media instanceof Types_Interface_Media ) {
-			return $string;
+	public function replace( $input, $media = null, Types_Media_Service $service = null ) {
+		if ( $media === null
+			 || ( ! is_string( $input ) && ! is_array( $input ) )
+		) {
+			return $input;
 		}
 
+		$input_as_string = is_array( $input )
+			? implode( '', $input )
+			: $input;
+
+		if( strpos( $input_as_string, '%%' ) === false ) {
+			// no replacements needed
+			return $input;
+		}
+
+		if( is_string( $media ) ) {
+			// only url is given, check if we need the full media object for replacement
+			$media = $service->find_by_url( $media );
+		}
+
+		if( ! $media instanceof Types_Interface_Media ) {
+			// media data not available
+			return $input;
+		}
+
+		// full media object given, proceed replacement
 		$supported_replacements = array(
 			'%%TITLE%%'       => $media->get_title(),
 			'%%CAPTION%%'     => $media->get_caption(),
@@ -29,7 +52,7 @@ class Types_View_Placeholder_Media implements Types_View_Placeholder_Interface {
 		return str_replace(
 			array_keys( $supported_replacements ),
 			array_values( $supported_replacements ),
-			$string
+			$input
 		);
 	}
 }

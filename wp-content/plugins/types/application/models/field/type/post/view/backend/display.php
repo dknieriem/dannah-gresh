@@ -92,8 +92,16 @@ class Types_Field_Type_Post_View_Backend_Display {
 
 		$types_settings_action = Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_POST_REFERENCE_FIELD );
 
+		$post_id = isset( $_REQUEST['post'] ) ? $_REQUEST['post'] : false;
+
+		if( ! $post_id ) {
+			// this happens on new post, but the post id is already resevered and stored in global $post_ID
+			global $post_ID;
+			$post_id = $post_ID ?: 0;
+		}
+
 		return array(
-			'post_id' => isset( $_REQUEST['post'] ) ? $_REQUEST['post'] : 0,
+			'post_id' => $post_id,
 			'action'  => array(
 				'name'  => $types_settings_action,
 				'nonce' => wp_create_nonce( $types_settings_action ),

@@ -38,7 +38,8 @@ class Toolset_Element_Exception_Element_Doesnt_Exist extends Exception {
 
 		parent::__construct(
 			sprintf(
-				__( 'Unable to load %s %d (%s).', 'wpcf' ),
+				/* translators: Error message when failing to load an object, like in Unable to load post 35 (35) */
+				__( 'Unable to load %s %d (%s).', 'wpv-views' ),
 				$domain,
 				$this->element_id,
 				esc_html( print_r( $element_source, true ) )

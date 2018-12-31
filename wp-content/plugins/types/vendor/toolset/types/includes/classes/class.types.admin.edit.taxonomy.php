@@ -527,14 +527,27 @@ class Types_Admin_Edit_Taxonomy extends Types_Admin_Page
             ),
         );
 
-        $form['show_in_rest'] = array(
-            '#type' => 'checkbox',
-            '#name' => 'ct[show_in_rest]',
-            '#default_value' => !empty( $this->ct['show_in_rest'] ),
-            '#title' => __( 'show_in_rest', 'wpcf' ),
-            '#description' => __( 'Whether to expose this taxonomy in the REST API.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' ),
-            '#inline' => true,
-        );
+        $block_editor_available = new Toolset_Condition_Plugin_Gutenberg_Active();
+		if( $block_editor_available->is_met() ) {
+			// gutenberg active, in this case we have "show_in_rest" active by default, add an option to force disabling
+			$form['show_in_rest_force_disable'] = array(
+				'#type' => 'checkbox',
+				'#name' => 'ct[show_in_rest_force_disable]',
+				'#default_value' => !empty( $this->ct['show_in_rest_force_disable'] ),
+				'#title' => __( 'Disable show_in_rest', 'wpcf' ),
+				'#description' => __( 'IMPORTANT: The block editor requires "show_in_rest". Disabling it will no longer show the taxonomy on the block editor.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' ),
+				'#inline' => true,
+			);
+		} else {
+			$form['show_in_rest'] = array(
+				'#type' => 'checkbox',
+				'#name' => 'ct[show_in_rest]',
+				'#default_value' => !empty( $this->ct['show_in_rest'] ),
+				'#title' => __( 'show_in_rest', 'wpcf' ),
+				'#description' => __( 'Whether to expose this taxonomy in the REST API.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' ),
+				'#inline' => true,
+			);
+		}
 
         $form['rest_base'] = array(
             '#type' => 'textfield',

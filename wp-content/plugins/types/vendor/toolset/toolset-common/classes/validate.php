@@ -203,7 +203,7 @@ if(!class_exists('Wpcf_Validate')) {
 		    $form['required-checkbox'] = self::merge_form_with_field_settings(
 			    array(
 				    '#type' => 'checkbox',
-				    '#title' => __('Required', 'wpcf'),
+				    '#title' => __('Required', 'wpv-views'),
 				    '#name' => $field['#name'] . '[active]',
 				    '#default_value' => isset($data['active']) ? 1 : 0,
 				    '#inline' => true,
@@ -272,7 +272,7 @@ if(!class_exists('Wpcf_Validate')) {
 	        $form['email-checkbox'] = self::merge_form_with_field_settings(
 		        array(
 			        '#type' => 'checkbox',
-			        '#title' => __('Email', 'wpcf'),
+			        '#title' => __('Email', 'wpv-views'),
 			        '#name' => $field['#name'] . '[active]',
 			        '#default_value' => isset($data['active']) ? 1 : 0,
 			        '#inline' => true,
@@ -328,7 +328,7 @@ if(!class_exists('Wpcf_Validate')) {
 	        $form['date-checkbox'] = self::merge_form_with_field_settings(
 		        array(
 		            '#type' => 'checkbox',
-		            '#title' => __('Date', 'wpcf'),
+		            '#title' => __('Date', 'wpv-views'),
 		            '#name' => $field['#name'] . '[active]',
 		            '#default_value' => isset($data['active']) ? 1 : 0,
 		            '#inline' => true,
@@ -365,7 +365,7 @@ if(!class_exists('Wpcf_Validate')) {
 	        $default_value = isset($data['active']) ? 1 : 0;
 	        $form['digits-checkbox'] = array(
 	            '#type' => 'checkbox',
-	            '#title' => __('Digits', 'wpcf'),
+	            '#title' => __('Digits', 'wpv-views'),
 	            '#name' => $field['#name'] . '[active]',
 	            '#default_value' => $default_value,
 	            '#inline' => true,
@@ -394,7 +394,7 @@ if(!class_exists('Wpcf_Validate')) {
 	        $form['number-checkbox'] = self::merge_form_with_field_settings(
 		        array(
 		            '#type' => 'checkbox',
-		            '#title' => __('Numeric', 'wpcf'),
+		            '#title' => __('Numeric', 'wpv-views'),
 		            '#name' => $field['#name'] . '[active]',
 		            '#default_value' => $default_value,
 		            '#inline' => true,
@@ -436,8 +436,8 @@ if(!class_exists('Wpcf_Validate')) {
 			$form['skype-checkbox'] = self::merge_form_with_field_settings(
 				array(
 					'#type' => 'checkbox',
-					'#title' => __('Validation', 'wpcf' ),
-					'#label' => __('Skype', 'wpcf'),
+					'#title' => __('Validation', 'wpv-views' ),
+					'#label' => __('Skype', 'wpv-views'),
 					'#name' => $field['#name'] . '[active]',
 					'#default_value' => isset( $data['active'] ) ? 1 : 0,
 					'#inline' => true,
@@ -487,7 +487,7 @@ if(!class_exists('Wpcf_Validate')) {
 	    {
 		    $validate_message_form = array(
 			    '#type' => 'textfield',
-		        // '#title' => __('Custom message', 'wpcf'),
+		        // '#title' => __('Custom message', 'wpv-views'),
 			    '#name' => $field['#name'] . '[message]',
 			    '#value' => !empty($data['message']) ? $data['message'] : $default,
 			    '#inline' => true,

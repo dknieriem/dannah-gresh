@@ -38,6 +38,7 @@ export default class CREDFormSelect extends Component {
 			editPostForms,
 			newUserForms,
 			editUserForms,
+			newRelationshipForms,
 		} = attributes;
 
 		return (
@@ -45,13 +46,15 @@ export default class CREDFormSelect extends Component {
 				'undefined' !== typeof newPostForms &&
 				'undefined' !== typeof editPostForms &&
 				'undefined' !== typeof newUserForms &&
-				'undefined' !== typeof editUserForms
+				'undefined' !== typeof editUserForms &&
+				'undefined' !== typeof newRelationshipForms
 			) &&
 			(
 				newPostForms.length > 0 ||
 				editPostForms.length > 0 ||
 				newUserForms.length > 0 ||
-				editUserForms.length > 0
+				editUserForms.length > 0 ||
+				newRelationshipForms.length > 0
 			) ?
 				<BaseControl>
 					{
@@ -108,6 +111,19 @@ export default class CREDFormSelect extends Component {
 										{
 											label: __( 'Edit User Forms' ),
 											items: editUserForms,
+											valueOrigin: 'object',
+										}
+									}
+								/> :
+								null
+						}
+						{
+							newRelationshipForms.length > 0 ?
+								<OptGroup
+									attributes={
+										{
+											label: __( 'Add Relationship Forms' ),
+											items: newRelationshipForms,
 											valueOrigin: 'object',
 										}
 									}

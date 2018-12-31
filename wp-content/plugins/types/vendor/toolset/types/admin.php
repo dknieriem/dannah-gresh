@@ -657,6 +657,8 @@ function wpcf_admin_menu_edit_type()
                 esc_url(add_query_arg( 'page', 'wpcf-edit-type', admin_url('admin.php'))),
                 __('Add New', 'wpcf')
             );
+
+            $title .= '<div id="root"></div>';
         } else {
             $title = __( 'Add New Post Type', 'wpcf' );
         }
@@ -1756,11 +1758,6 @@ function wpcf_usort_reorder($a,$b)
     return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
 }
 
-add_filter('set-screen-option', 'wpcf_table_set_option', 10, 3);
-function wpcf_table_set_option($status, $option, $value)
-{
-      return $value;
-}
 
 function wpcf_admin_screen( $post_type, $form_output = '')
 {

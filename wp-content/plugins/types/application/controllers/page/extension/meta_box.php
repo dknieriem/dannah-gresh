@@ -42,6 +42,8 @@ abstract class Types_Page_Extension_Meta_Box {
 	 */
 	protected $twig_template_paths;
 
+	/** @var int */
+	private $current_post_id;
 
 	/**
 	 * Used for better instance
@@ -105,6 +107,32 @@ abstract class Types_Page_Extension_Meta_Box {
 	 */
 	abstract protected function get_main_twig_template( $data );
 
+	/**
+	 * Returns the current post id or false if none exists
+	 *
+	 * @return int|false
+	 * @since 3.2
+	 */
+	protected function get_current_post_id() {
+		if( $this->current_post_id !== null ) {
+			return $this->current_post_id;
+		}
+
+		$current_post_id = toolset_getget( 'post' );
+
+		if ( ! $current_post_id ) {
+			// new post, but the post id is already reserved by WP and stored in global $post_ID
+			global $post_ID;
+			$current_post_id = $post_ID;
+
+			if( ! $current_post_id ) {
+				// no reservered post id found, leave hint that relationships can only be added to a saved post
+				return $this->current_post_id = false;
+			}
+		}
+
+		return $this->current_post_id = (int) $current_post_id;
+	}
 
 	/**
 	 * Adds several meta boxex to a page
@@ -172,7 +200,7 @@ abstract class Types_Page_Extension_Meta_Box {
 	 */
 	public function render_meta_box( $post, $data ) {
 		// If there is not post, there is not context data.
-		$context = ! toolset_getget( 'post' )
+		$context = ! $this->get_current_post_id()
 			? array()
 			: $this->build_metabox_context( $data );
 

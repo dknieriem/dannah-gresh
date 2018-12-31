@@ -38,7 +38,8 @@ class Types_Ajax_Handler_Repeatable_Group extends Toolset_Ajax_Handler_Abstract 
 		     ->ajax_begin(
 			     array(
 				     'nonce' => $this->get_ajax_manager()->get_action_js_name( Types_Ajax::CALLBACK_REPEATABLE_GROUP ),
-				     'capability_needed' => 'edit_posts'
+				     'capability_needed' => 'edit_posts',
+				     'is_public' => toolset_getarr( $_REQUEST, 'skip_capability_check', false )
 			     )
 		     );
 
@@ -217,8 +218,18 @@ class Types_Ajax_Handler_Repeatable_Group extends Toolset_Ajax_Handler_Abstract 
 
 		wp_update_post( $new_post );
 
-		$relationship_definition->create_association( $parent_post, $new_post );
+		$association_result = $relationship_definition->create_association( $parent_post, $new_post );
 
+		if( $association_result instanceof \Toolset_Result && $association_result->is_error() ) {
+			// the association couldn't be build, delete rfg post and throw message to save the post first
+			// (currently this only happens when the post is translateable by WPML)
+			wp_delete_post( $new_post_id );
+			$this->get_ajax_manager()->ajax_finish( array(
+					'message' => __( 'Could not create item for this unsaved post. This can happen due to other plugins interacting with the Repeatable Field Group. Please save the post and try again.', 'wpcf' )
+				),
+				false
+			);
+		}
 		/*
 		 * Action 'toolset_post_update'
 		 *
@@ -249,7 +260,12 @@ class Types_Ajax_Handler_Repeatable_Group extends Toolset_Ajax_Handler_Abstract 
 	 *
 	 */
 	private function add_to_field_conditions_collection_by_items( &$items ){
-		$form_condition = new WPToolset_Forms_Conditional_RFG();
+		if( ! $parent_post = $this->get_parent_post_by_post_data() ) {
+			// technical issue
+			return;
+		}
+
+		$form_condition = new WPToolset_Forms_Conditional_RFG( '#post', $parent_post->post_type );
 
 		foreach( $items as &$item ) {
 			foreach( $item['fields'] as &$field ) {
@@ -555,14 +571,26 @@ class Types_Ajax_Handler_Repeatable_Group extends Toolset_Ajax_Handler_Abstract 
 				array( 'hide_field_title' => true )
 			);
 
-		return array(
+		$return = array(
 			'title'        => $field_definition->get_display_name(),
 			'metaKey'      => $field_definition->get_meta_key(),
 			'value'        => $field->get_value(),
 			'wpmlIsCopied' => $wpml_is_copied,
 			'htmlInput'    => $renderer->render( false, $rfg->get_wp_post()->ID ),
-			'fieldConfig'  => $renderer->get_field_config( $rfg->get_wp_post()->ID )
+			'fieldConfig'  => $renderer->get_field_config( $rfg->get_wp_post()->ID ),
 		);
+
+		if( TOOLSET_TYPES_YOAST ) {
+			$field_repository = new \OTGS\Toolset\Types\Compatibility\Yoast\Field\Repository(
+				\Toolset_Field_Group_Post_Factory::get_instance(),
+				new \OTGS\Toolset\Types\Compatibility\Yoast\Field\Factory()
+			);
+			if( $field_yoast = $field_repository->getFieldByDefinition( $field_definition, $belongs_to_post_id ) ) {
+				$return['yoast'] = $field_yoast;
+			}
+		}
+
+		return $return;
 	}
 
 	/**

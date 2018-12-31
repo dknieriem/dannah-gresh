@@ -115,6 +115,22 @@ class WPCF_Import_Export
                 $checksum = wpcf_get_custom_taxonomy_settings( $item_id );
                 break;
 
+            case 'relationship':
+	            $definition_repository = \Toolset_Relationship_Definition_Repository::get_instance();
+	            if( $relationship = $definition_repository->get_definition( $item_id ) ) {
+	            	$relationship_info = array(
+	            		'slug' => $relationship->get_slug(),
+			            'parent_domain' => $relationship->get_parent_domain(),
+			            'parent_type' => $relationship->get_parent_type(),
+			            'child_domain' => $relationship->get_child_domain(),
+			            'child_type' => $relationship->get_child_type(),
+			            'cardinality' => $relationship->get_cardinality(),
+			            'fields' => $relationship->get_association_field_definitions()
+		            );
+	            	return md5( maybe_serialize( $relationship_info ) );
+	            }
+	            return false;
+
             default:
                 /*
                  * Enable $this->generate_checksum('test');
@@ -209,6 +225,11 @@ class WPCF_Import_Export
             case 'custom_taxonomy':
                 $check = wpcf_get_custom_taxonomy_settings( $item_id );
                 break;
+
+	        case 'relationship':
+		        $definition_repository = \Toolset_Relationship_Definition_Repository::get_instance();
+		        $check = $definition_repository->get_definition( $item_id );
+		        break;
 
             default:
                 return false;

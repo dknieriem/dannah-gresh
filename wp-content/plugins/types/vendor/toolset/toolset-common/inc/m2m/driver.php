@@ -67,7 +67,7 @@ class Toolset_Relationship_Driver extends Toolset_Relationship_Driver_Base {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'An error occurred when creating an association: %s', 'wpcf' ),
+					__( 'An error occurred when creating an association: %s', 'wpv-views' ),
 					$e->getMessage()
 				)
 			);
@@ -78,7 +78,7 @@ class Toolset_Relationship_Driver extends Toolset_Relationship_Driver_Base {
 		if ( $instantiate_association ) {
 			return $updated_association;
 		} else {
-			return new Toolset_Result( true, __( 'Association created', 'wpcf' ) );
+			return new Toolset_Result( true, __( 'Association created', 'wpv-views' ) );
 		}
 
 	}
@@ -139,11 +139,11 @@ class Toolset_Relationship_Driver extends Toolset_Relationship_Driver_Base {
 		$names = array(
 			'slug' => ( null === $new_slug_candidate ? $this->get_relationship_slug() : $new_slug_candidate ),
 			'label_name' => sprintf(
-				__( '%s Intermediary Posts', 'wpcf' ),
+				__( '%s Intermediary Posts', 'wpv-views' ),
 				$this->get_relationship_definition()->get_display_name_plural()
 			),
 			'label_singular_name' => sprintf(
-				__( '%s Intermediary Post', 'wpcf' ),
+				__( '%s Intermediary Post', 'wpv-views' ),
 				$this->get_relationship_definition()->get_display_name_singular()
 			)
 		);

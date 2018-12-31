@@ -113,8 +113,10 @@ class Toolset_Field_Group_Post extends Toolset_Field_Group {
 		}
 
 		// we have selected post types
-		return explode( ',', $db_assigned_to );
+		$post_types = explode( ',', $db_assigned_to );
 
+		// make sure no empty values are returned (can happen due to our legacy storage like "posts,,cpt,cpt-2")
+		return array_filter( $post_types );
 	}
 
 

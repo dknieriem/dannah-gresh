@@ -1,4 +1,7 @@
 <?php
+
+use OTGS\Toolset\Types\Page\Extension\RelatedContent\DirectEditStatusFactory;
+
 /**
  * Handle action with related content in edit posts page.
  *
@@ -18,6 +21,9 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	const ACTION_LOAD = 'load';
 	const ACTION_GET_TRANSLATABLE_CONTENT = 'get_translatable_content';
 	const ACTION_UPDATE_FIELDS_DISPLAYED = 'update_fields_displayed';
+
+
+	const SEARCH_RESULTS_PER_PAGE = 25;
 
 
 	/**
@@ -115,15 +121,16 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 *
 	 * @var Toolset_Association_Query_V2
 	 * @since m2m
-	 * @deprecated
 	 */
-	private $association_query;
+	private $_association_query;
 
 
-	/**
-	 * @var Toolset_Element_Factory|null
-	 */
+	/** @var Toolset_Element_Factory|null */
 	private $_element_factory;
+
+
+	/** @var DirectEditStatusFactory */
+	private $direct_edit_status_factory;
 
 
 	/**
@@ -137,8 +144,8 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 * @param Toolset_Association_Query_V2 $association_query_di Test injection purposes.
 	 * @param boolean $can_connect_di Test injection purposes.
 	 * @param Toolset_Post_Type_Repository|null $post_type_repository_di
-	 *
 	 * @param Toolset_Element_Factory|null $element_factory_di
+	 * @param DirectEditStatusFactory|null $direct_edit_status_factory
 	 *
 	 * @since m2m
 	 */
@@ -151,7 +158,8 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 		Toolset_Association_Query_V2 $association_query_di = null,
 		$can_connect_di = null,
 		Toolset_Post_Type_Repository $post_type_repository_di = null,
-		Toolset_Element_Factory $element_factory_di = null
+		Toolset_Element_Factory $element_factory_di = null,
+		DirectEditStatusFactory $direct_edit_status_factory = null
 	) {
 		parent::__construct( $ajax_manager );
 		$this->_gui_base = $gui_base_di;
@@ -159,9 +167,10 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 		$this->related_content_viewmodel = $related_content_viewmodel;
 		$this->fields_edit_container = $fields_edit_container;
 		$this->can_connect = $can_connect_di;
-		$this->association_query = $association_query_di;
+		$this->_association_query = $association_query_di;
 		$this->post_type_repository = $post_type_repository_di;
 		$this->_element_factory = $element_factory_di;
+		$this->direct_edit_status_factory = $direct_edit_status_factory ?: new DirectEditStatusFactory();
 	}
 
 
@@ -224,7 +233,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 *
 	 * @param Toolset_Field_Definition[]  $fields Array of fields.
 	 * @param Twig_Environment            $twig Twig environment.
-	 * @param string                      $context Initial Twig context.
+	 * @param array                      $context Initial Twig context.
 	 * @param string                      $template Template path.
 	 * @param Types_Viewmodel_Field_Input $viewmodel Viewmodel for getting formatted data.
 	 *
@@ -266,6 +275,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 *
 	 * @since m2m
 	 * @throws Twig_Error_Loader
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
 	public function process_call( $arguments ) {
 		do_action( 'toolset_do_m2m_full_init' );
@@ -275,7 +285,8 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 		$this->get_ajax_manager()->ajax_begin(
 			array(
 				'nonce' => $this->get_ajax_manager()->get_action_js_name( Types_Ajax::CALLBACK_RELATED_CONTENT_ACTION ),
-				'capability_needed' => $this->is_safe_action( $action ) ? 'read' : 'edit_posts'
+				'capability_needed' => $this->is_safe_action( $action ) ? 'read' : 'edit_posts',
+				'is_public' => toolset_getarr( $_REQUEST, 'skip_capability_check', false )
 			)
 		);
 
@@ -442,6 +453,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 *
 	 * @since m2m
 	 * @throws Twig_Error_Loader
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
 	private function insert_connect( $action = true ) {
 		$current_post_id = toolset_getpost( 'post_id' );
@@ -575,8 +587,8 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 */
 	private function create_post( $fields, $post_type ) {
 		// Post creation must be done in default language.
-		$current_language = Toolset_Wpml_Utils::get_current_language();
-		do_action( 'wpml_switch_language', Toolset_Wpml_Utils::get_default_language() );
+		$current_language = Toolset_WPML_Compatibility::get_instance()->get_current_language();
+		do_action( 'wpml_switch_language', Toolset_WPML_Compatibility::get_instance()->get_default_language() );
 
 		// Insert
 		// Creating new related post type.
@@ -684,6 +696,11 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 			),
 		);
 
+		// Intermediary Title
+		if( $intermediary_title_data = \Types_Page_Extension_Meta_Box_Related_Content::get_table_data_for_intermediary_title( $association_uid ) ) {
+			$fields_data['preview']['relationship']['intermediary-title'] = $intermediary_title_data;
+		}
+
 		return $fields_data;
 	}
 
@@ -745,12 +762,12 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 * Handle unchecked checkboxes
 	 *
 	 * @param $fields
-	 * @param Toolset_Association $association
+	 * @param IToolset_Association $association
 	 * @param $related_post_id
 	 *
 	 * @since
 	 */
-	private function update_unchecked_checkboxes( $fields, Toolset_Association $association, $related_post_id) {
+	private function update_unchecked_checkboxes( $fields, IToolset_Association $association, $related_post_id) {
 		$hidden_inputs_for_empty_checkboxes = toolset_getpost( '_wptoolset_checkbox', array() );
 
 		// hidden checkboxes inputs for related post (to unchecked / 0)
@@ -802,7 +819,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 */
 	private function enable_editing_fields() {
 		$association_uid = toolset_getpost( 'association_uid' );
-		$association_is_enabled = new Types_Page_Extension_Related_Content_Direct_Edit_Status( $association_uid, null, $this->get_association_query() );
+		$association_is_enabled = $this->direct_edit_status_factory->create( $association_uid, null );
 		$association_is_enabled->set( true );
 		$this->get_ajax_manager()->ajax_finish(
 			array(
@@ -846,7 +863,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 		if ( $result->is_success() ) {
 			$this->get_ajax_manager()->ajax_finish(
 				array(
-					'message' => __( 'Association disconneted successfully.', 'wpcf' ),
+					'message' => __( 'Association disconnected successfully.', 'wpcf' ),
 					'canConnectAnother' => $can_connect_another,
 				), true
 			);
@@ -881,7 +898,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 
 		$this->get_ajax_manager()->ajax_finish(
 			array(
-				'message' => __( 'Related post moved to Trash and association disconneted successfuly.', 'wpcf' ),
+				'message' => __( 'Related post moved to Trash and association disconnected successfully.', 'wpcf' ),
 				'canConnectAnother' => $can_connect_another,
 			), true
 		);
@@ -897,6 +914,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 */
 	private function search_related_content() {
 		$relationship_definition = $this->get_definition();
+		$post_type = toolset_getpost( 'post_type' );
 
 		if ( ! $relationship_definition instanceof IToolset_Relationship_Definition ) {
 			$this->fail( __( 'Something went wrong when fetching the related content: Couldn\'t load the relationship.', 'wpcf' ) );
@@ -907,7 +925,7 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 		$parent_post_type = array_pop( $parent_post_types );
 
 		$target_role = (
-		toolset_getpost( 'post_type' ) === $parent_post_type
+		$post_type === $parent_post_type
 			? new Toolset_Relationship_Role_Parent()
 			: new Toolset_Relationship_Role_Child()
 		);
@@ -921,6 +939,8 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 			return;
 		}
 
+		$requested_page = (int) toolset_getpost( 'page', 1 );
+
 		$query_args_builder = new Toolset_Potential_Association_Query_Arguments();
 		$query_args_builder
 			->addFilter( new Toolset_Potential_Association_Query_Filter_Search_String() )
@@ -930,17 +950,35 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 				new Types_Potential_Association_Query_Filter_Posts_Status( $relationship_definition, $target_role )
 			);
 
+		$query_args = $query_args_builder->get();
+		$query_args['page'] = $requested_page;
+		$query_args['items_per_page'] = self::SEARCH_RESULTS_PER_PAGE;
+		$query_args['count_results'] = true;
+
 		// @refactoring, use dependency injection
 		$query_factory = new Toolset_Potential_Association_Query_Factory();
 		$query = $query_factory->create(
-			$relationship_definition, $target_role, $current_post, $query_args_builder->get()
+			$relationship_definition, $target_role, $current_post, $query_args
 		);
 
 		$posts = $query->get_results();
 
+		$user = wp_get_current_user();
+		$user_access = new \OTGS\Toolset\Types\User\Access( $user );
+		$user_can_edit_any = $user_access->canEditAny( $post_type );
+		$user_can_edit_own = $user_access->canEditOwn( $post_type );
+
 		$formatted_posts = array();
 		foreach ( $posts as $post ) {
-
+			if( ! $user_can_edit_any
+			    && (
+			    	! $user_can_edit_own
+				    || ( $user_can_edit_own && $post->get_underlying_object()->post_author != $user->ID )
+			    )
+			) {
+				// user is not allowed to edit this post
+				continue;
+			}
 			$wpml_compatibility = Toolset_WPML_Compatibility::get_instance();
 			if ( $wpml_compatibility->is_wpml_active_and_configured() ) {
 				$disabled = ! Toolset_Wpml_Utils::has_default_language_translation( $post->get_id() );
@@ -961,10 +999,17 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 			);
 		}
 
+		$total_returned_items = self::SEARCH_RESULTS_PER_PAGE * $requested_page;
+		$has_more_items = ( $query->get_found_elements() > $total_returned_items );
+
 		$this->get_ajax_manager()->ajax_finish(
 			array(
 				'items' => $formatted_posts,
-			), true
+				'pagination' => array(
+					'more' => $has_more_items,
+				),
+			),
+			true
 		);
 	}
 
@@ -1134,6 +1179,10 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 			return $this->association;
 		}
 		$association_query = $this->get_association_query();
+
+		// disable default conditions to make this work without having the post saved
+		$association_query->do_not_add_default_conditions();
+
 		$association_uid = toolset_getpost( 'association_uid' );
 		$association_query->add( $association_query->association_id( $association_uid ) );
 		$association = $association_query->get_results();
@@ -1196,10 +1245,10 @@ class Types_Ajax_Handler_Related_Content_Action extends Toolset_Ajax_Handler_Abs
 	 * @since m2m
 	 */
 	private function get_association_query() {
-		if ( ! $this->association_query ) {
+		if ( ! $this->_association_query ) {
 			return new Toolset_Association_Query_V2();
 		}
-		return $this->association_query;
+		return $this->_association_query;
 	}
 
 

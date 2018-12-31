@@ -44,8 +44,8 @@ echo "Generating classmap for autoloaded classes..."
 php "$GENERATOR" --library ./inc/autoloaded --output ./autoload_classmap.php --overwrite
 php "$GENERATOR" --library ./utility/admin --output ./autoload_classmap.php --append
 php "$GENERATOR" --library ./utility/condition --output ./autoload_classmap.php --append
+php "$GENERATOR" --library ./utility/lock-overlay --output ./autoload_classmap.php --append
 php "$GENERATOR" --library ./toolset-blocks --output ./autoload_classmap.php --append
-php "$GENERATOR" --library ./toolset-page-builder-modules --output ./autoload_classmap.php --append
 php "$GENERATOR" --library ./user-editors --output ./autoload_classmap.php --append
 php "$GENERATOR" --library ./expression-parser --output ./autoload_classmap.php --append
 php "$GENERATOR" --library ./lib/whip/src --output ./autoload_classmap.php --append

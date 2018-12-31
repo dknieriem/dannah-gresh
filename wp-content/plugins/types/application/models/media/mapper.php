@@ -44,20 +44,28 @@ class Types_Media_Mapper implements Types_Media_Mapper_Interface {
 			return false;
 		}
 
-		return new Types_Media( array(
-			'id'          => $id,
-			'url'         => $attachment['guid'],
-			'title'       => $attachment['post_title'],
-			'description' => $attachment['post_content'],
-			'caption'     => $attachment['post_excerpt'],
-			'alt'         => $attachment['alt']
-		) );
+		if ( ! $url = wp_get_attachment_url( $id ) ) {
+			return false;
+		}
+
+		return new Types_Media(
+			array(
+				'id'          => $id,
+				'url'         => $url,
+				'title'       => $attachment['post_title'],
+				'description' => $attachment['post_content'],
+				'caption'     => $attachment['post_excerpt'],
+				'alt'         => $attachment['alt'],
+			)
+		);
 	}
 
 	/**
+	 * Not used yet.
+	 *
 	 * @param Types_Interface_Media $media
 	 */
 	public function store( Types_Interface_Media $media ) {
-		// todo implement when it's used
+		// TODO implement when it's used.
 	}
 }

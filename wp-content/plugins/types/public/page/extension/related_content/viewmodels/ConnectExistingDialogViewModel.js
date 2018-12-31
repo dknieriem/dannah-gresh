@@ -95,6 +95,10 @@ Types.page.extension.relatedContent.viewmodels.ConnectExistingDialogViewModel = 
 
 		self.dialog_id = 'types-connect-existing-content-dialog-' + relatedContentModel.relationship_slug;
 
+		var maxDialogWidth = relatedContentModel.relatedContent.columns.relationship.length > 0
+			? 1200 // with relationship fields
+			: 600; // without relationship fields
+
 		var dialog = Types.page.extension.relatedContent.main.createDialog(
 			self.dialog_id,
 			relatedContentModel.strings.misc['connectExisting'],
@@ -119,7 +123,8 @@ Types.page.extension.relatedContent.viewmodels.ConnectExistingDialogViewModel = 
 				}
 			],
 			{
-				dialogClass: 'toolset-dialog-connect-related-content'
+				dialogClass: 'toolset-dialog-connect-related-content',
+                width: jQuery( window ).width() < maxDialogWidth + 50 ? jQuery( window ).width() - 50 : maxDialogWidth
 			}
 		);
 
@@ -145,6 +150,7 @@ Types.page.extension.relatedContent.viewmodels.ConnectExistingDialogViewModel = 
 				wptRep.init();
 			}
 			wptDate.init( this );
+			self.afterDialogRendered();
 		}).trigger('open');
 
 		// Repetitive elements have to add [post] or [relationship] to their template.
@@ -162,6 +168,21 @@ Types.page.extension.relatedContent.viewmodels.ConnectExistingDialogViewModel = 
 		ko.applyBindings(self, dialog.el);
 	};
 
+	/**
+	 * Needs to add some conditionals after the dialog is rendered, 'open' event is before it, so a new binding is neccesary.
+	 */
+	self.afterDialogRendered = function() {
+			// Set fields conditionals
+			var formId = '#types-connect-existing-content-dialog-container-' + relatedContentModel.relationship_slug;
+
+			wptCondTriggers[formId] = [];
+			wptCondFields[formId] = [];
+			relatedContentModel.relatedContent.conditionals.forEach( function( conditional) {
+				var data = {};
+				data[formId] = conditional;
+				wptCond.addConditionals( data );
+			});
+	};
 
 	return self;
 };

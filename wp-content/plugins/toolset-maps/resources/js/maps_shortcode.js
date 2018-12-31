@@ -89,8 +89,8 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 		// Using $.extend with deep cloning.
 		var mapsShortcodeData = $.extend( true, {}, maps_shortcode_i18n );
 
-		// Just marker for now, will need to expand later for other shortcodes.
-		var shortcodeAttributes = mapsShortcodeData.attributes.marker;
+		// Use the shortcode attributes for given shortcode
+		var shortcodeAttributes = mapsShortcodeData.attributes[dialogData.shortcode];
 
 		// Add the templates and attributes to the main set of data, and render the dialog
 		var templateData = _.extend(
@@ -145,10 +145,10 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 			if ( shortcode_data.name === 'wpv-map-render' ) {
 				if ( shortcode_data.attributes.map_id === 'map-' + nextMapId ) {
 					self.counters.map++;
-					maps_shortcode_i18n.attributes.marker.marker.fields.map_id.defaultForceValue = 'map-' + nextMapId;
+					maps_shortcode_i18n.attributes['wpv-map-marker'].marker.fields.map_id.defaultForceValue='map-'+nextMapId;
 				} else {
 					self.lastInsertedMapId = shortcode_data.attributes.map_id;
-					maps_shortcode_i18n.attributes.marker.marker.fields.map_id.defaultForceValue=self.lastInsertedMapId;
+					maps_shortcode_i18n.attributes['wpv-map-marker'].marker.fields.map_id.defaultForceValue=self.lastInsertedMapId;
 				}
 			}
 		} );
@@ -164,7 +164,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 				let computedAttributeValues = _.omit( shortcodeAttributeValues, function( value, attribute ) {
 					return ( attribute.lastIndexOf( '_', 0) === 0 );
 				} );
-				
+
 				// Remove all extra attributes
 				computedAttributeValues.marker_source_options = false;
 				computedAttributeValues.marker_source_meta = false;
@@ -186,7 +186,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 				computedAttributeValues.map_render = false;
 
 
-				// Populate all needed attributs with right values
+				// Populate all needed attributes with right values
 				// Only add the item/id attribute if needed, of course
 				switch ( rawAttributes.marker_source_options ) {
 					case 'address':
@@ -229,6 +229,76 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 			}
 		);
 
+		// Massage distance value shortcode output
+		Toolset.hooks.addFilter(
+			'toolset-filter-shortcode-gui-toolset-maps-distance-value-computed-attribute-values',
+			function( shortcodeAttributeValues, shortcodeData ) {
+				switch( shortcodeData.rawAttributes.target_source ) {
+					case 'postmeta':
+						delete( shortcodeAttributeValues.termmeta );
+						delete( shortcodeAttributeValues.usermeta );
+						break;
+					case 'termmeta':
+						delete( shortcodeAttributeValues.postmeta );
+						delete( shortcodeAttributeValues.usermeta );
+						break;
+					case 'usermeta':
+						delete( shortcodeAttributeValues.postmeta );
+						delete( shortcodeAttributeValues.termmeta );
+						break;
+				}
+
+				// Convert lat/lon to an address, as it's handled like an address through the pipeline
+				if ( shortcodeData.rawAttributes.origin_source === 'latlon' ) {
+					shortcodeAttributeValues.location = '{'+shortcodeData.rawAttributes.lat+','
+						+shortcodeData.rawAttributes.lon+'}';
+					delete( shortcodeAttributeValues.lat );
+					delete( shortcodeAttributeValues.lon );
+					delete( shortcodeAttributeValues.origin_source );
+				}
+
+				if (
+					'termmeta_id' in shortcodeAttributeValues
+					&& shortcodeAttributeValues.termmeta_id === 'viewloop'
+				) {
+					delete shortcodeAttributeValues.termmeta_id;
+				}
+
+				return shortcodeAttributeValues;
+			}
+		);
+
+		// Change "reload" button output from a shortcode to a HTML element
+		Toolset.hooks.addFilter(
+			'toolset-filter-shortcode-gui-reload_button-crafted-shortcode',
+			function( shortcode, formData )	{
+				let attributes = formData.rawAttributes;
+				let elementStart = '';
+				let elementEnd = '';
+				let styles = attributes.styles ? ' style="' + attributes.styles + '"' : '';
+				let classNames = attributes.classnames ? ' ' + attributes.classnames : '';
+
+				if ( attributes.html_element === 'link' ) {
+					elementStart = '<a href="#"';
+					elementEnd = '</a>';
+				} else {
+					elementStart = '<button';
+					elementEnd = '</button>';
+				}
+
+				return elementStart
+					+' class="js-wpv-addon-maps-reload-map'
+					+classNames
+					+'" data-map="'
+					+attributes.map_id
+					+'"'
+					+styles
+					+'>'
+					+attributes.anchor_text
+					+elementEnd;
+			}
+		);
+
 		// Using this filter because it contains formData, so we can update marker id and defaults for map & marker ids.
 		// Not changing shortcode itself.
 		Toolset.hooks.addFilter(
@@ -244,7 +314,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 					nextMarkerId++;
 					nextMarker = 'marker-' + nextMarkerId;
 
-					maps_shortcode_i18n.attributes.marker.marker.fields.marker_id.defaultForceValue = nextMarker;
+					maps_shortcode_i18n.attributes['wpv-map-marker'].marker.fields.marker_id.defaultForceValue = nextMarker;
 					self.updateCounters();
 				}
 
@@ -252,7 +322,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 				// client-side and use that one.
 				if ( formData.attributes.map_id !== 'map-' + self.counters.map ) {
 					self.lastInsertedMapId = formData.attributes.map_id;
-					maps_shortcode_i18n.attributes.marker.marker.fields.map_id.defaultForceValue = self.lastInsertedMapId;
+					maps_shortcode_i18n.attributes['wpv-map-marker'].marker.fields.map_id.defaultForceValue = self.lastInsertedMapId;
 				}
 
 				return shortcode;
@@ -266,17 +336,26 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 				// Set current active editor
 				WPViews.addon_maps_dialogs.current_active_editor = window.wpcfActiveEditor;
 
-				// Field dependencies init
-				// This should only run for maps and marker dialogs, probably?
-				self.initDependsOn( dialogData );
-
-				// For marker dialog
-				if ( dialogData.shortcode === "wpv-map-marker" ) {
-					// Marker icons highlights and upload button
-					self.initMarkerIcons();
-
-					// Move some fields around so that forms look nicer
-					self.initMarkerSource();
+				// Dialog specific functionalities, tweaks, etc.
+				switch ( dialogData.shortcode ) {
+					case "wpv-map-marker":
+						// Field dependencies init
+						self.initDependsOn( dialogData );
+						// Marker icons highlights and upload button
+						self.initMarkerIcons();
+						// Move some fields around so that forms look nicer
+						self.initMarkerSource();
+						break;
+					case "toolset-maps-distance-conditional-display":
+						self.initDistanceConditionalDisplaySource();
+						break;
+					case "toolset-maps-distance-value":
+						self.initDependsOn( dialogData );
+						self.initDistanceValueSource();
+						break;
+					case "reload_button":
+						self.makeDialogNarrower();
+						break;
 				}
 			}
 		);
@@ -296,14 +375,139 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 		return self;
 	};
 
+	/**
+	 * Adds address autocomplete to a given input field.
+	 * @since 1.6
+	 * @param jQuery $location
+	 */
+	self.addAddressAutocomplete = function ( $location ) {
+		if ( API_GOOGLE === views_addon_maps_i10n.api_used ) {
+			$location.geocomplete();
+		} else {
+			$location.addClass( 'js-toolset-maps-address-autocomplete' );
+			WPViews.mapsAddressAutocomplete.initField( $location );
+		}
+	};
+
+	/**
+	 * Dialogs with no tabs look somewhat better when a bit narrower.
+	 * @since 1.7.1
+	 */
+	self.makeDialogNarrower = function() {
+		$( 'div#js-maps-shortcode-gui-dialog-container-shortcode').parent( 'div' ).css( 'width', '80%' );
+	};
+
+	/**
+	 * Stuff specific for distance conditional display dialog
+	 * @since 1.6
+	 */
+	self.initDistanceConditionalDisplaySource = function() {
+		// Since it has no tabs, this dialog looks somewhat better when a bit narrower
+		self.makeDialogNarrower();
+
+		// Init autocomplete for address field
+		self.addAddressAutocomplete( $( 'input#toolset-maps-distance-conditional-display-location' ) );
+	};
+
+	/**
+	 * Stuff specific for distance value dialog
+	 * @since 1.6
+	 */
+	self.initDistanceValueSource = function() {
+		self.makeDialogNarrower();
+
+		// Init autocomplete for address field
+		self.addAddressAutocomplete( $( 'input#toolset-maps-distance-value-location' ) );
+
+		// Disable the geolocation option in case of no HTTPS
+		if ( ! maps_shortcode_i18n.data.geolocation.enabled ) {
+			$( '.js-shortcode-gui-field[value="visitor_location"]' )
+				.prop( 'disabled', true )
+				.closest( 'li' )
+					.append( self.templates.noGeolocationMessage( {} ) );
+		}
+
+		// Make 2-column GUI for 1st location
+		self.moveAttributesToRightColumn(
+			$( '.js-toolset-shortcode-gui-attribute-wrapper-for-location_source_meta' ),
+			[ 'location', 'url_param', 'lat', 'lon' ],
+			$( '#toolset-maps-distance-value-location_source_meta' )
+		);
+		// Make 2-column GUI for 2nd location
+		self.moveAttributesToRightColumn(
+			$( '.js-toolset-shortcode-gui-attribute-wrapper-for-target_source_meta' ),
+			[ 'postmeta', 'postmeta_id', 'termmeta', 'termmeta_id', 'usermeta', 'usermeta_id' ],
+			$( '#toolset-maps-distance-value-target_source_meta' )
+		);
+
+		// Check if post, user & taxonomy fields exist. Disable radios for those that don't.
+		_.each( ['postmeta', 'termmeta', 'usermeta'], function( field ) {
+			if ( !$( 'select#toolset-maps-distance-value-' + field ).eq( 0 ).val() ) {
+				$( 'input[name="toolset-maps-distance-value-target_source"][value="' + field + '"]')
+					.prop( 'disabled', true )
+					.prop( 'checked', false );
+			}
+		} );
+		// If postmeta disabled, switch to another one that's enabled
+		if ( $( 'input[name="toolset-maps-distance-value-target_source"][value="postmeta"]').is(':disabled') ) {
+			let hasFields = _.find(['termmeta', 'usermeta'], function (field) {
+				return $( 'input[name="toolset-maps-distance-value-target_source"][value="' + field + '"]')
+					.is(':enabled')
+			} );
+			if ( hasFields ) {
+				$( 'input[name="toolset-maps-distance-value-target_source"][value="' + hasFields + '"]')
+					.prop( 'checked', true )
+					.trigger( 'change' );
+			}
+		}
+
+		// If no fields available, disable insert shortcode button and hide useless fields selection options
+		if (
+			!_.some( ['postmeta', 'termmeta', 'usermeta'], function( field ) {
+				return $( 'input[name="toolset-maps-distance-value-target_source"][value="' + field + '"]')
+					.is(':enabled')
+			} )
+		) {
+			$( 'button.js-maps-shortcode-gui-button-craft' ).prop( 'disabled', true );
+			$( 'div.js-toolset-shortcode-gui-attribute-wrapper-for-target_source_meta' ).hide();
+		} else {
+			// Select the first radio for where is the post coming from
+			$('.js-toolset-shortcode-gui-attribute-wrapper-for-postmeta_id .js-toolset-shortcode-gui-item-selector[checked]')
+				.prop('checked', true)
+				.trigger('change');
+		}
+	};
+
+	/**
+	 * Move given attributes to the 2nd column of a 2-column GUI (group). Hide dummy from 2nd column.
+	 *
+	 * For when we need the UI of a 2-column group, but want to put multiple inputs to 2nd column, and then use
+	 * dependsOn to show the appropriate one.
+	 *
+	 * @since 1.6
+	 *
+	 * @param jQuery $container
+	 * @param {array} attributes
+	 * @param jQuery $dummy
+	 */
+	self.moveAttributesToRightColumn = function( $container, attributes, $dummy ) {
+		// Hide the dummy attribute used to have a 2-column GUI
+		$dummy.hide();
+
+		// Move all relevant attributes to the 2nd column
+		_.each( attributes, function( attribute, attributeIndex, attributeList ) {
+			$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + attribute )
+				.detach()
+				.appendTo( $container );
+		});
+	};
+
 	self.initTemplates = function() {
 		// Gets the shared pool
 		self.templates = _.extend(
 			Toolset.hooks.applyFilters( 'toolset-filter-get-shortcode-gui-templates', {} ),
 			self.templates
 		);
-
-		// TODO: init our templates
 
 		return self;
 	};
@@ -315,7 +519,6 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 		 * @since 1.5
 		 */
 		if ( ! $( '#js-maps-shortcode-gui-dialog-container-shortcode' ).length ) {
-			// TODO: move HTML to template
 			$( 'body' ).append(
 				'<div id="js-maps-shortcode-gui-dialog-container-shortcode" class="toolset-shortcode-gui-dialog-container js-toolset-shortcode-gui-dialog-container js-maps-shortcode-gui-dialog-container js-maps-shortcode-gui-dialog-container-shortcode"></div>'
 			);
@@ -410,7 +613,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 	self.initMarkerSource = function() {
 		var $container = $( '.js-toolset-shortcode-gui-attribute-wrapper-for-marker_source_meta', '#wpv-map-marker-marker' ),
 			attributesToDetach = [ 'address', 'postmeta', 'postmeta_id', 'termmeta', 'termmeta_id', 'usermeta', 'usermeta_id', 'lat', 'lon', 'map_render' ];
-		
+
 		// Hide the dummy attribute used to have a tabbed GUI
 		$( '#wpv-map-marker-marker_source_meta' ).hide();
 
@@ -450,9 +653,9 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 			});
 		});
 
-		// Rename classnames and the name attributes for object selectors to aoid collissions
+		// Rename classnames and the name attributes for object selectors to avoid collissions
 		_.each( metaTypes, function( metaType, metaIndex, metaList ) {
-			$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + metaType + 'meta_id', '#wpv-map-marker-marker' ).each( function() {
+			$( '#wpv-map-marker-marker .js-toolset-shortcode-gui-attribute-wrapper-for-' + metaType + 'meta_id' ).each( function() {
 				$( this )
 					.find( '.js-toolset-shortcode-gui-item-selector' )
 						.attr( 'name', 'toolset_shortcode_gui_' + metaType + '_object_id' );
@@ -481,9 +684,9 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 			.addClass( 'js-toolset-shortcode-gui-field-select2-inited' )
 			.css( { width: '100%' } )
 			.toolset_select2(
-				{ 
+				{
 					width:				'resolve',
-					dropdownAutoWidth:	true, 
+					dropdownAutoWidth:	true,
 					dropdownParent:		$selectorParent,
 					minimumInputLength:	0,
 					ajax: {
@@ -603,7 +806,7 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 	self.offDependsOn = function() {
 		$( 'div#js-maps-shortcode-gui-dialog-container-shortcode input[type="radio"]' ).off('change');
 	};
-	
+
 	/**
 	 * Perform AJAX call to save the new values - both of them.
 	 */
@@ -648,23 +851,23 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 			// - Value crafting: each object source will force the right classname to compute the attributes.
 			var source = $( 'input[name="wpv-map-marker-marker_source_options"]:checked', '#wpv-map-marker-marker' ).val(),
 				$metaOptions = $( '.js-toolset-shortcode-gui-attribute-wrapper-for-marker_source_meta', '#wpv-map-marker-marker' );
-			
+
 			$metaOptions.find( '.js-toolset-shortcode-gui-required' )
 				.removeClass( 'js-toolset-shortcode-gui-required' );
-			
+
 			$metaOptions.find( '.js-toolset-shortcode-gui-invalid-attr' )
 				.removeClass( 'toolset-shortcode-gui-invalid-attr js-toolset-shortcode-gui-invalid-attr' );
 
 			$metaOptions.find( '.js-toolset-shortcode-gui-item-selector-standby' )
 				.removeClass( 'js-toolset-shortcode-gui-item-selector');
-			
+
 			$metaOptions
 				.find( '[name="specific_object_id"]' )
 					.attr( 'name', 'specific_object_id_standby' );
 			$metaOptions
 				.find( '[name="specific_object_id_raw"]' )
 					.attr( 'name', 'specific_object_id_raw_standby' );
-			
+
 			switch( source ) {
 				case 'address':
 					$( '#wpv-map-marker-address' ).addClass( 'js-toolset-shortcode-gui-required' );
@@ -688,7 +891,79 @@ Toolset.Maps.ShortcodeManager = function( $ ) {
 					break;
 			}
 		});
-		
+
+		// Distance value GUI events
+		$( document ).on(
+			'change',
+			'#toolset-maps-distance-value-distance_value input[name="toolset-maps-distance-value-origin_source"]',
+			function() {
+				let source = $(
+					'input[name="toolset-maps-distance-value-origin_source"]:checked',
+					'#toolset-maps-distance-value-distance_value'
+				).val();
+				let $metaOptions = $(
+					'.js-toolset-shortcode-gui-attribute-wrapper-for-location_source_meta',
+					'#toolset-maps-distance-value-distance_value'
+				);
+
+				$metaOptions.find( '.js-toolset-shortcode-gui-required' )
+					.removeClass( 'js-toolset-shortcode-gui-required' );
+				$metaOptions.find( '.js-toolset-shortcode-gui-invalid-attr' )
+					.removeClass( 'toolset-shortcode-gui-invalid-attr js-toolset-shortcode-gui-invalid-attr' );
+				$metaOptions.find( '.js-toolset-shortcode-gui-item-selector-standby' )
+					.removeClass( 'js-toolset-shortcode-gui-item-selector');
+				$metaOptions.find( '[name="specific_object_id"]' )
+					.attr( 'name', 'specific_object_id_standby' );
+				$metaOptions.find( '[name="specific_object_id_raw"]' )
+					.attr( 'name', 'specific_object_id_raw_standby' );
+
+				switch( source ) {
+					case 'address':
+						$('#toolset-maps-distance-value-location').addClass('js-toolset-shortcode-gui-required');
+						break;
+					case 'url_param':
+						$('#toolset-maps-distance-value-url_param').addClass('js-toolset-shortcode-gui-required');
+						break;
+				}
+			}
+		);
+		$( document ).on(
+			'change',
+			'#toolset-maps-distance-value-distance_value input[name="toolset-maps-distance-value-target_source"]',
+			function() {
+				let source = $(
+					'input[name="toolset-maps-distance-value-target_source"]:checked',
+					'#toolset-maps-distance-value-distance_value'
+				).val();
+				let $metaOptions = $(
+					'.js-toolset-shortcode-gui-attribute-wrapper-for-target_source_meta',
+					'#toolset-maps-distance-value-distance_value'
+				);
+
+				$metaOptions.find( '.js-toolset-shortcode-gui-required' )
+					.removeClass( 'js-toolset-shortcode-gui-required' );
+				$metaOptions.find( '.js-toolset-shortcode-gui-invalid-attr' )
+					.removeClass( 'toolset-shortcode-gui-invalid-attr js-toolset-shortcode-gui-invalid-attr' );
+				$metaOptions.find( '.js-toolset-shortcode-gui-item-selector-standby' )
+					.removeClass( 'js-toolset-shortcode-gui-item-selector');
+				$metaOptions.find( '[name="specific_object_id"]' )
+					.attr( 'name', 'specific_object_id_standby' );
+				$metaOptions.find( '[name="specific_object_id_raw"]' )
+					.attr( 'name', 'specific_object_id_raw_standby' );
+
+				$( '#toolset-maps-distance-value-target_source-' + source ).addClass( 'js-toolset-shortcode-gui-required' );
+				$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + source + '_id .js-toolset-shortcode-gui-item-selector-standby' )
+					.addClass( 'js-toolset-shortcode-gui-item-selector' );
+				$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + source + '_id [name="specific_object_id_standby"]' )
+					.attr( 'name', 'specific_object_id' );
+				$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + source + '_id [name="specific_object_id_raw_standby"]' )
+					.attr( 'name', 'specific_object_id_raw' );
+				$( '.js-toolset-shortcode-gui-attribute-wrapper-for-' + source + '_id .js-toolset-shortcode-gui-item-selector[checked]' )
+					.prop( 'checked', true )
+					.trigger( 'change' );
+			}
+		);
+
 		return self;
 	};
 

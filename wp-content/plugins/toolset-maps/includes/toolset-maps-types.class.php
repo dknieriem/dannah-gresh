@@ -107,6 +107,7 @@ class WPToolset_Field_google_address extends FieldFactory {
 			wp_enqueue_script( 'toolset-google-map-editor-script' );
 		} else {
 			wp_enqueue_script( 'toolset-maps-address-autocomplete' );
+			Toolset_Addon_Maps_Common::maybe_enqueue_azure_css();
 		}
 	}
 

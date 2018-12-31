@@ -1,11 +1,11 @@
 <?php
 
 if( !defined('TOOLSET_VERSION') ){
-	define('TOOLSET_VERSION', '3.0.7');
+	define('TOOLSET_VERSION', '3.3.3' );
 }
 
 if ( ! defined('TOOLSET_COMMON_VERSION' ) ) {
-    define( 'TOOLSET_COMMON_VERSION', '3.0.7' );
+    define( 'TOOLSET_COMMON_VERSION', '3.3.3' );
 }
 
 if ( ! defined('TOOLSET_COMMON_PATH' ) ) {
@@ -23,7 +23,7 @@ if( ! defined( 'TOOLSET_DATA_STRUCTURE_VERSION') ) {
 	 *
 	 * This constant should be used only by Toolset_Upgrade_Controller.
 	 */
-	define( 'TOOLSET_DATA_STRUCTURE_VERSION', 3 );
+	define( 'TOOLSET_DATA_STRUCTURE_VERSION', 4 );
 }
 
 /**
@@ -39,7 +39,12 @@ if ( ! defined( 'TOOLSET_EDIT_LAST' ) ) {
 if( ! defined( 'TOOLSET_COMMON_VENDOR_PATH' ) ) {
 
 	/**
-	 * Vendor directory that holds the composer dependencies of the currently loaded Toolset Common instance.
+	 * Vendor directory that holds the composer dependencies of the plugin that is
+	 * currently loading this Toolset Common instance.
+	 *
+	 * Note that this does not point to the actual vendor directory of Toolset Common,
+	 * but to the vendor directory where Toolset Common and other dependencies for
+	 * the main plugin housing them live.
 	 *
 	 * @since 2.5.7
 	 */

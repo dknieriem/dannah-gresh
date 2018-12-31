@@ -200,6 +200,12 @@ abstract class Types_Admin_Page
      */
     protected function is_delete_action_forbidden() { return false; }
 
+	/**
+	 * Returns the relationship url
+	 * @return false|string
+	 * @since 3.2
+	 */
+	protected function get_relationship_edit_url() { return false; }
 
     protected function submitdiv($button_text, $form = array(), $type = 'custom-post-type', $built_in = false )
     {
@@ -269,7 +275,17 @@ abstract class Types_Admin_Page
                         )
                     );
                 }
-            }
+            } else if( $relationship_edit_url = $this->get_relationship_edit_url() ) {
+            	// intermediary field group, add "return to relationship" link
+				$form['return-to-relationship'] = array(
+					'#type' => 'markup',
+					'#markup' => sprintf(
+						'<p style="margin-top:0"><a href="%s">%s</a></p>',
+						$relationship_edit_url,
+						__('Return to relationship', 'wpcf')
+					)
+				);
+			}
 
             $form['submit-div-open-publish'] = array(
                 '#type' => 'markup',

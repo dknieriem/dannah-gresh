@@ -36,7 +36,7 @@ class WPToolset_Field_Checkbox extends FieldFactory {
          * if is a default value, there value is 1 or default_value
          */
         if (
-                array_key_exists( 'default_value', $data ) && ( 'y' === $value || $value === $data['default_value']) && !$is_cred_generic_field
+                array_key_exists( 'default_value', $data ) && ( 'y' === $value || $value === $data['default_value'] || $value === stripslashes( $data['default_value'] ) ) && !$is_cred_generic_field
         ) {
             $checked = true;
         }

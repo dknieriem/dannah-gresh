@@ -104,7 +104,7 @@ abstract class Toolset_Post_Type_Abstract implements IToolset_Post_Type {
 
 		// at the end, we've decided to allow any translation mode for relationships
 		return new Toolset_Result( true );
-		// return new Toolset_Result( false, __( 'This post type uses the <strong>Translatable - only show translated items</strong> WPML translation mode. In order to use it in a relationship, switch to <strong>Translatable - use translation if available or fallback to default language</strong> mode.', 'wpcf' ) );
+		// return new Toolset_Result( false, __( 'This post type uses the <strong>Translatable - only show translated items</strong> WPML translation mode. In order to use it in a relationship, switch to <strong>Translatable - use translation if available or fallback to default language</strong> mode.', 'wpv-views' ) );
 	}
 
 

@@ -74,7 +74,7 @@ class Toolset_Singleton_Factory {
 		// drop $class argument
 		array_shift( $arguments );
 
-		self::$instances[$class] = new $class( ... $arguments );
+		self::$instances[$class] = new $class( ... $arguments ); // @codingStandardsIgnoreLine because this file gets loaded only in PHP 5.6+
 
 		return self::$instances[ $class ];
 	}

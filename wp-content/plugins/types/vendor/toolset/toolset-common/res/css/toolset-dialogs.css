@@ -192,6 +192,24 @@
 /**
  * Shortcodes dialogs styles: shortcodes dialog.
  */
+.toolset-shortcode-gui-dialog h4,
+.wpv-fields-and-views-dialog h4 {
+	font-size: 1em;
+	font-weight: 600;
+}
+
+.toolset-shortcode-gui-dialog-container h2 {
+	font-weight: 600;
+}
+
+.toolset-shortcode-gui-dialog-container ul {
+	list-style: none;
+}
+
+.toolset-shortcode-gui-dialog-container label {
+	font-weight: normal;
+}
+
 .toolset-shortcode-gui-dialog-container .ui-tabs-nav {
     padding: .2em .1em .2em .2em;
     border: none;
@@ -429,3 +447,75 @@ Toolset Confirmation Dialog
 .toolset-confirmation-dialog-content > :first-child {
     margin-top: 0;
 }
+
+/* Fields and Views in generic inputs */
+a.toolset-shortcode-in-page-builder-input {
+	position: absolute;
+	display: none;
+	top: 0;
+	left: -20px;
+	color: #fff !important;
+	font-weight: bold;
+	font-size: 14px !important;
+	width: 17px;
+	height: 17px;
+	line-height: 15px;
+	text-align:center;
+	background: #f05a29;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-decoration: none !important;
+}
+
+/* Skype Settings */
+#toolset-attribute-skype-preview,
+#toolset-attribute-skype-preview-loaded {
+    position: relative;
+}
+
+#toolset-attribute-skype-preview-loaded,
+#toolset-attribute-skype-preview-offline {
+    display: none;
+}
+
+#toolset-attribute-skype-preview-loaded table {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+#toolset-attribute-skype-preview-loaded table td {
+    vertical-align: top;
+}
+
+#toolset-attribute-skype-preview-loaded table tr td:nth-child(1) {
+    width: 100px;
+    font-weight: bold;
+}
+
+#toolset-attribute-skype-preview-loaded table tr:nth-child(1) td {
+    height: 85px;
+}
+
+#toolset-attribute-skype-preview-loaded .lwc-chat-button {
+    position: static;
+}
+
+.js-toolset-shortcode-gui-attribute-group-for-skype_button_style select,
+.js-toolset-shortcode-gui-attribute-group-for-skype_button_style_enhanced select,
+.js-toolset-shortcode-gui-attribute-wrapper-for-receiver select {
+    width: 98%;
+    width: calc( 100% - 5px );
+}
+
+.js-toolset-shortcode-gui-attribute-group-for-skype_button_style_enhanced li {
+    box-sizing: border-box;
+    padding-top: 5px!important;
+}
+
+.js-toolset-shortcode-gui-attribute-group-for-skype_button_style_enhanced {
+    display: none;
+}
+
+

@@ -41,7 +41,7 @@ abstract class Toolset_Maps_Views_Distance {
 		// Nothing to do if query is skipped, pagination disabled, or we are not in map distance filter or order
 		if (
 			$this->is_query_skipped( $query )
-			|| $view_settings['pagination']['type'] === 'disabled'
+			|| $this->is_no_limit_or_pagination( $view_settings )
 			|| ! $this->is_views_distance_child_in_settings( $view_settings )
 		) {
 			return $query;
@@ -50,6 +50,19 @@ abstract class Toolset_Maps_Views_Distance {
 		$query['posts_per_page'] = - 1;
 
 		return $query;
+	}
+
+	/**
+	 * Checks that there is no limit or pagination set in view settings
+	 *
+	 * @since 1.5.3
+	 *
+	 * @param array $view_settings
+	 *
+	 * @return bool
+	 */
+	protected function is_no_limit_or_pagination( $view_settings ) {
+		return ( $view_settings['limit'] === -1 && $view_settings['pagination']['type'] === 'disabled' );
 	}
 
 	/**
@@ -99,11 +112,16 @@ abstract class Toolset_Maps_Views_Distance {
 	protected function is_views_distance_child_in_settings( array $view_settings ) {
 		foreach ( self::$children as $setting_string => $set ) {
 			if ( isset( $view_settings[$setting_string] ) ) {
-				if ( isset( $view_settings['distance_order'] ) ) {
+				if (
+					'distance_order' === $setting_string
+					&& isset( $view_settings['distance_order'] )
+				) {
 					// Special case: check if distance order was set, then removed. In that case, it's key exists in
-					// $view_settings, but it's value is bogus.
+					// $view_settings, but it's value is 'undefined'.
 					if ( $view_settings['distance_order']['source'] === 'undefined' ) return false;
 				}
+
+				// Otherwise, if we have distance order or filter in view settings, return true
 				return true;
 			}
 		}
@@ -121,13 +139,24 @@ abstract class Toolset_Maps_Views_Distance {
 	}
 
 	/**
-	 * Checks if there was paging removed in order to allow post processing to do its thing, and brings it back.
+	 * Checks if there was query limit removed in order to allow post processing to do its thing, and brings it back.
 	 *
 	 * @param WP_Query $post_query
 	 *
 	 * @return WP_Query
 	 */
 	protected function bring_paging_back( WP_Query $post_query ) {
+		// Bring back removed limit
+		if ( $post_query->query['wpv_original_limit'] !== -1 ) {
+			$post_query->posts = array_slice(
+				$post_query->posts,
+				$post_query->query['wpv_original_offset'],
+				$post_query->query['wpv_original_limit']
+			);
+			$post_query->query['posts_per_page'] = $post_query->query['wpv_original_limit'];
+		}
+
+		// Bring back removed paging
 		if ( $post_query->query['wpv_original_posts_per_page'] !== - 1 ) {
 			$post_query->query['posts_per_page'] = $post_query->query['wpv_original_posts_per_page'];
 			$post_query->max_num_pages           = ceil( count( $post_query->posts ) / $post_query->query['posts_per_page'] );
@@ -148,6 +177,20 @@ abstract class Toolset_Maps_Views_Distance {
 	 * @return string HTML
 	 */
 	protected function render_view( $view, $vars=array() ) {
+		return self::render_view_static( $view, $vars );
+	}
+
+	/**
+	 * Static version of render_view, so it can be called from static methods...
+	 *
+	 * @since 1.6
+	 *
+	 * @param string $view
+	 * @param array $vars
+	 *
+	 * @return false|string
+	 */
+	protected static function render_view_static( $view, $vars = array() ) {
 		ob_start();
 		include( TOOLSET_ADDON_MAPS_TEMPLATE_PATH . "$view.phtml" );
 		$html = ob_get_contents();

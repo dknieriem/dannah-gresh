@@ -5,7 +5,7 @@
  */
 $has_output_bootstrap = (isset( $cfg['attribute']['output'] ) && $cfg['attribute']['output'] == 'bootstrap');
 
-if ( is_admin() ) {
+if ( Toolset_Utils::is_real_admin() ) {
     $child_div_classes = array('js-wpt-field-items');
 	if (  ! $has_output_bootstrap && $cfg['use_bootstrap'] && in_array( $cfg['type'], array( 'date', 'select' ) ) ) {
 		$child_div_classes[] = 'form-inline';
@@ -34,7 +34,7 @@ if ( is_admin() ) {
     /**
 	 * Get the field extra classnames, coming from checks in validation and conditionals.
 	 *
-	 * Used to adjust the data-initial-conditional attribute by getting the field extra classnames 
+	 * Used to adjust the data-initial-conditional attribute by getting the field extra classnames
 	 * and checking whether it contains a "wpt-hidden" bit.
 	 *
 	 * @note This might need a deeper review, since we are getting here some classnames that we ditch entirely

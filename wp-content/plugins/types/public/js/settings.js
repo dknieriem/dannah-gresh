@@ -88,7 +88,7 @@ Types.Gui.SettingsScreen = function ($) {
         if( modelData === false ) {
             return self;
         }
-        
+
         /**
          * This will evaluate to true if any of the sections managed here have actions in progress.
          *
@@ -127,7 +127,7 @@ Types.Gui.SettingsScreen = function ($) {
         };
 
         // Initialize the main viewmodel.
-        ko.applyBindings(self);
+        ko.applyBindings(self, $('.js-toolset-toolset_is_m2m_enabled').get(0) );
         return self;
     };
 

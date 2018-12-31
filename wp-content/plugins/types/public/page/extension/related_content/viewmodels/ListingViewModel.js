@@ -90,7 +90,7 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 		return relatedContentModels.onlyOneRelatedConection
 			? 'types-related-content-only-one-relations'
 			: 'types-related-content-several-relations';
-	}
+	};
 
 
 
@@ -112,7 +112,7 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 				return self.visibleFields()[ type ].includes( field_slug );
 			}
 		}, this);
-	}
+	};
 
 
 	/**
@@ -124,6 +124,8 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 		self.itemsFound(data.relatedContent.items_found);
 		var $pageSpinner = jQuery('#' + relatedContentModels.relationship_slug + ' .toolset-page-spinner');
 		relatedContentModels.relatedContent.items_found = data.items_found;
+		relatedContentModels.relatedContent.disabled_fields_by_post = data.relatedContent.disabled_fields_by_post;
+		relatedContentModels.relatedContent.disabled_fields_all = data.relatedContent.disabled_fields_all;
 		self.createItemViewModels(data);
 		if ( !! window.tinyMCEPreInit ) {
 			_.each(data.relatedContent.data, function(item) {
@@ -225,7 +227,7 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 				relationship_slug: relatedContentModels.relationship_slug,
 				page: page,
 				related_post_type: relatedContentModels.ajaxInfo.relatedPostType,
-				post_id: WPV_Toolset.Utils.getParameterByName('post'),
+				post_id: relatedContentModels.postId,
 				items_per_page: relatedContentModels.itemsPerPage,
 				sort_by : propertyName,
 				sort: newDirection,
@@ -255,7 +257,7 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 	 */
 	self.createItemViewModels = function(itemModels) {
 		self.items(_.map(itemModels.relatedContent.data, function(itemModel) {
-			return new Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel(itemModel, self.itemActions, relatedContentModels.relationship_slug, self);
+			return new Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel(itemModel, self.itemActions, relatedContentModels.relationship_slug, self, relatedContentModels);
 		}));
 	};
 
@@ -293,6 +295,24 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 	self.canConnectAnotherElement = ko.observable(relatedContentModels.canConnectAnother);
 
 
+    /**
+	 * User Id
+	 *
+	 * @since 3.1
+     */
+    self.userId = relatedContentModels.userId;
+
+    /**
+	 * User Caps for the related post type
+	 * e.g.
+	 * - self.userCaps.publish_posts
+	 * - self.userCaps.edit_others_posts
+	 *
+	 * List of cap definitions: publish_posts, edit_others_posts, delete_others_posts, edit_posts, delete_posts
+	 *
+	 * @since 3.1
+     */
+	self.userCaps = relatedContentModels.userCaps;
 
 	/**
 	 * Checks if there is translatable post types involve.
@@ -426,7 +446,8 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 							}
 						}
 						return {
-							results: data.data.items
+							results: data.data.items,
+							pagination: data.data.pagination
 						};
 					},
 					cache: false
@@ -487,13 +508,7 @@ Types.page.extension.relatedContent.viewmodels.ListingViewModel = function(relat
 			if (typeof wptColorpicker !== 'undefined') {
 				 wptColorpicker.init('body');
 			}
-			var $files = jQuery('.ui-dialog-content .js-wpt-field');
-			if ($files.length > 0) {
-				$files.on('click', '.js-wpt-file-upload', function( event ) {
-					event.preventDefault();
-					wptFile.bindOpen(jQuery(this), event, true);
-				});
-			}
+
 			jQuery( 'textarea.wpt-wysiwyg', '#' + id ).each(function() {
 				self.initWysiwygField( jQuery(this).attr('id') );
 			});

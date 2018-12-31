@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\Condition\IsInGutenbergEditor;
+
 /**
  * Generic class for generating and controlling shortcodes.
  *
@@ -35,8 +37,6 @@ abstract class Toolset_Shortcode_Generator {
 	private static $target_dialog_added			= false;
 
 	function __construct() {
-		add_action( 'init',	array( $this, 'register_shortcode_transformer' ) );
-
 		add_action( 'admin_init',		array( $this, 'register_shortcodes_admin_bar_items' ), 99 );
 	    add_action( 'admin_bar_menu',	array( $this, 'display_shortcodes_admin_bar_items' ), 99 );
 		add_action( 'admin_footer',		array( $this, 'display_shortcodes_target_dialog' ) );
@@ -123,13 +123,31 @@ abstract class Toolset_Shortcode_Generator {
 	}
 
 	/**
+	 * Helper method to decide whether we are on an admin editor page
+	 * using the Gutenber blocks editor.
+	 *
+	 * This includes checks against the Gutenberg plugin and the core version.
+	 *
+	 * @since gutenberg
+	 * @return boolean
+	 */
+	public function is_blocks_editor_page() {
+		if ( ! $this->is_admin_editor_page() ) {
+			return false;
+		}
+
+		$is_blocks_editor_page = new IsInGutenbergEditor();
+
+		return $is_blocks_editor_page->is_met();
+	}
+
+	/**
 	 * Helper method to check whether we are on an admin editor page.
 	 * This covers edit pages for posts, terms and users,
 	 * as well as Toolset object edit pages.
 	 *
 	 * @since 2.3.0
 	 */
-
 	public function is_admin_editor_page() {
 		if ( ! is_admin() ) {
 			return false;
@@ -164,7 +182,6 @@ abstract class Toolset_Shortcode_Generator {
 	 *
 	 * @since 2.3.0
 	 */
-
 	public function is_frontend_editor_page() {
 		if ( is_admin() ) {
 			return false;
@@ -244,6 +261,10 @@ abstract class Toolset_Shortcode_Generator {
 			null
 		);
 		$renderer->render(
+			$template_repository->get( Toolset_Output_Template_Repository::SHORTCODE_GUI_ATTRIBUTE_NUMBER ),
+			null
+		);
+		$renderer->render(
 			$template_repository->get( Toolset_Output_Template_Repository::SHORTCODE_GUI_ATTRIBUTE_TEXTAREA ),
 			null
 		);
@@ -261,6 +282,10 @@ abstract class Toolset_Shortcode_Generator {
 		);
 		$renderer->render(
 			$template_repository->get( Toolset_Output_Template_Repository::SHORTCODE_GUI_ATTRIBUTE_AJAXSELECT2 ),
+			null
+		);
+		$renderer->render(
+			$template_repository->get( Toolset_Output_Template_Repository::SHORTCODE_GUI_ATTRIBUTE_SKYPE ),
 			null
 		);
 		$renderer->render(
@@ -299,7 +324,7 @@ abstract class Toolset_Shortcode_Generator {
 			) {
 				$current_post_type = get_post_type_object( $post->post_type );
 			}
-			
+
 			// Current top page when displaying a View loop
 			if (
 				in_array( $pagenow, array( 'admin.php' ) )
@@ -380,7 +405,7 @@ abstract class Toolset_Shortcode_Generator {
 				// Make sure m2m classes are registered in the autoloader
 				do_action( 'toolset_do_m2m_full_init' );
 				$relationship_definitions_per_origin = $this->get_m2m_current_post_type_relationships_per_origin( $current_post_type );
-				
+
 				$relationship_section_title_per_cardinality = array(
 					'one-to-one' => __( '%s (one-to-one relationship)', 'wpv-views' ),
 					'one-to-many' => __( '%s (one-to-many relationship)', 'wpv-views' ),
@@ -530,9 +555,9 @@ abstract class Toolset_Shortcode_Generator {
 							isset( $_GET['page'] )
 							&& in_array( $_GET['page'], array( 'views-editor', 'view-archives-editor' ) )
 						) {
-							_e( 'The current post in the loop', 'wp-cred' );
+							_e( 'The current post in the loop', 'wpv-views' );
 						} else {
-							_e( 'The current post', 'wp-cred' );
+							_e( 'The current post', 'wpv-views' );
 						}
 						?>
 					</label>
@@ -540,7 +565,7 @@ abstract class Toolset_Shortcode_Generator {
 				<li class="js-toolset-shortcode-gui-item-selector-has-related">
 					<label>
 						<input type="radio" name="{{{data.shortcode}}}-select-target-post" class="toolset-shortcode-gui-item-selector js-toolset-shortcode-gui-item-selector" value="object_id" />
-						<?php _e( 'Another post', 'wp-cred' ); ?>
+						<?php _e( 'Another post', 'wpv-views' ); ?>
 						<div class="toolset-shortcode-gui-item-selector-is-related js-toolset-shortcode-gui-item-selector-is-related" style="display:none">
 							<select id="toolset-shortcode-gui-item-selector-post-id-object_id"
 								class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2"
@@ -561,13 +586,13 @@ abstract class Toolset_Shortcode_Generator {
 				<li>
 					<label>
 						<input type="radio" name="{{{data.shortcode}}}-select-target-user" class="toolset-shortcode-gui-item-selector js-toolset-shortcode-gui-item-selector" value="current" checked="checked" />
-						<?php _e( 'The current logged in user', 'wp-cred' ); ?>
+						<?php _e( 'The current logged in user', 'wpv-views' ); ?>
 					</label>
 				</li>
 				<li class="js-toolset-shortcode-gui-item-selector-has-related">
 					<label>
 						<input type="radio" name="{{{data.shortcode}}}-select-target-user" class="toolset-shortcode-gui-item-selector js-toolset-shortcode-gui-item-selector" value="object_id" />
-						<?php _e( 'Another user', 'wp-cred' ); ?>
+						<?php _e( 'Another user', 'wpv-views' ); ?>
 						<div class="toolset-shortcode-gui-item-selector-is-related js-toolset-shortcode-gui-item-selector-is-related" style="display:none">
 							<select id="toolset-shortcode-gui-item-selector-user-id-object_id"
 								class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2"
@@ -640,13 +665,13 @@ abstract class Toolset_Shortcode_Generator {
 	public function can_add_editor_buttons( $status ) {
 		// Elementor page builder editor includes those GET parameters
 		// and Toolset buttons do not work on its text widgets.
-		if ( 
+		if (
 			'elementor' == toolset_getget( 'action' )
 			&& '' != toolset_getget( 'post' )
 		) {
 			return false;
 		}
-		
+
 		return $status;
 	}
 
@@ -736,7 +761,7 @@ abstract class Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	public function get_m2m_current_post_type_relationships_per_origin( $current_post_type ) {
-		
+
 		$relationship_definitions_per_origin = array(
 			Toolset_Relationship_Origin_Wizard::ORIGIN_KEYWORD => array(),
 			Toolset_Relationship_Origin_Post_Reference_Field::ORIGIN_KEYWORD => array()
@@ -775,7 +800,7 @@ abstract class Toolset_Shortcode_Generator {
 		foreach( $relationship_definitions as $relationship_definition ) {
 			$relationship_cardinality = $relationship_definition->get_cardinality();
 			$origin = $relationship_definition->get_origin();
-			
+
 			$relationship_definitions_per_origin[ $origin->get_origin_keyword() ][] = $relationship_definition;
 		}
 

@@ -185,11 +185,9 @@ function wpcf_add_meta_boxes( $post_type, $post ) {
 					if ( ! is_array( $field ) || ! isset( $field['id'] ) ) {
 						// repeatable field group container
 						if ( $repeatable_group = $repeatable_group_service->get_object_from_prefixed_string( $field ) ) {
-							$related_post_type = $repeatable_group->get_post_type();
-							$has_permission = current_user_can( 'edit_posts' );
-							$has_permissions = apply_filters( 'toolset_access_api_get_post_type_permissions', $has_permission, $related_post_type->get_slug(), 'publish', get_current_user_id() );
+							$user_access = new \OTGS\Toolset\Types\User\Access( wp_get_current_user() );
 
-							if ( ! $has_permission ) {
+							if ( ! $user_access->canEditGroup( $group['slug'], $post_type ) ) {
 								$group['html'][] = '<label class="wpt-form-label wpt-form-textfield-label">' . $repeatable_group->get_name() . '</label>'
 									. '<p class="toolset-alert toolset-alert-error">' . sprintf( __( 'You don\'t have permission to create <strong>%s</strong> Repeteable Field Groups.', 'wpcf' ), $repeatable_group->get_name() ) . '</p>';
 								continue;
@@ -274,13 +272,14 @@ function wpcf_add_meta_boxes( $post_type, $post ) {
 				$group_wpml = new Types_Wpml_Field_Group( $field_group );
 
 				// Add meta boxes
+				$slug_decoded = urldecode( $group['slug'] );
 				if ( empty( $only_preview ) ) {
-					add_meta_box( "wpcf-group-{$group['slug']}",
+					add_meta_box( "wpcf-group-{$slug_decoded}",
 						$group_wpml->translate_name(),
 						'wpcf_admin_post_meta_box',
 						$post_type, $group['meta_box_context'], 'high', $group );
 				} else {
-					add_meta_box( "wpcf-group-{$group['slug']}",
+					add_meta_box( "wpcf-group-{$slug_decoded}",
 						$group_wpml->translate_name(),
 						'wpcf_admin_post_meta_box_preview', $post_type,
 						$group['meta_box_context'], 'high', $group );
@@ -1515,9 +1514,37 @@ function wpcf_admin_post_get_post_groups_fields( $post = false, $context = 'grou
 				true ), ',' ) );
 
 		// Templates
-		$groups_all[ $temp_key ]['_wp_types_group_templates'] = explode( ',',
+		$templates = explode( ',',
 			trim( get_post_meta( $temp_group['id'],
 				'_wp_types_group_templates', true ), ',' ) );
+
+		if( isset( $templates[0] ) && $templates[0] != 'all' ) {
+		    foreach( $templates as $key => $template_slug ) {
+			    if( $template_post = get_page_by_path( $template_slug, OBJECT, 'view-template' ) ) {
+			        // content template found
+				    $templates[$key] = $template_post->ID;
+				    continue;
+                }
+
+                // maybe we have the old format stored (which stores the template ids)
+                if( is_numeric( $template_slug ) ) {
+	                if( $template_post = get_post( $template_slug ) ) {
+		                // legacy format
+		                $templates[$key] = $template_post->ID;
+		                continue;
+                    }
+                }
+
+                // at this point it's probably a page template of the theme
+            }
+        }
+
+		$groups_all[ $temp_key ]['_wp_types_group_templates'] = array_values( $templates );
+
+		if( ! isset( $groups_all[ $temp_key ]['_wp_types_group_templates'][0] ) ){
+		    // this is required for backward compatibility
+			$groups_all[ $temp_key ]['_wp_types_group_templates'][0] = '';
+        }
 
 		// Data-Dependant
 		$groups_all[ $temp_key ]['_wpcf_conditional_display'] =
@@ -1629,7 +1656,23 @@ function wpcf_admin_post_get_post_groups_fields( $post = false, $context = 'grou
 		if ( $post_type_filter == - 1 && $taxonomy_filter == - 1 && $template_filter == - 1 ) {
 			$passed = 1;
 		} else if ( $groups_all[ $temp_key ]['filters_association'] == 'any' ) {
-			$passed = $post_type_filter == 1 || $taxonomy_filter == 1 || $template_filter == 1;
+            $field_group_service = isset( $field_group_service )
+                ? $field_group_service
+                : new Types_Field_Group_Repeatable_Service();
+
+            if( $field_group_service->group_contains_rfg_or_prf( $temp_group['id'] ) ) {
+                // for rfg / prf the post_type_filter must be true
+                $passed = $post_type_filter == 1 &&
+                          (
+                            // AND
+                            // any other condition met (or a data dependant condition exists - that will be toggled by js afterwards)
+                            ( $taxonomy_filter == 1 || $template_filter == 1 || ! empty( $groups_all[ $temp_key ]['_wpcf_conditional_display'] ) )
+                            // OR no other condition isset at all, in this case we also need to show the group
+                            || ( $taxonomy_filter == -1 && $template_filter == -1 && empty( $groups_all[ $temp_key ]['_wpcf_conditional_display'] ) )
+                          );
+            } else {
+	            $passed = $post_type_filter == 1 || $taxonomy_filter == 1 || $template_filter == 1;
+            }
 		} else {
 			$passed = $post_type_filter != 0 && $taxonomy_filter != 0 && $template_filter != 0;
 		}

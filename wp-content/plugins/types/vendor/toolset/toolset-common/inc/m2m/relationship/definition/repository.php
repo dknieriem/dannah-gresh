@@ -149,7 +149,7 @@ class Toolset_Relationship_Definition_Repository {
 		unset( $this->definitions[ $slug ] );
 		$this->get_definition_persistence()->delete_definition( $definition );
 
-		$toolset_results[] = new Toolset_Result( true, sprintf( __( 'Relationship "%s" has been deleted.', 'wpcf' ), $slug ) );
+		$toolset_results[] = new Toolset_Result( true, sprintf( __( 'Relationship "%s" has been deleted.', 'wpv-views' ), $slug ) );
 
 		// No "after_delete_relationship" action as long as we have to save_relationships() manually. This can change in the future.
 
@@ -175,7 +175,7 @@ class Toolset_Relationship_Definition_Repository {
 	 * @since m2m
 	 */
 	public function definition_exists( $slug ) {
-		return array_key_exists( $slug, $this->definitions );
+		return ( ( is_string( $slug ) || is_int( $slug ) ) && array_key_exists( $slug, $this->definitions ) );
 	}
 
 
@@ -297,11 +297,16 @@ class Toolset_Relationship_Definition_Repository {
 	/**
 	 * Update a single relationship definition.
 	 *
-	 * @param Toolset_Relationship_Definition $relationship_definition
+	 * @param IToolset_Relationship_Definition $relationship_definition
+	 *
 	 * @since 2.5.2
+	 * @return Toolset_Result
 	 */
-	public function persist_definition( Toolset_Relationship_Definition $relationship_definition ) {
-		$this->get_definition_persistence()->persist_definition( $relationship_definition );
+	public function persist_definition( IToolset_Relationship_Definition $relationship_definition ) {
+		if( ! $relationship_definition instanceof Toolset_Relationship_Definition ) {
+			throw new RuntimeException( 'Unable to persist a foreign relationship definition object.' );
+		}
+		return $this->get_definition_persistence()->persist_definition( $relationship_definition );
 	}
 
 
@@ -389,7 +394,7 @@ class Toolset_Relationship_Definition_Repository {
 		return new Toolset_Result(
 			true,
 			sprintf(
-				__( 'Relationship slug was successfully renamed from "%s" to "%s".', 'wpcf' ),
+				__( 'Relationship slug was successfully renamed from "%s" to "%s".', 'wpv-views' ),
 				$previous_slug,
 				$new_slug
 			)

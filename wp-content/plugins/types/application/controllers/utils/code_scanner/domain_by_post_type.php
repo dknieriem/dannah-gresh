@@ -24,7 +24,7 @@ abstract class DomainByPostType extends \Toolset_Wpdb_User {
 			case \Toolset_Post_Type_List::CRED_POST_FORM:
 			case \Toolset_Post_Type_List::CRED_USER_FORM:
 			case \Toolset_Post_Type_List::CRED_RELATIONSHIP_FORM:
-				return __( 'CRED From', 'wpcf' );
+				return __( 'Toolset Form', 'wpcf' );
 			default:
 				return __( 'Post content', 'wpcf' );
 		}

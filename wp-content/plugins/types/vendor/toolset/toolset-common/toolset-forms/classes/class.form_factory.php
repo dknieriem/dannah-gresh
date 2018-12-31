@@ -210,10 +210,15 @@ class FormFactory extends FormAbstract {
      */
     public function metaform($config, $global_name_field, $value) {
         /**
-         * add bootstrap config to every field
+         * add bootstrap, media and Toolset buttons config to every field
          */
 		$config['use_bootstrap'] = $this->theForm->form_settings['use_bootstrap'];
-        $config[ 'has_media_button' ] = $this->theForm->form_settings[ 'has_media_button' ];
+        $config['has_media_button'] = isset( $this->theForm->form_settings[ 'has_media_button' ] )
+            ? $this->theForm->form_settings[ 'has_media_button' ]
+            : false;
+        $config['has_toolset_buttons'] = isset( $this->theForm->form_settings[ 'has_toolset_buttons' ] )
+            ? $this->theForm->form_settings[ 'has_toolset_buttons' ]
+            : false;
 
         /**
          * WMPL configuration

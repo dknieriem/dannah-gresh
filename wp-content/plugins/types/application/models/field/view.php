@@ -49,6 +49,12 @@ class Types_Field_View {
 				)
 			);
 		}
+
+		if( method_exists( $this->field, 'is_raw_output' ) && $this->field->is_raw_output() ) {
+			// do not render shortcodes if "raw" output is wanted
+			return $output;
+		}
+
 		return do_shortcode( $output );
 	}
 }

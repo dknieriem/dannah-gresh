@@ -1,171 +1,187 @@
 /**
+ * Media manager for backend file-related fields.
  *
- *
+ * @since 3.3
+ * @package Toolset
+ * @extends Toolset.Common.MediaField
  */
-var wptFile = (function($, w) {
-    var frame = [];
-    var $item, $parent, $preview;
 
-    function init() {
-        // Fetch available headers and apply jQuery.masonry
-        // once the images have loaded.
-        var $headers = $('.available-headers');
+var Toolset = Toolset || {};
 
-        $headers.imagesLoaded( function() {
-            $headers.masonry({
-                itemSelector: '.default-header',
-                isRTL: !! ( 'undefined' != typeof isRtl && isRtl )
-            });
-        });
-        /*
-        $('.js-wpt-field').on('click', '.js-wpt-file-upload', function() {
-            if ( $(this).data('attched-thickbox') ) {
-                return;
-            }
-            return wptFile.open(this, true);
-        });
-        */
-        // Build the choose from library frame.
-        $('.js-wpt-field').on('click', '.js-wpt-file-upload', function( event ) {
-			event.preventDefault();
-            wptFile.bindOpen($(this), event);
-        });
-    }
+Toolset.Forms = Toolset.Forms || {};
+
+Toolset.Forms.MediaField = function( $ ) {
+    Toolset.Common.MediaField.call( this );
+
+    var self = this;
 
     /**
-     * Opens the dialog
+     * Initialize the backend-specific constants for selectors.
      *
-     * @param {Object} $el The jQuery element that opens the dialog
-     * @param {Event} event The event
-     * @param {boolean} updateFrame of the frame needs to be update, it is needed when the file is open from a dialog window that is created with the same ID
+     * @since 3.3
      */
-    function bindOpen($el, event)
-    {
-            if (arguments.length === 3) {
-              updateFrame = arguments[2];
-            } else {
-              updateFrame = false;
-            }
+    self.initConstants = function() {
+        self.CONST = _.extend( {}, self.CONST, {
+            INPUT_VALUE_SELECTOR: '.wpt-form-textfield',
+            REPEATING_CONTAINER_SELECTOR: '.js-wpt-field-item',
+            PREVIEW_CONTAINER_SELECTOR: '.js-wpt-file-preview',
+        } );
 
-            var $type = $el.data('wpt-type');
-            var $id = $el.parent().attr('id');
-
-            if ( event ) {
-                event.preventDefault();
-            }
-
-            // If the media frame already exists, reopen it.
-            if ( !updateFrame && frame[$id] ) {
-                frame[$id].open();
-                return;
-            }
-
-            // Create the media frame.
-            frame[$id] = wp.media.frames.customHeader = wp.media({
-                // Set the title of the modal.
-                title: $el.html(),
-
-                // Tell the modal to show only images.
-                library: {
-                    type: 'file' == $type? null:$type
-                },
-
-                // Customize the submit button.
-                button: {
-                    // Set the text of the button.
-                    text: $el.data('update'),
-                    // Tell the button not to close the modal, since we're
-                    // going to refresh the page when the image is selected.
-                    close: false
-                }
-            });
-
-            // When an image is selected, run a callback.
-            frame[$id].on( 'select', function() {
-                // Grab the selected attachment.
-                var attachment = frame[$id].state().get('selection').first();
-                var $parent = $el.parent();
-                switch( $type ) {
-                    case 'image':
-                        /**
-                         * value
-                         */
-                        var has_size_full = false;
-                        if (
-                            'undefined' != typeof attachment.attributes.sizes
-                            && 'undefined' != typeof attachment.attributes.sizes.full
-                            && 'undefined' != typeof attachment.attributes.sizes.full.url
-                           ) {
-                               has_size_full = true;
-                               $('.textfield', $parent).val(attachment.attributes.sizes.full.url);
-                           }
-                        else if ( 'undefined' != typeof(attachment.attributes.url) ) {
-                            $('.textfield', $parent).val(attachment.attributes.url);
-                        }
-
-                        /**
-                         * preview
-                         */
-                        if ( 0 == $('.wpt-file-preview img', $parent.parent()).length) {
-                            $('.wpt-file-preview', $parent.parent()).append('<img src="">');
-                        }
-                        if (
-                            'undefined' != typeof attachment.attributes.sizes
-                            && 'undefined' != typeof attachment.attributes.sizes.thumbnail
-                            && 'undefined' != typeof attachment.attributes.sizes.thumbnail.url
-                           ) {
-							$( '.wpt-file-preview img', $parent.parent() ).attr(
-								{
-									'src': attachment.attributes.sizes.thumbnail.url,
-									'srcset': attachment.attributes.sizes.thumbnail.url,
-								}
-							);
-                        }
-                        else if ( has_size_full ) {
-							$( '.wpt-file-preview img', $parent.parent() ).attr(
-								{
-									'src': attachment.attributes.sizes.full.url,
-									'srcset': attachment.attributes.sizes.full.url,
-								}
-							);
-                        }
-                        else if ( 'undefined' != typeof(attachment.attributes.url) ) {
-							$( '.wpt-file-preview img', $parent.parent() ).attr(
-								{
-									'src': attachment.attributes.url,
-									'srcset': attachment.attributes.url,
-								}
-							);
-                        }
-                        /**
-                         * add full
-                         */
-                        if ( has_size_full ) {
-                            $('.wpt-file-preview img', $parent.parent()).data('full-src', attachment.attributes.sizes.full.url);
-                        } else if ( 'undefined' != typeof(attachment.attributes.url) ) {
-                            $('.wpt-file-preview img', $parent.parent()).data('full-src', attachment.attributes.url);
-                        }
-                        /**
-                         * bind preview
-                         */
-                        if ( 'function' == typeof bind_colorbox_to_thumbnail_preview) {
-                            bind_colorbox_to_thumbnail_preview();
-                        }
-                        break;
-                    default:
-                        $('.textfield', $parent).val(attachment.attributes.url);
-                        break;
-                }
-                frame[$id].close();
-            });
-
-            frame[$id].open();
-    }
-
-    return {
-        init: init,
-        bindOpen: bindOpen,
+        return self;
     };
-})(jQuery);
 
-jQuery(document).ready(wptFile.init);
+    /**
+     * Set the field value.
+     *
+     * @param object $instance DOM element matching the field instance structure.
+     * @param object Media item selected in the media dialog.
+     *
+     * @since 3.3
+     */
+    self.setFieldValue = function( $instance, mediaItem ) {
+        $instance
+            .find( self.CONST.INPUT_VALUE_SELECTOR )
+                .val( mediaItem.url )
+                .trigger( 'change' );
+    };
+
+    /**
+     * Update the field preview, if any.
+     *
+     * @param object $instance DOM element matching the field instance structure.
+     * @param object Media item selected in the media dialog.
+     *
+     * @since 3.3
+     */
+    self.manageFieldPreview = function( $instance, mediaItem ) {
+        var $previewContainer = $instance.find( self.CONST.PREVIEW_CONTAINER_SELECTOR ),
+            $mediaSelector = $instance.find( self.CONST.INPUT_SELECTOR ),
+            metaData = $mediaSelector.data( 'meta' );
+
+        metaData = _.defaults( metaData, {
+            metakey: '',
+            parent: 0,
+            type: '',
+            preview: '',
+            multiple: false,
+            select_label: '',
+            edit_label: ''
+        });
+
+        if ( '' == metaData.preview ) {
+            if ( _.contains( [ 'audio', 'file', 'video' ], metaData.type ) ) {
+                metaData.preview = 'url';
+            }
+            if ( _.contains( [ 'image' ], metaData.type ) ) {
+                metaData.preview = 'img';
+            }
+        }
+
+        switch( metaData.preview ) {
+            case 'img':
+                if ( 0 == $( 'img', $previewContainer ).length) {
+                    $previewContainer.append('<img src="">');
+                }
+
+                var $img = $previewContainer.find( 'img' );
+
+                var has_size_full = false;
+                if (
+                    'undefined' != typeof mediaItem.sizes
+                    && 'undefined' != typeof mediaItem.sizes.full
+                    && 'undefined' != typeof mediaItem.sizes.full.url
+                ) {
+                    has_size_full = true;
+                }
+
+                if (
+                    'undefined' != typeof mediaItem.sizes
+                    && 'undefined' != typeof mediaItem.sizes.thumbnail
+                    && 'undefined' != typeof mediaItem.sizes.thumbnail.url
+                   ) {
+                    $img.attr(
+                        {
+                            'src': mediaItem.sizes.thumbnail.url,
+                            'srcset': mediaItem.sizes.thumbnail.url,
+                        }
+                    );
+                }
+                else if ( has_size_full ) {
+                    $img.attr(
+                        {
+                            'src': mediaItem.sizes.full.url,
+                            'srcset': mediaItem.sizes.full.url,
+                        }
+                    );
+                }
+                else if ( 'undefined' != typeof(mediaItem.url) ) {
+                    $img.attr(
+                        {
+                            'src': mediaItem.url,
+                            'srcset': mediaItem.url,
+                        }
+                    );
+                }
+                /**
+                 * add full
+                 */
+                if ( has_size_full ) {
+                    $img.data('full-src', mediaItem.sizes.full.url);
+                } else if ( 'undefined' != typeof(mediaItem.url) ) {
+                    $img.data('full-src', mediaItem.url);
+                }
+
+                // add "title" and "alt" attribute to preview image
+                $img.attr('alt', mediaItem.alt );
+                $img.attr('title', mediaItem.title );
+
+                /**
+                 * bind preview popup
+                 */
+                if ( 'function' == typeof bind_colorbox_to_thumbnail_preview) {
+                    bind_colorbox_to_thumbnail_preview();
+                }
+                break;
+            case 'url':
+            case 'filename':
+            default:
+                $previewContainer.hide();
+                break;
+        }
+
+        $mediaSelector.text( metaData[ 'edit_label' ] );
+
+    };
+
+    /**
+     * Set the post to attach media to, if needed.
+     *
+     * Note that we only force a post ID when dealing with quick edit for related posts:
+     * - it works properly on add new/connect to existing relationships creation.
+     * - it works properly on RFGs instances.
+     * - but it only attaches properly to the right post in quick edit :-(
+     *
+     * @param int parentId
+     * @param object $mediaSelector DOM element matching the button to add field values.
+     *
+     * @since 3.3
+     */
+    self.setParentId = function( parentId, $mediaSelector ) {
+        if ( $mediaSelector.closest( '.types-quick-edit-fields' ).length > 0 ) {
+            parentId = $mediaSelector
+                .closest( '.types-quick-edit-fields' )
+                    .find('[name=post_id]')
+                        .val();
+            wp.media.model.settings.post.id = parentId;
+        }
+        return parentId;
+    };
+
+    self.init();
+};
+
+Toolset.Forms.MediaField.prototype = Object.create( Toolset.Common.MediaField.prototype );
+
+jQuery( document ).ready( function( $ ) {
+    new Toolset.Forms.MediaField( $ );
+});

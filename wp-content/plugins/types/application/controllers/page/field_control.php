@@ -306,6 +306,7 @@ final class Types_Page_Field_Control extends Types_Page_Abstract {
 		
 		return array(
 			'jsIncludePath' => TYPES_RELPATH . '/public/page/field_control',
+			'typesVersion' => TYPES_VERSION,
 			'fieldDefinitions' => $this->build_field_definitions(),
 			'fieldTypeDefinitions' => $field_type_definition_factory->get_field_type_definitions(),
 			'templates' => $this->build_templates(),
@@ -527,28 +528,26 @@ final class Types_Page_Field_Control extends Types_Page_Abstract {
 			'option' => self::SCREEN_OPTION_PER_PAGE_NAME,
 		);
 		add_screen_option( 'per_page', $args );
-
-		add_filter( 'set-screen-option', array( $this, 'set_screen_option' ), 10, 3);
 	}
 
 
 	/**
 	 * Update the "per page" screen option.
 	 * 
-	 * @param $status
+	 * @param $original_value
 	 * @param string $option
-	 * @param $value
+	 * @param $option_value
+	 *
 	 * @return mixed
 	 * @since 2.0
 	 */
-	public function set_screen_option( $status, $option, $value ) {
-
+	public function set_screen_option( $original_value, $option, $option_value ) {
 		if ( self::SCREEN_OPTION_PER_PAGE_NAME == $option ) {
-			return $value;
+			return $option_value;
 		}
 
-		return $status;
-
+		// not our option, return the original value (which is by default "false" = no saving)
+		return $original_value;
 	}
 
 

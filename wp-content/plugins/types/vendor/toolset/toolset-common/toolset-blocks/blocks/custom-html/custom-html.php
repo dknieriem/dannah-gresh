@@ -6,20 +6,19 @@
  *
  * @since 2.6.0
  */
-class Toolset_Blocks_Custom_HTML implements Toolset_Gutenberg_Block_Interface {
+class Toolset_Blocks_Custom_HTML_Extension extends Toolset_Gutenberg_Block {
 
 	const BLOCK_NAME = 'toolset/custom-html';
 
 	public function init_hooks() {
-
 		add_action( 'init', array( $this, 'register_block_editor_assets' ) );
 
 		add_action( 'init', array( $this, 'register_block_type' ) );
 
-		// Hook scripts function into block editor hook
+		// Hook scripts function into block editor hook.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'blocks_editor_scripts' ) );
 
-		// Hook scripts function into block editor hook
+		// Hook scripts function into block editor hook.
 		add_action( 'enqueue_block_assets', array( $this, 'blocks_scripts' ) );
 	}
 
@@ -29,33 +28,50 @@ class Toolset_Blocks_Custom_HTML implements Toolset_Gutenberg_Block_Interface {
 	 * @since 2.6.0
 	 */
 	public function register_block_editor_assets() {
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
-
-		$toolset_assets_manager->register_script(
+		$this->toolset_assets_manager->register_script(
 			'toolset-custom-html-block-js',
-			TOOLSET_COMMON_URL . '/toolset-blocks/assets/js/custom.html.block.editor.js',
-			array( 'wp-i18n', 'wp-element', 'wp-blocks', 'wp-components', 'wp-api' ),
-			TOOLSET_COMMON_VERSION
+			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . '/toolset-blocks/assets/js/custom.html.block.editor.js',
+			array( 'wp-editor' ),
+			$this->constants->constant( 'TOOLSET_COMMON_VERSION' )
 		);
+
+		/**
+		 * Filter to allow extending the buttons in the toolbar of the core Custom HTML block.
+		 *
+		 * @param array $extension_buttons The buttons information to be used for the extension.
+		 *
+		 * @since 3.2.5
+		 */
+		$extension_buttons = apply_filters( 'toolset_filter_extend_the_core_custom_html_block', array() );
+
+		if (
+			$this->types_active->is_met() &&
+			! $this->views_active->is_met()
+		) {
+			$extension_buttons['types'] = array(
+				'clickCallback' => 'window.Toolset.Types.shortcodeGUI.openMainDialog',
+			);
+		}
+
+		if ( $this->cred_active->is_met() ) {
+			$extension_buttons['cred'] = array(
+				'clickCallback' => 'window.Toolset.CRED.shortcodeGUI.openCredDialog',
+			);
+		}
 
 		wp_localize_script(
 			'toolset-custom-html-block-js',
 			'toolset_custom_html_block_strings',
-			array()
+			array(
+				'extensionButtons' => $extension_buttons,
+			)
 		);
 
-		$toolset_assets_manager->register_style(
+		$this->toolset_assets_manager->register_style(
 			'toolset-custom-html-block-editor-css',
-			TOOLSET_COMMON_URL . '/toolset-blocks/assets/css/custom.html.block.editor.css',
-			array( 'wp-blocks', 'wp-edit-blocks' ),
-			TOOLSET_COMMON_VERSION
-		);
-
-		$toolset_assets_manager->register_style(
-			'toolset-custom-html-block-editor-frontend-css',
-			TOOLSET_COMMON_URL . '/toolset-blocks/assets/css/custom.html.block.style.css',
-			array( 'wp-blocks', 'wp-edit-blocks' ),
-			TOOLSET_COMMON_VERSION
+			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . '/toolset-blocks/assets/css/custom.html.block.editor.css',
+			array(),
+			$this->constants->constant( 'TOOLSET_COMMON_VERSION' )
 		);
 	}
 
@@ -74,9 +90,7 @@ class Toolset_Blocks_Custom_HTML implements Toolset_Gutenberg_Block_Interface {
 	 *
 	 * @since 2.6.0
 	 */
-	public function blocks_scripts() {
-		return;
-	}
+	public function blocks_scripts(){}
 
 	/**
 	 * Register block type. We can use this method to register the editor & frontend scripts as well as the render callback.
@@ -85,7 +99,5 @@ class Toolset_Blocks_Custom_HTML implements Toolset_Gutenberg_Block_Interface {
 	 *
 	 * @since 2.6.0
 	 */
-	public function register_block_type() {
-		return;
-	}
+	public function register_block_type(){}
 }

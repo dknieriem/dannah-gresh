@@ -13,6 +13,7 @@ abstract class Types_Field_Gateway_Abstract implements Types_Field_Gateway_Inter
 	 * @return null|array
 	 */
 	public function get_field_by_id( $id ) {
+		$id = trim( $id );
 		$fields = $this->get_fields();
 
 		if( ! isset( $fields[$id] ) || ! isset( $fields[$id]['type'] ) ) {

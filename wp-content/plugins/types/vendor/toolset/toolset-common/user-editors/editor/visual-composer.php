@@ -10,10 +10,26 @@
 class Toolset_User_Editors_Editor_Visual_Composer
 	extends Toolset_User_Editors_Editor_Abstract {
 
-	protected $id = 'vc';
+	const VC_SCREEN_ID = 'vc';
+
+	/**
+	 * @var string
+	 */
+	protected $id = self::VC_SCREEN_ID;
+
+	/**
+	 * @var string
+	 */
 	protected $name = 'WPBakery Page Builder';
+
+	/**
+	 * @var string
+	 */
 	protected $option_name = '_toolset_user_editors_vc';
 
+	/**
+	 * @var string
+	 */
 	protected $logo_image_svg = 'vc.svg';
 
 	/**

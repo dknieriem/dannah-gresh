@@ -34,6 +34,7 @@ WPViews.ViewEditScreenUserEditorBasic = function( $ ) {
     self.i18n_data = {
         title: toolset_user_editors_basic_layout_template_i18n.template_overlay.title,
     };
+	self.dialogSource = null;
 	
 	self.initBasicEditors = function() {
 		$( self.selector ).each( function() {
@@ -57,7 +58,7 @@ WPViews.ViewEditScreenUserEditorBasic = function( $ ) {
 		if ( attributes.builder == 'basic' ) {
 			item.addClass( 'js-wpv-ct-listing-user-editor-inited' );
 			item.find( '.js-wpv-layout-template-overlay' ).remove();
-			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-basic)' ).prop( 'disabled', false );
+			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-basic)' ).prop( 'disabled', false ).attr( 'disabled', false );
 			// Autoresize setting
 			if ( 
 				wpv_inline_templates_i18n.settings.codemirror_autoresize == 'true' 
@@ -132,6 +133,26 @@ WPViews.ViewEditScreenUserEditorBasic = function( $ ) {
 	
 	$( document ).on( 'click', '.js-wpv-ct-apply-user-editor', function( e ) {
 		e.preventDefault();
+
+		var currentCTUpdateButton = $( this ).closest( '.js-wpv-ct-listing' ).find( '.js-wpv-inline-content-template-title .js-wpv-ct-update-inline' );
+		if ( ! currentCTUpdateButton.prop( 'disabled' ) ) {
+			// The user tries to edit the inline Content Template content using an editor.
+			// If the "Update" button for the current inline Content Template is enabled, which means that there are changes in it,
+			// they need to be saved before moving onto the editor.
+			// We display a modal offering to save the changes on the current Content Template.
+			self.dialogSource = $( this );
+
+			var editorName = '' !== $( this ).find( '.button-label' ).text().trim() ? $( this ).find( '.button-label' ).text().trim() : $( this ).text().trim(),
+				ct_name = $( this ).closest( '.js-wpv-ct-listing' ).find( '.js-wpv-inline-content-template-title strong' ).html();
+
+			$( '.js_tooslet_unsaved_content_template_name' ).html( ct_name );
+			$( '.js_tooslet_unsaved_content_template_editor' ).html( editorName );
+
+			self.unsavedContentTemplateDialog.dialog( 'open' );
+			return;
+		}
+
+		self.dialogSource = null;
 		
 		var thiz = $( this ),
 			editor = thiz.data( 'editor' ),
@@ -171,10 +192,80 @@ WPViews.ViewEditScreenUserEditorBasic = function( $ ) {
 		Toolset.hooks.addAction( 'toolset-action-toolset-set-user-editor-to-basic', self.setUserEditorToBasic );
 		return self;
 	};
+
+	self.initDialogs = function() {
+		var unsavedContentTemplateDialogSelector = $( '#js-toolset-unsaved-content-template-dialog' );
+		if ( ! unsavedContentTemplateDialogSelector.length ) {
+			$( 'body' ).append( '<div id="js-toolset-unsaved-content-template-dialog" class="toolset-unsaved-content-template-dialog-container"></div>' );
+			unsavedContentTemplateDialogSelector = $( unsavedContentTemplateDialogSelector.selector );
+		}
+
+		self.unsavedContentTemplateDialog = unsavedContentTemplateDialogSelector
+			.html( toolset_user_editors_basic_layout_template_i18n.unsavedContentTemplateDialog.content )
+			.dialog({
+				autoOpen: false,
+				modal: true,
+				title: toolset_user_editors_basic_layout_template_i18n.unsavedContentTemplateDialog.title,
+				minWidth: 550,
+				draggable: false,
+				resizable: false,
+				position: {
+					my: "center top+50",
+					at: "center top",
+					of: window,
+					collision: "none"
+				},
+				show: {
+					effect: "blind",
+					duration: 800
+				},
+				create: function( event, ui ) {},
+				open: function( event, ui ) {
+					$( 'body' ).addClass( 'modal-open' );
+				},
+				close: function( event, ui ) {
+					$( 'body' ).removeClass( 'modal-open' );
+				},
+				buttons: [
+					{
+						class: 'button-secondary toolset-shortcode-gui-dialog-button-close',
+						text: toolset_user_editors_basic_layout_template_i18n.unsavedContentTemplateDialog.buttons.cancel,
+						click: function () {
+							$( this ).dialog( 'close' );
+						}
+					},
+					{
+						class: 'toolset-shortcode-gui-dialog-button-align-right button-primary',
+						text: toolset_user_editors_basic_layout_template_i18n.unsavedContentTemplateDialog.buttons.save,
+						click: function () {
+							if ( null !== self.dialogSource ) {
+								// User tries to save the inline Content Template content through the modal.
+								// In this case we are triggering a click on the "Update" button of the inline Content Template
+								// while also hooking an callback on the successful Content Template saving, in order to:
+								//    * mark the Content Template as edited by the selected editor
+								//    * remove the event afterwards
+								$( document ).on( 'js_event_wpv_save_section_inline_content_template_completed.inline_ct_template', function() {
+									self.dialogSource.click();
+									$( document ).off( 'js_event_wpv_save_section_inline_content_template_completed.inline_ct_template' );
+								} );
+
+								var updateCTbutton = self.dialogSource.closest( '.js-wpv-ct-listing' ).find( '.js-wpv-inline-content-template-title .js-wpv-ct-update-inline' );
+								updateCTbutton.click();
+
+								self.unsavedContentTemplateDialog.dialog( 'close' );
+							}
+						}
+					}
+				]
+			});
+
+		return self;
+	};
 	
 	self.init = function() {
 		self.initBasicEditors()
-			.initHooks();
+			.initHooks()
+			.initDialogs();
 		
 	};
 	

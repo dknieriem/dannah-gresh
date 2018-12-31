@@ -88,7 +88,7 @@ abstract class Toolset_Field_Definition_Factory implements Toolset_Field_Definit
 	 *
 	 * @return null|Toolset_Field_Definition Field definition or null if it can't be loaded.
 	 */
-	final public function load_field_definition( $field_key ) {
+	public function load_field_definition( $field_key ) {
 
 		if( ! array_key_exists( $field_key, $this->field_definitions ) ) {
 			$this->field_definitions[ $field_key ] = $this->load_field_definition_from_database( $field_key );

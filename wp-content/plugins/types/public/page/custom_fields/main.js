@@ -19,7 +19,7 @@ Types.page.customFields.strings = {};
  * @constructor
  * @since 2.3
  */
-Types.page.customFields.Class = function() {
+Types.page.customFields.Class = function () {
 
     var self = this;
 
@@ -33,17 +33,17 @@ Types.page.customFields.Class = function() {
      * @param modelData
      * @since 2.3
      */
-    self.initStaticData = function(modelData) {
+    self.initStaticData = function (modelData) {
         Types.page.customFields.strings = modelData.strings || {};
         Types.page.customFields.itemsPerPage = modelData.itemsPerPage || {};
-				Types.page.customFields.ajaxInfo = modelData.ajaxInfo || {};
+        Types.page.customFields.ajaxInfo = modelData.ajaxInfo || {};
 
         Types.page.customFields.strings.misc = Types.page.customFields.strings.misc || {};
         Types.page.customFields.ajaxInfo = modelData.ajaxInfo || {};
         Types.page.customFields.currentDomain = modelData.currentDomain || {};
         Types.page.customFields.itemsPerPage = modelData.itemsPerPage || {};
-				Types.page.customFields.addNewLinks = modelData.addNewLinks || {};
-				Types.page.customFields.tabs = modelData.tabs || {};
+        Types.page.customFields.addNewLinks = modelData.addNewLinks || {};
+        Types.page.customFields.tabs = modelData.tabs || {};
     };
 
 
@@ -52,7 +52,7 @@ Types.page.customFields.Class = function() {
      *
      * @since 2.3
      */
-    self.initAjax = function() {
+    self.initAjax = function () {
 
         /**
          * Perform an AJAX call on field definitions.
@@ -116,11 +116,12 @@ Types.page.customFields.Class = function() {
     };
 
 
-    self.beforeInit = function() {
+    self.beforeInit = function () {
 
         var modelData = self.getModelData();
         //noinspection JSUnresolvedVariable
         Types.page.customFields.jsPath = modelData.jsIncludePath;
+        Types.page.customFields.typesVersion = modelData.typesVersion || 'unset';
 
         self.initStaticData(modelData);
         self.initAjax();
@@ -134,11 +135,11 @@ Types.page.customFields.Class = function() {
      *
      * @since 2.3
      */
-    self.addKnockoutBindingHandlers = function() {
+    self.addKnockoutBindingHandlers = function () {
 
-        var highlightedBorder = function(element, valueAccessor) {
+        var highlightedBorder = function (element, valueAccessor) {
             var isHighlighted = ko.unwrap(valueAccessor());
-            if(isHighlighted) {
+            if (isHighlighted) {
                 jQuery(element).addClass('types-highlighted-border').focus();
             } else {
                 jQuery(element).removeClass('types-highlighted-border');
@@ -158,44 +159,45 @@ Types.page.customFields.Class = function() {
     };
 
 
-    self.loadDependencies = function(nextStep) {
+    self.loadDependencies = function (nextStep) {
+        var typesVersion = Types.page.customFields.typesVersion;
         // Continue after loading the view of the listing table.
         Types.head.load(
-						Types.page.customFields.jsPath + '/viewmodels/ListingViewModel.js',
-						Types.page.customFields.jsPath + '/viewmodels/CustomFieldViewModel.js',
-            Types.page.customFields.jsPath + '/viewmodels/AddNewDialogViewModel.js',
-						Types.page.customFields.jsPath + '/viewmodels/DeleteDialogViewModel.js',
+            Types.page.customFields.jsPath + '/viewmodels/ListingViewModel.js?ver=' + typesVersion,
+            Types.page.customFields.jsPath + '/viewmodels/CustomFieldViewModel.js?ver=' + typesVersion,
+            Types.page.customFields.jsPath + '/viewmodels/AddNewDialogViewModel.js?ver=' + typesVersion,
+            Types.page.customFields.jsPath + '/viewmodels/DeleteDialogViewModel.js?ver=' + typesVersion,
             nextStep
         );
     };
 
 
-    self.getMainViewModel = function() {
+    self.getMainViewModel = function () {
         return new Types.page.customFields.viewmodels.ListingViewModel(self.getModelData().customFields);
     };
 
-    var tabsHandler = function() {
-        jQuery( document ).on( 'click', '.js-toolset-nav-tab', function( e ) {
+    var tabsHandler = function () {
+        jQuery(document).on('click', '.js-toolset-nav-tab', function (e) {
             e.preventDefault();
-            var $clicked_tab = jQuery( this ),
-                target = $clicked_tab.data( 'target' ),
-                current = jQuery( '.js-toolset-nav-tab.nav-tab-active' ).data( 'target' );
-            if ( ! $clicked_tab.hasClass( 'nav-tab-active' ) ) {
-                jQuery( '.js-toolset-nav-tab.nav-tab-active' ).removeClass( 'nav-tab-active' );
-                jQuery( '.js-toolset-tabbed-section-item-' + current ).fadeOut( 'fast', function() {
-                    jQuery( '.js-toolset-tabbed-section-item' ).removeClass( 'toolset-tabbed-section-current-item js-toolset-tabbed-section-current-item' );
-                    $clicked_tab.addClass( 'nav-tab-active' );
-                    jQuery( '.js-toolset-tabbed-section-item-' + target ).fadeIn( 'fast', function() {
-                        jQuery( this ).addClass( 'toolset-tabbed-section-current-item js-toolset-tabbed-section-current-item' );
+            var $clicked_tab = jQuery(this),
+                target = $clicked_tab.data('target'),
+                current = jQuery('.js-toolset-nav-tab.nav-tab-active').data('target');
+            if (!$clicked_tab.hasClass('nav-tab-active')) {
+                jQuery('.js-toolset-nav-tab.nav-tab-active').removeClass('nav-tab-active');
+                jQuery('.js-toolset-tabbed-section-item-' + current).fadeOut('fast', function () {
+                    jQuery('.js-toolset-tabbed-section-item').removeClass('toolset-tabbed-section-current-item js-toolset-tabbed-section-current-item');
+                    $clicked_tab.addClass('nav-tab-active');
+                    jQuery('.js-toolset-tabbed-section-item-' + target).fadeIn('fast', function () {
+                        jQuery(this).addClass('toolset-tabbed-section-current-item js-toolset-tabbed-section-current-item');
                     });
                 });
             }
         });
     };
 
-    self.afterInit = function() {
+    self.afterInit = function () {
         Types.page.menuLinkAdjuster.addMenuParams({key: 'domain', value: Types.page.customFields.currentDomain});
-				tabsHandler();
+        tabsHandler();
     };
 
 };

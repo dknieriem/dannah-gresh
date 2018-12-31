@@ -6,54 +6,84 @@
  * @since m2m
  */
 class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
-	
+
 	const SCRIPT_TYPES_SHORTCODE = 'types-shortcode';
-	
+
+	/**
+	 * Admin bar shortcodes button priority.
+	 *
+	 * Set to 5 to follow an order for Toolset buttons:
+	 * - 5 Types/Views
+	 * - 6 Forms
+	 * - 7 Access
+	 */
+	const ADMIN_BAR_BUTTON_PRIORITY = 5;
+
+	/**
+	 * Media toolbar shortcodes button priority. Note that the native button is loaded at 10.
+	 *
+	 * Set to 11 to follow an order for Toolset buttons:
+	 * - 11 Types/Views
+	 * - 12 Forms
+	 * - 13 Access
+	 */
+	const MEDIA_TOOLBAR_BUTTON_PRIORITY = 11;
+
+	/**
+	 * MCE shortcodes button priority.
+	 *
+	 * Set to 5 to follow an order for Toolset buttons:
+	 * - 5 Types/Views
+	 * - 6 Forms
+	 * - 7 Access
+	 */
+	const MCE_BUTTON_PRIORITY = 5;
+
 	/**
 	 * @var bool
 	 */
 	private $admin_bar_item_registered	= false;
-	
+
 	/**
 	 * @var bool
 	 */
 	private $footer_dialog_needed		= false;
-	
+
 	/**
 	 * @var array
 	 */
 	private $dialog_groups				= array();
-	
+
 	/**
 	 * @var string
 	 */
 	private $footer_dialogs				= '';
-	
+
 	/**
 	 * @var bool
 	 */
 	private $doing_ajax                 = false;
-	
+
 	/**
 	 * @var Types_Field_Group_Repeatable_Service
 	 */
 	private $repeatable_group_service;
-	
+
 	/**
 	 * @var bool
 	 */
 	private $views_available = false;
-	
+
 	/**
 	 * Initialize the class.
 	 *
 	 * @since m2m
 	 */
 	public function initialize() {
-		
+
 		$this->doing_ajax = ( defined( 'DOING_AJAX' ) && DOING_AJAX );
 		$this->repeatable_group_service = new Types_Field_Group_Repeatable_Service();
-		
+
 		/*
 		 * ---------------------
 		 * Toolset fair play:
@@ -61,7 +91,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		 * ---------------------
 		 */
 		$this->views_available = apply_filters( 'toolset_is_views_available', false );
-		
+
 		/*
 		 * ---------------------
 		 * Admin Bar
@@ -69,8 +99,8 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		 */
 		// Register the Fields and Views item in the backend Admin Bar
 		$this->admin_bar_item_registered = false;
-		add_filter( 'toolset_shortcode_generator_register_item', array( $this, 'register_shortcode_generator' ), 5 );
-		
+		add_filter( 'toolset_shortcode_generator_register_item', array( $this, 'register_shortcode_generator' ), self::ADMIN_BAR_BUTTON_PRIORITY );
+
 		/*
 		 * ---------------------
 		 * Button and dialogs
@@ -81,19 +111,23 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		add_action( 'types_action_register_shortcode_group', array( $this, 'register_shortcode_group' ), 10, 2 );
 		add_action( 'types_action_collect_shortcode_groups', array( $this, 'register_builtin_groups' ), 1 );
 		add_action( 'wpv_action_collect_shortcode_groups',   array( $this, 'register_builtin_groups' ), 10 );
-		
+
 		// Types in native editors plus on demand:
 		// - From media_buttons actions
 		// - From Toolset arbitrary editor toolbars
-		add_action( 'media_buttons',                                     array( $this, 'generate_types_button' ) );
+		add_action( 'media_buttons',                                     array( $this, 'generate_types_button' ), self::MEDIA_TOOLBAR_BUTTON_PRIORITY );
 		add_action( 'toolset_action_toolset_editor_toolbar_add_buttons', array( $this, 'generate_types_custom_button' ), 10, 2 );
-		
+
+		// Shortcodes button in Gutenberg classic TinyMCE editor blocks
+		add_filter( 'mce_external_plugins', array( $this, 'mce_button_scripts' ), self::MCE_BUTTON_PRIORITY );
+		add_filter( 'mce_buttons', array( $this, 'mce_button' ), self::MCE_BUTTON_PRIORITY );
+
 		// Unregister on known scenarios
 		add_filter( 'types_filter_add_types_button',                     array( $this, 'unhook_types_button'), 10, 2 );
-		
+
 		// Track whether dialogs re needed and have been rendered in the footer
 		$this->footer_dialogs = '';
-		
+
 		// Generate and print the shortcodes dialogs in the footer,
 		// both in frotend and backend, as long as there is anything to print.
 		// Do it as late as possible because page builders tend to register their templates,
@@ -104,7 +138,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			add_action( 'wp_footer',    array( $this, 'render_footer_dialogs' ), PHP_INT_MAX );
 			add_action( 'admin_footer', array( $this, 'render_footer_dialogs' ), PHP_INT_MAX );
 		}
-		
+
 		/*
 		 * ---------------------
 		 * Assets
@@ -118,13 +152,13 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			add_action( 'wp_enqueue_scripts',    array( $this, 'frontend_enqueue_assets' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_assets' ) );
 		}
-		
+
 		// Ensure that shortcodes dialogs assets are enqueued
 		// both when using the Admin Bar item and when a Types button is on the page.
 		if ( ! $this->doing_ajax ) {
 			add_action( 'types_action_enforce_shortcode_assets', array( $this, 'enforce_shortcode_assets' ) );
 		}
-		
+
 		/*
 		 * ---------------------
 		 * Compatibility
@@ -132,25 +166,25 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		 */
 		add_filter( 'gform_noconflict_scripts',	array( $this, 'gform_noconflict_scripts' ) );
 		add_filter( 'gform_noconflict_styles',	array( $this, 'gform_noconflict_styles' ) );
-		
+
 	}
-	
+
 	/**
 	 * Register the shortcode generator in the Toolset shortcodes admin bar entry.
 	 *
 	 * Hooked into the toolset_shortcode_generator_register_item filter.
-	 * 
+	 *
 	 * @since m2m
 	 */
 	public function register_shortcode_generator( $registered_sections ) {
-		
+
 		$this->footer_dialog_needed = true;
 		$this->enforce_shortcode_assets();
-		
+
 		if ( $this->views_available ) {
 			return $registered_sections;
 		}
-		
+
 		$this->admin_bar_item_registered = true;
 		$registered_sections[ 'types' ] = array(
 			'id'		=> 'Types',
@@ -161,7 +195,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		);
 		return $registered_sections;
 	}
-	
+
 	/**
 	 * Register all the dedicated shortcodes assets:
 	 * - Shortcodes GUI script.
@@ -169,10 +203,10 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @todo Move the assets registration to here
 	 *
 	 * @since m2m
-	 */	
+	 */
 	public function register_assets() {
 		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
-		
+
 		$toolset_assets_manager->register_script(
 			self::SCRIPT_TYPES_SHORTCODE,
 			TYPES_RELPATH . '/public/js/types_shortcode.js',
@@ -180,7 +214,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			TYPES_VERSION,
 			true
 		);
-		
+
 		global $pagenow;
 		$conditions = array(
 			'toolsetViews' => new Toolset_Condition_Plugin_Views_Active()
@@ -216,7 +250,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'number'		=> __( 'Please enter a valid number', 'wpcf' ),
 				'numberlist'	=> __( 'Please enter a valid comma separated number list', 'wpcf' ),
 				'url'			=> __( 'Please enter a valid URL', 'wpcf' ),
-				
+
 			),
 			'conditions' => array(
 				'plugins' => array(
@@ -227,21 +261,26 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 					'ctEditor' => ( 'admin.php' == $pagenow && 'ct-editor' == toolset_getget( 'page' ) )
 				)
 			),
+			'mce' => array(
+				'types' => array(
+					'button' => __( 'Types', 'wpcf' ),
+				),
+			),
 			'ajaxurl'         => admin_url( 'admin-ajax.php', ( is_ssl() ? 'https' : 'http' )  ),
 			'pagenow'         => $pagenow,
 			'attributes'      => $this->get_fields_expected_attributes(),
 			'repeatingAttributes' => $this->get_repeating_fields_extra_attributes(),
 			'selectorGroups'  => $this->get_selector_groups_attributes()
 		);
-		$toolset_assets_manager->localize_script( 
-			'types-shortcode', 
-			'types_shortcode_i18n', 
-			$types_shortcode_i18n 
+		$toolset_assets_manager->localize_script(
+			'types-shortcode',
+			'types_shortcode_i18n',
+			$types_shortcode_i18n
 		);
 	}
-	
+
 	/**
-	 * Enforce some assets that need to be in the frontend header, like styles, 
+	 * Enforce some assets that need to be in the frontend header, like styles,
 	 * when we detect that we are on a page that needs them.
 	 * Basically, this involves frontend page builders, detected by their own methods.
 	 * Also enforces the generation of the dialog, just in case, in the footer.
@@ -252,17 +291,17 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 */
 	public function frontend_enqueue_assets() {
 		// Enqueue on the frontend pages that we know it is needed, maybe on users frontend editors only
-		
+
 		if ( $this->is_frontend_editor_page() ) {
 			$this->footer_dialog_needed = true;
 			$this->enforce_shortcode_assets();
-			
+
 		}
-		
+
 	}
-	
+
 	/**
-	 * Enforce some assets that need to be in the backend header, like styles, 
+	 * Enforce some assets that need to be in the backend header, like styles,
 	 * when we detect that we are on a page that needs them.
 	 * Also enforces the generation of the dialog, just in case, in the footer.
 	 *
@@ -278,37 +317,37 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			$this->enforce_shortcode_assets();
 		}
 	}
-	
+
 	/**
 	 * Enforce the shortcodes assets when loaded at a late time.
-	 * Note that there should be no problem with scripts, 
+	 * Note that there should be no problem with scripts,
 	 * although styles might not be correctly enqueued.
 	 *
 	 * @usage do_action( 'types_action_enforce_shortcode_assets' );
 	 *
 	 * @since m2m
-	 */	
+	 */
 	public function enforce_shortcode_assets() {
-		
+
 		do_action( 'toolset_enqueue_scripts', array( 'types-shortcode' ) );
-		do_action( 'toolset_enqueue_styles', array( 
+		do_action( 'toolset_enqueue_styles', array(
 			Toolset_Assets_Manager::STYLE_JQUERY_UI_DIALOG,
-			Toolset_Assets_Manager::STYLE_TOOLSET_COMMON, 
-			Toolset_Assets_Manager::STYLE_TOOLSET_DIALOGS_OVERRIDES, 
-			Toolset_Assets_Manager::STYLE_SELECT2_CSS, 
+			Toolset_Assets_Manager::STYLE_TOOLSET_COMMON,
+			Toolset_Assets_Manager::STYLE_TOOLSET_DIALOGS_OVERRIDES,
+			Toolset_Assets_Manager::STYLE_SELECT2_CSS,
 			Toolset_Assets_Manager::STYLE_NOTIFICATIONS
 		) );
 		do_action( 'otg_action_otg_enforce_styles' );
-		
+
 	}
-	
+
 	/**
 	 * Unregister the Types button from editors on known problematic scenarios.
 	 *
 	 * @since m2m
 	 */
 	public function unhook_types_button( $status, $editor ) {
-		
+
 		// first determine what is the situation
 		$is_elementor_page_builder = ( 'elementor' === toolset_getget( 'action' ) );
 
@@ -316,10 +355,37 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		if ( $is_elementor_page_builder ) {
 			return false;
 		}
-		
+
 		return $status;
 	}
-	
+
+	/**
+	 * Check whether the shortcodes generator button should not be included in editors.
+	 *
+	 * @param string $editor
+	 * @return bool
+	 * @since 3.2
+	 */
+	private function is_editor_button_disabled( $editor = '' ) {
+		if ( ! apply_filters( 'toolset_editor_add_form_buttons', true ) ) {
+			return true;
+		}
+
+		/**
+		 * Public filter to disable the shortcodes button on selected editors.
+		 *
+		 * @param bool
+		 * @param string $editor The ID of the editor.
+		 * @return bool
+		 * @since m2m
+		 */
+		if ( ! apply_filters( 'types_filter_add_types_button', true, $editor ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * Generate the button on native editors, using the media_buttons action.
 	 * and also on demand using a custom action.
@@ -330,40 +396,30 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 *
 	 * @since m2m
 	 */
-	function generate_types_button( $editor, $args = array() ) {
-		
-		$dont_add_editor_form_buttons = ( ! apply_filters( 'toolset_editor_add_form_buttons', true ) );
-
-		/**
-		 * Public filter to disable the Types button on native WordPress editors.
-		 *
-		 * @since m2m
-		 */
-		$dont_add_types_button = ( ! apply_filters( 'types_filter_add_types_button', true, $editor ) );
-
-		if ( 
-			empty( $args ) 
-			&& ( $dont_add_editor_form_buttons || $dont_add_types_button ) 
+	public function generate_types_button( $editor, $args = array() ) {
+		if (
+			empty( $args )
+			&& $this->is_editor_button_disabled()
 		) {
 			return;
 		}
-		
+
 		$this->footer_dialog_needed = true;
 		$this->enforce_shortcode_assets();
-		
+
 		if ( $this->views_available ) {
 			return;
 		}
-		
+
 		$defaults = array(
 			'output'	=> 'span',
 		);
-		
+
 		$args = wp_parse_args( $args, $defaults );
-		
+
 		$button			= '';
 		$button_label	= __( 'Types', 'wpcf' );
-		
+
 		switch ( $args['output'] ) {
 			case 'button':
 				$button = '<button'
@@ -383,13 +439,13 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				. '</span>';
 				break;
 		}
-		
-		do_action( 'types_action_enforce_shortcode_assets' );
-		
+
+		$this->enforce_shortcode_assets();
+
 		echo $button;
-		
+
 	}
-	
+
 	/**
 	 * Generate a button for custom editor toolbars, inside a <li></li> HTML tag.
 	 *
@@ -401,23 +457,82 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	public function generate_types_custom_button( $editor, $source = '' ) {
-		
+
 		$this->footer_dialog_needed = true;
 		$this->enforce_shortcode_assets();
-		
+
 		if ( $this->views_available ) {
 			return;
 		}
-		
+
 		$args = array(
 			'output'	=> 'button',
 		);
 		echo '<li>';
 		$this->generate_types_button( $editor, $args );
 		echo '</li>';
-		
+
 	}
-	
+
+	/**
+	 * Add a TinyMCE plugin script for the shortcodes generator button.
+	 *
+	 * Note that this only gets registered when editing a post with Gutenberg.
+	 *
+	 * @param array $plugin_array
+	 * @return array
+	 * @since 2.7
+	 */
+	public function mce_button_scripts( $plugin_array ) {
+		if (
+			! $this->is_blocks_editor_page()
+			|| $this->is_editor_button_disabled()
+			|| $this->views_available
+		) {
+			return $plugin_array;
+		}
+		$this->gutenberg_enqueue_assets();
+		$plugin_array['toolset_add_types_shortcode_button'] = TYPES_RELPATH . '/public/js/compatibility/bundle.tinymce.js?ver=' . TYPES_VERSION;
+		return $plugin_array;
+	}
+
+	/**
+	 * Add a TinyMCE button for the shortcodes generator button.
+	 *
+	 * Note that this only gets registered when editing a post with Gutenberg.
+	 *
+	 * @param array $buttons
+	 * @return array
+	 * @since 2.7
+	 */
+	public function mce_button( $buttons ) {
+		if (
+			! $this->is_blocks_editor_page()
+			|| $this->is_editor_button_disabled()
+			|| $this->views_available
+		) {
+			return $buttons;
+		}
+		$this->gutenberg_enqueue_assets();
+		array_push( $buttons, 'toolset_types_shortcodes' );
+		$classic_editor_block_toolbar_icon_style = '.ont-icon-block-classic-toolbar::before {position:absolute;top:1px;left:2px;}';
+		wp_add_inline_style(
+			Toolset_Assets_Manager::STYLE_TOOLSET_COMMON,
+			$classic_editor_block_toolbar_icon_style
+		);
+		return $buttons;
+	}
+
+	/**
+	 * Enforce the shortcodes generator assets when using a Gutenberg editor.
+	 *
+	 * @since 2.7
+	 */
+	public function gutenberg_enqueue_assets() {
+		$this->footer_dialog_needed = true;
+		$this->enforce_shortcode_assets();
+	}
+
 	/**
 	 * Register Types fields groups in the API.
 	 *
@@ -456,9 +571,9 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			$this->register_meta_dialog_groups( Toolset_Field_Utils::DOMAIN_POSTS );
 			$this->register_meta_dialog_groups( Toolset_Field_Utils::DOMAIN_USERS );
 		}
-		
+
 	}
-	
+
 	/**
 	 * Get meta fields target per domain:
 	 * - postmeta fields on posts
@@ -484,7 +599,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 					$pagenow == 'admin.php'
 					&& in_array( toolset_getget( 'page' ), array( 'view-archives-editor' ) )
 				) {
-					// On WPA edit pages, we can insret also termmeta fields even if the target is posts, 
+					// On WPA edit pages, we can insret also termmeta fields even if the target is posts,
 					// because [types] shortcodes do support termmeta fields output on term archives.
 					$target = array( 'posts' );
 				}
@@ -495,7 +610,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		}
 		return $target;
 	}
-	
+
 	/**
 	 * Get meta fields shortcode attribute per domain:
 	 * - field on postmeta
@@ -523,7 +638,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		}
 		return $slug;
 	}
-	
+
 	/**
 	 * Get a field shortcode default set of data, including:
 	 * - the main attribute as field|termmeta|usermeta key, and field slug value
@@ -539,28 +654,28 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	private function get_shortcode_default_parameters( Toolset_Field_Definition $field ) {
-		
-		if ( ! in_array( 
-			$field->get_factory()->get_domain(), 
-			array( 
-				Toolset_Field_Utils::DOMAIN_POSTS, 
-				Toolset_Field_Utils::DOMAIN_TERMS, 
-				Toolset_Field_Utils::DOMAIN_USERS 
-			) 
+
+		if ( ! in_array(
+			$field->get_factory()->get_domain(),
+			array(
+				Toolset_Field_Utils::DOMAIN_POSTS,
+				Toolset_Field_Utils::DOMAIN_TERMS,
+				Toolset_Field_Utils::DOMAIN_USERS
+			)
 		) ) {
 			return array();
 		}
-		
-		
+
+
 		$parameter_key = $this->get_shortcode_meta_attribute_per_domain( $field->get_factory()->get_domain() );
-		
+
 		$parameters = array(
 			$parameter_key => $field->get_slug(),
 			'metaType'     => $field->get_type()->get_slug(),
 			'metaNature'   => ( $field->get_is_repetitive() ) ? 'multiple' : 'single',
-			'metaDomain'   => $field->get_factory()->get_domain()			
+			'metaDomain'   => $field->get_factory()->get_domain()
 		);
-		
+
 		switch( $field->get_type()->get_slug() ) {
 			case 'radio':
 				$meta_options = array();
@@ -570,9 +685,9 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						continue;
 					}
 					$meta_options[ $option_key ] = array(
-						'title' => wpcf_translate( 
-							'field ' . $field->get_slug() . ' option ' . $option_key . ' title', 
-							$option->get_display_value() 
+						'title' => wpcf_translate(
+							'field ' . $field->get_slug() . ' option ' . $option_key . ' title',
+							$option->get_display_value()
 						)
 					);
 				}
@@ -582,19 +697,19 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				$meta_options = array();
 				foreach ( $field->get_field_options() as $option_key => $option ) {
 					$meta_options[ $option_key ] = array(
-						'title' => wpcf_translate( 
-							'field ' . $field->get_slug() . ' option ' . $option_key . ' title', 
-							$option->get_label() 
+						'title' => wpcf_translate(
+							'field ' . $field->get_slug() . ' option ' . $option_key . ' title',
+							$option->get_label()
 						)
 					);
 				}
 				$parameters['metaOptions'] = $meta_options;
 				break;
 		}
-		
+
 		return $parameters;
 	}
-	
+
 	/**
 	 *
 	 * @param $repeatable_field_group Types_Field_Group_Repeatable
@@ -602,29 +717,29 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * * @since m2m
 	 */
 	private function get_repeatable_field_group_default_parameters( $repeatable_field_group, $domain ) {
-		
-		if ( ! in_array( 
-			$domain, 
-			array( 
-				Toolset_Field_Utils::DOMAIN_POSTS, 
-				Toolset_Field_Utils::DOMAIN_TERMS, 
-				Toolset_Field_Utils::DOMAIN_USERS 
-			) 
+
+		if ( ! in_array(
+			$domain,
+			array(
+				Toolset_Field_Utils::DOMAIN_POSTS,
+				Toolset_Field_Utils::DOMAIN_TERMS,
+				Toolset_Field_Utils::DOMAIN_USERS
+			)
 		) ) {
 			return array();
 		}
-		
+
 		$parameter_key = $this->get_shortcode_meta_attribute_per_domain( $domain );
 		$parameters = array(
 			$parameter_key => $repeatable_field_group->get_slug(),
 			'metaType'     => 'repeatable_field_group',
 			'metaNature'   => 'multiple',
-			'metaDomain'   => $domain			
+			'metaDomain'   => $domain
 		);
-		
+
 		return $parameters;
 	}
-	
+
 	/**
 	 * Get the callback shortcode API JS function for a given field.
 	 *
@@ -636,24 +751,24 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	private function get_shortcode_callback( Toolset_Field_Definition $field, $parameters ) {
-		if ( ! in_array( 
-			$field->get_factory()->get_domain(), 
-			array( 
-				Toolset_Field_Utils::DOMAIN_POSTS, 
-				Toolset_Field_Utils::DOMAIN_TERMS, 
-				Toolset_Field_Utils::DOMAIN_USERS 
-			) 
+		if ( ! in_array(
+			$field->get_factory()->get_domain(),
+			array(
+				Toolset_Field_Utils::DOMAIN_POSTS,
+				Toolset_Field_Utils::DOMAIN_TERMS,
+				Toolset_Field_Utils::DOMAIN_USERS
+			)
 		) ) {
 			return array();
 		}
-		
-		return "Toolset.Types.shortcodeGUI.shortcodeDialogOpen({ 
-			shortcode: 'types', 
-			title: '" . esc_js( $field->get_name() ) . "', 
-			parameters: " . esc_js( json_encode( $parameters ) ) . " 
+
+		return "Toolset.Types.shortcodeGUI.shortcodeDialogOpen({
+			shortcode: 'types',
+			title: '" . esc_js( $field->get_name() ) . "',
+			parameters: " . esc_js( json_encode( $parameters ) ) . "
 		})";
 	}
-	
+
 	/**
 	 * Get the callback shortcode API JS function for a given field.
 	 *
@@ -666,24 +781,24 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	private function get_repeatable_field_group_callback( $repeatable_field_group, $parameters, $domain ) {
-		if ( ! in_array( 
-			$domain, 
-			array( 
-				Toolset_Field_Utils::DOMAIN_POSTS, 
-				Toolset_Field_Utils::DOMAIN_TERMS, 
-				Toolset_Field_Utils::DOMAIN_USERS 
-			) 
+		if ( ! in_array(
+			$domain,
+			array(
+				Toolset_Field_Utils::DOMAIN_POSTS,
+				Toolset_Field_Utils::DOMAIN_TERMS,
+				Toolset_Field_Utils::DOMAIN_USERS
+			)
 		) ) {
 			return array();
 		}
-		
-		return "Toolset.Types.shortcodeGUI.shortcodeDialogOpen({ 
-			shortcode: 'types', 
-			title: '" . esc_js( $repeatable_field_group->get_name() ) . "', 
-			parameters: " . esc_js( json_encode( $parameters ) ) . " 
+
+		return "Toolset.Types.shortcodeGUI.shortcodeDialogOpen({
+			shortcode: 'types',
+			title: '" . esc_js( $repeatable_field_group->get_name() ) . "',
+			parameters: " . esc_js( json_encode( $parameters ) ) . "
 		})";
 	}
-	
+
 	/**
 	 * Get Types meta groups per domain.
 	 *
@@ -692,14 +807,14 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @return array
 	 *
 	 * @since m2m
-	 * @note For the Toolset_Field_Utils::DOMAIN_POSTS domain we also return field groups for 
+	 * @note For the Toolset_Field_Utils::DOMAIN_POSTS domain we also return field groups for
 	 *     intermediary post types in many-to-many relationships.
 	 */
 	private function get_meta_groups_by_domain( $domain ) {
 		$meta_groups = array();
-		
+
 		$group_factory = Toolset_Field_Group_Factory::get_factory_by_domain( $domain );
-		
+
 		switch( $domain ) {
 			case Toolset_Field_Utils::DOMAIN_POSTS:
 				$meta_groups = $group_factory->query_groups();
@@ -713,10 +828,10 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				$meta_groups = $group_factory->query_groups();
 				break;
 		}
-		
+
 		return $meta_groups;
 	}
-	
+
 	/**
 	 * Get the fields definition factory per domain.
 	 *
@@ -730,18 +845,15 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		switch( $domain ) {
 			case Toolset_Field_Utils::DOMAIN_POSTS:
 				return Toolset_Field_Definition_Factory_Post::get_instance();
-				break;
 			case Toolset_Field_Utils::DOMAIN_TERMS:
 				return Toolset_Field_Definition_Factory_Term::get_instance();
-				break;
 			case Toolset_Field_Utils::DOMAIN_USERS:
 				return Toolset_Field_Definition_Factory_User::get_instance();
-				break;
 		}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * Get the fields in a given group and separate them by whether they are single or repeating fields groups items.
 	 *
@@ -757,10 +869,10 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			'fields' => array(),
 			'repeating_groups' => array()
 		);
-		
+
 		$slugs = $meta_group->get_field_slugs();
 		$factory = $this->get_field_definition_factory( $domain );
-		
+
 		foreach( $slugs as $slug ) {
 			$field_definition = $factory->load_field_definition( $slug );
 			if ( null != $field_definition && $field_definition->is_managed_by_types() ) {
@@ -772,10 +884,10 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				}
 			}
 		}
-		
+
 		return $meta;
 	}
-	
+
 	/**
 	 * Populate a registering group with its fields entries.
 	 *
@@ -794,20 +906,20 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				$group_data['fields'][ $meta_field->get_name() ] = array(
 					'name'       => stripslashes( $meta_field->get_name() ),
 					'handle'     => 'types',
-					'shortcode'  => '[types ' 
-									. $this->get_shortcode_meta_attribute_per_domain( $domain ) 
-									. '="' 
-									. esc_js( $meta_field->get_slug() ) 
+					'shortcode'  => '[types '
+									. $this->get_shortcode_meta_attribute_per_domain( $domain )
+									. '="'
+									. esc_js( $meta_field->get_slug() )
 									. '"][/types]',
 					'callback'   => $this->get_shortcode_callback( $meta_field, $parameters ),
 					'parameters' => $parameters
 				);
 			}
 		}
-		
+
 		return $group_data;
 	}
-	
+
 	/**
 	 * Populate a registering group with its repeating fields groups entries.
 	 *
@@ -832,11 +944,11 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				);
 			}
 		}
-		
+
 		return $group_data;
 	}
-	
-	
+
+
 	/**
 	 * Register the meta fields groups given a valid domain.
 	 *
@@ -846,7 +958,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 */
 	private function register_meta_dialog_groups( $domain ) {
 		$meta_groups = $this->get_meta_groups_by_domain( $domain );
-		
+
 		foreach( $meta_groups as $meta_group ) {
 			$group_id = 'types-' . $domain . '-' . $meta_group->get_slug();
 			$group_data = array(
@@ -854,9 +966,9 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'target' => $this->get_target_by_domain( $domain ),
 				'fields' => array()
 			);
-			
+
 			$meta = $this->get_fields_in_group_by_nature( $meta_group, $domain );
-			
+
 			$group_data = $this->populate_dialog_group_with_fields( $group_data, $meta['fields'], $domain );
 			$group_data = $this->populate_dialog_group_with_repeating_group_fields( $group_data, $meta['repeating_groups'], $domain );
 
@@ -867,9 +979,9 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			}
 		}
 	}
-	
+
 	/**
-	 * Register the repeating groups fields groups given a valid domain, 
+	 * Register the repeating groups fields groups given a valid domain,
 	 * only in Views, Content Templates and Layouts edit pages.
 	 *
 	 * @param $repeatable_field_groups array Repeatable field groups to register
@@ -881,11 +993,11 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		if ( empty( $repeatable_field_groups ) ) {
 			return;
 		}
-		
+
 		global $pagenow;
-		
+
 		$is_toolset_supported_edit_page = (
-			'admin.php' === $pagenow 
+			'admin.php' === $pagenow
 			&& in_array( toolset_getget( 'page' ), array(
 				'views-editor',
 				'ct-editor',
@@ -893,16 +1005,16 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			) )
 		);
 		$is_views_loop_wizard_add_field_ajax = (
-			is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX 
+			is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX
 			&& 'wpv_loop_wizard_add_field' === toolset_getpost( 'action' )
 		);
 		if (
-			! $is_toolset_supported_edit_page 
+			! $is_toolset_supported_edit_page
 			&& ! $is_views_loop_wizard_add_field_ajax
 		) {
 			return;
 		}
-			
+
 		foreach( $repeatable_field_groups as $meta_group ) {
 			$group_id = 'types-' . $domain . '-' . $meta_group->get_slug();
 			$group_data = array(
@@ -913,12 +1025,12 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'target' => $this->get_target_by_domain( $domain ),
 				'fields' => array()
 			);
-			
+
 			$meta = $this->get_fields_in_group_by_nature( $meta_group, $domain );
-			
+
 			$group_data = $this->populate_dialog_group_with_fields( $group_data, $meta['fields'], $domain );
 			$group_data = $this->populate_dialog_group_with_repeating_group_fields( $group_data, $meta['repeating_groups'], $domain );
-			
+
 			if ( ! empty( $group_data['fields'] ) ) {
 				do_action( 'types_action_register_shortcode_group', $group_id, $group_data );
 				do_action( 'wpv_action_register_shortcode_group', $group_id, $group_data );
@@ -926,7 +1038,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			}
 		}
 	}
-	
+
 	/**
 	 * Register a dialog group with its fields.
 	 *
@@ -940,19 +1052,19 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @since m2m
 	 */
 	public function register_shortcode_group( $group_id = '', $group_data = array() ) {
-		
+
 		$group_id = sanitize_text_field( $group_id );
-		
+
 		if ( empty( $group_id ) ) {
 			return;
 		}
-		
+
 		$group_data['fields'] = ( isset( $group_data['fields'] ) && is_array( $group_data['fields'] ) ) ? $group_data['fields'] : array();
-		
+
 		$dialog_groups = $this->dialog_groups;
-		
+
 		if ( isset( $dialog_groups[ $group_id ] ) ) {
-			
+
 			// Extending an already registered group, which should have a name already.
 			if ( ! array_key_exists( 'name', $dialog_groups[ $group_id ] ) ) {
 				return;
@@ -960,21 +1072,21 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			foreach( $group_data['fields'] as $field_key => $field_data ) {
 				$dialog_groups[ $group_id ]['fields'][ $field_key ] = $field_data;
 			}
-			
+
 		} else {
-			
+
 			// Registering a new group, the group name is mandatory
 			if ( ! array_key_exists( 'name', $group_data ) ) {
 				return;
 			}
 			$dialog_groups[ $group_id ]['name']		= $group_data['name'];
 			$dialog_groups[ $group_id ]['fields']	= $group_data['fields'];
-		
+
 		}
 		$this->dialog_groups = $dialog_groups;
-		
+
 	}
-	
+
 	/**
 	 * Generate the main shortcode GUI dialog listing all the available relevant fields.
 	 *
@@ -982,25 +1094,25 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 * @todo Move this to a proper template
 	 */
 	public function generate_shortcodes_dialog() {
-		
+
 		$dialog_links = array();
 		$dialog_content = '';
-		
+
 		foreach ( $this->dialog_groups as $group_id => $group_data ) {
-			
+
 			if ( empty( $group_data['fields'] ) ) {
 				continue;
 			}
-			
+
 			$dialog_links[] = '<li data-id="' . md5( $group_id ) . '" class="editor-addon-top-link" data-editor_addon_target="editor-addon-link-' . md5( $group_id ) . '">' . esc_html( $group_data['name'] ) . ' </li>';
 
-			$dialog_content .= '<div class="group"><h4 data-id="' . md5( $group_id ) . '" class="group-title  editor-addon-link-' . md5( $group_id ) . '-target">' . esc_html( $group_data['name'] ) . "</h4>";
+			$dialog_content .= '<div class="toolset-shortcodes-gui-dialog-group"><h4 data-id="' . md5( $group_id ) . '" class="group-title  editor-addon-link-' . md5( $group_id ) . '-target">' . esc_html( $group_data['name'] ) . '</h4>';
 			$dialog_content .= "\n";
 			$dialog_content .= '<ul class="toolset-shortcode-gui-group-list types-shortcode-gui-group-list js-types-shortcode-gui-group-list">';
 			$dialog_content .= "\n";
 			foreach ( $group_data['fields'] as $group_data_field_key => $group_data_field_data ) {
 				if (
-					! isset( $group_data_field_data['callback'] ) 
+					! isset( $group_data_field_data['callback'] )
 					|| empty( $group_data_field_data['callback'] )
 				) {
 					$dialog_content .= sprintf(
@@ -1010,8 +1122,8 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 					);
 				} else {
 					$dialog_content .= sprintf(
-						'<li class="item"><button class="button button-secondary button-small js-types-shortcode-gui" onclick="%s; return false;">%s</button></li>', 
-						$group_data_field_data['callback'], 
+						'<li class="item"><button class="button button-secondary button-small js-types-shortcode-gui" onclick="%s; return false;">%s</button></li>',
+						$group_data_field_data['callback'],
 						esc_html( $group_data_field_data['name'] )
 					);
 				}
@@ -1044,44 +1156,44 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 					. '
 			</div>
 		</div>';
-		
+
 		$this->footer_dialogs .= $out;
-		
+
 	}
-	
+
 	/**
 	 * Render the footer dialog, when needed.
 	 *
 	 * @since m2m
 	 */
-	function render_footer_dialogs() {
-		
+	public function render_footer_dialogs() {
+
 		if ( ! $this->footer_dialog_needed ) {
 			return;
 		}
-		
-		// Generate foter dialogs even if Views is active, so we can 
+
+		// Generate foter dialogs even if Views is active, so we can
 		// offer to append Types shortcodes directly
 		do_action( 'types_action_collect_shortcode_groups' );
 		$this->generate_shortcodes_dialog();
-		// Make sure that Toolset Common shared templates are included, 
+		// Make sure that Toolset Common shared templates are included,
 		// and also the custom own ones.
 		do_action( 'toolset_action_require_shortcodes_templates' );
 		$this->generate_shortcode_templates();
-		
+
 		$footer_dialogs = $this->footer_dialogs;
 		if ( '' != $footer_dialogs ) {
 			?>
 			<div class="js-types-footer-dialogs" style="display:none">
-				<?php 
-				echo $footer_dialogs; 
+				<?php
+				echo $footer_dialogs;
 				?>
 			</div>
 			<?php
 		}
-		
+
 	}
-	
+
 	/**
 	 * Generate the repeating fields attribute for the index and separator.
 	 * This will be automatically appended when the field is a repeating one.
@@ -1090,23 +1202,23 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 */
 	private function get_repeating_fields_extra_attributes() {
 		$attributes = array();
-		
+
 		$attributes['index'] = array(
 			'label'        => __( 'Field index to display', 'wpcf' ),
 			'type'         => 'text',
 			'defaultValue' => '',
 			'description'  => __( 'Zero-based index number of the field to be output.', 'wpcf' )
 		);
-		
+
 		$attributes['separator'] = array(
 			'label'        => __( 'Separator between multiple values', 'wpcf' ),
 			'type'         => 'text',
 			'defaultForceValue' => ', '
 		);
-		
+
 		return $attributes;
 	}
-	
+
 	/**
 	 * Generate the item selector attribute for postmeta, termmeta and usermeta fields.
 	 * This will be automatically appended to all fields and the matching template is shard in Toolset Common.
@@ -1146,29 +1258,29 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		return $types_selector_groups_attributes;
 	}
-	
+
 	/**
 	 * List the expected attributed of each field type.
 	 * Provide a fallback for generic fields not available in this API.
 	 *
-	 * Note that the 'displayOptions' group should be always included, even empty, 
+	 * Note that the 'displayOptions' group should be always included, even empty,
 	 * since this is where repeating fields attributes are appended into.
 	 *
 	 * @since m2m
 	 */
 	private function get_fields_expected_attributes() {
 		$attributes = array();
-		
+
 		$attributes['typesGenericType'] = array(
 			'displayOptions' => array(
 				'header' => __( 'Display options', 'wpcf' ),
 				'fields' => array()
 			)
 		);
-		
+
 		// Audio is OK
 		$attributes['audio'] = array(
 			'displayOptions' => array(
@@ -1213,7 +1325,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Checkbox is OK
 		// state='(un)checked' is not working
 		$attributes['checkbox'] = array(
@@ -1257,7 +1369,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Checkboxes also support a "checked"/"unchecked" values for the state attribute
 		// Checkboxes fields offer one custom output per value
 		$attributes['checkboxes'] = array(
@@ -1297,7 +1409,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Colorpicker is OK
 		$attributes['colorpicker'] = array(
 			'displayOptions' => array(
@@ -1305,7 +1417,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'fields' => array()
 			)
 		);
-		
+
 		// Date is OK
         $info_about_escaping = __( 'Use % to escape characters, because Wordpress removes backslashes from shortcode attributes.', 'wpcf' );
 
@@ -1360,7 +1472,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Email is OK
 		// class attribute is not working
 		$attributes['email'] = array(
@@ -1399,7 +1511,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Embed is OK
 		$attributes['embed'] = array(
 			'displayOptions' => array(
@@ -1432,7 +1544,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// File is OK
 		$attributes['file'] = array(
 			'displayOptions' => array(
@@ -1468,7 +1580,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Image is OK
 		// class attribute is not working
 		$image_size_attributes = array(
@@ -1482,9 +1594,9 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		);
 		$wp_image_sizes = (array) get_intermediate_image_sizes();
 		foreach ( $wp_image_sizes as $wp_size ) {
-			if ( 
+			if (
 				$wp_size != 'post-thumbnail'
-				&& ! array_key_exists( $wp_size, $image_size_attributes ) 
+				&& ! array_key_exists( $wp_size, $image_size_attributes )
 			) {
 				$image_size_attributes[ $wp_size ] = $wp_size;
 			}
@@ -1609,7 +1721,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Numeric is OK
 		$attributes['numeric'] = array(
 			'displayOptions' => array(
@@ -1634,7 +1746,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Phone is OK
 		$attributes['phone'] = array(
 			'displayOptions' => array(
@@ -1642,7 +1754,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'fields' => array()
 			)
 		);
-		
+
 		// Post seems to be OK
 		// This might not be needed at all, could be removed
 		$attributes['post'] = array(
@@ -1651,7 +1763,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'fields' => array()
 			)
 		);
-		
+
 		// Radio is OK
 		// Radio fields offer one custom output per value
 		$attributes['radio'] = array(
@@ -1682,7 +1794,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Select is OK
 		$attributes['select'] = array(
 			'displayOptions' => array(
@@ -1700,7 +1812,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Skype is OK
 		// class attribute is not working
 		$attributes['skype'] = array(
@@ -1716,19 +1828,81 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						),
 						'defaultValue' => 'normal'
 					),
-					'button_style' => array(
-						'label'             => __( 'Button style', 'wpcf' ),
-						'type'              => 'radio',
-						'options'           => array(
-							'btn1' => '<img alt="" id="btn1-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/call_green_white_153x63.png" height="63" width="153" />',
-							'btn2' => '<img alt="" id="btn2-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/call_blue_white_124x52.png" height="52" width="125" />',
-							'btn3' => '<img alt="" id="btn3-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/call_green_white_92x82.png" height="82" width="92" />',
-							'btn4' => '<img alt="" id="btn4-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/call_blue_transparent_34x34.png" height="34" width="34" />',
-							'btn5' => '<img alt="" id="btn5-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/anim_balloon.gif" height="60" width="150" />',
-							'btn6' => '<img alt="" id="btn6-img" src="//www.skypeassets.com/i/legacy/images/share/buttons/anim_rectangle.gif" height="44" width="182" /> '
-						),
-						'defaultForceValue' => 'btn1'
+					'skype_button_style' => array(
+						'label' => __( 'Button', 'wpcf' ),
+						'type' => 'group',
+						'fields' => array(
+							'button' => array(
+								'pseudolabel' => __( 'Style', 'wpcf' ),
+								'type'  => 'select',
+								'options' => array(
+									'bubble' => __( 'Bubble (fixed position at the bottom right of the window)', 'wpcf'),
+									'rounded' => __( 'Rounded (in place of the shortcode)', 'wpcf'),
+									'rectangle' => __( 'Rectangle (in place of the shortcode)', 'wpcf'),
+								)
+							),
+							'button-color' => array(
+								'pseudolabel' => __( 'Color', 'wpcf' ),
+								'type'  => 'text',
+                                'defaultValue' => '#00AFF0'
+							),
+                        )
+                    ),
+					'skype_button_style_enhanced' => array(
+                        'pseudolabel' => __( 'Button Style', 'wpcf' ),
+                        'type' => 'group',
+                        'fields' => array(
+	                        'button-icon'   => array(
+		                        'pseudolabel' => __( 'Icon', 'wpcf' ),
+		                        'type'  => 'select',
+		                        'options' => array(
+			                        'enabled' => __( 'Enabled', 'wpcf'),
+			                        'disabled' => __( 'Disabled', 'wpcf'),
+		                        ),
+		                        'defaultValue' => 'enabled'
+	                        ),
+	                        'button-label'   => array(
+		                        'pseudolabel' => __( 'Label', 'wpcf' ),
+		                        'type'  => 'text',
+		                        'placeholder' => 'Contact Us'
+	                        ),
+                        )
+                    ),
+
+					'skype_chat_style' => array(
+						'label' => __( 'Chat Color', 'wpcf' ),
+						'type' => 'group',
+						'fields' => array(
+							'chat-color' => array(
+								'type'  => 'text',
+								'defaultValue' => '#80DDFF'
+							),
+						)
 					),
+
+					'skype_preview' => array(
+						'label' => __( 'Preview', 'wpcf' ),
+						'type' => 'skype',
+                        'i18n' => array(
+                            'button' => __( 'Button', 'wpcf' ),
+                            'chat' => __( 'Chat', 'wpcf' ),
+                            'preview_title' => __( 'Preview', 'wpcf' ),
+	                        'cdn_not_reachable' => __( 'The required files for the preview could not be loaded from the Skype servers. Continue without preview or try again later.', 'wpcf' )
+                        )
+					),
+
+					'receiver' => array(
+                        'label' => __( 'Treat field value as' ),
+                        'type' => 'select',
+                        'options' => array(
+	                        'user' => __( 'User (Skype User ID)', 'wpcf'),
+	                        'bot' => __( 'Bot (Microsoft App ID)', 'wpcf'),
+                        ),
+                        'defaultValue' => 'user',
+                        'description' => sprintf( __( 'To learn more about Skype Bots see %s', 'wpcf' ),
+                            '<a href="https://dev.skype.com/bots" target="_blank">https://dev.skype.com/bots</a>' )
+                    ),
+
 					'class' => array(
 						'label'       => __( 'Skype button extra classes', 'wpcf' ),
 						'type'        => 'text',
@@ -1737,7 +1911,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Textarea is OK
 		$attributes['textarea'] = array(
 			'displayOptions' => array(
@@ -1755,7 +1929,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Textfield is OK
 		$attributes['textfield'] = array(
 			'displayOptions' => array(
@@ -1763,7 +1937,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'fields' => array()
 			)
 		);
-		
+
 		// URL is OK
 		// class attribute is not working
 		$attributes['url'] = array(
@@ -1819,7 +1993,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// Video is OK
 		$attributes['video'] = array(
 			'displayOptions' => array(
@@ -1884,7 +2058,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		// WYSIWYG is OK
 		$attributes['wysiwyg'] = array(
 			'displayOptions' => array(
@@ -1911,12 +2085,12 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				)
 			)
 		);
-		
+
 		$attributes = apply_filters( 'types_extend_fields_expected_attributes', $attributes );
-		
+
 		return $attributes;
 	}
-	
+
 	/**
 	 * Generate the templates needed for Types shortcodes:
 	 * - typesUserSelector for usermeta fields
@@ -1938,27 +2112,27 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						<?php _e( 'Author of the current post', 'wpcf' ); ?>
 					</label>
 				</li>
-				
+
 				<li class="toolset-shortcode-gui-item-selector-option">
 					<label for="toolset-shortcode-gui-item-selector-user-id-current">
 						<input type="radio" class="js-toolset-shortcode-gui-item-selector" id="toolset-shortcode-gui-item-selector-user-id-current" name="toolset_shortcode_gui_object_id" value="current" />
 						<?php _e( 'The current logged in user', 'wpcf' ); ?>
 					</label>
 				</li>
-				
+
 				<li class="toolset-shortcode-gui-item-selector-option toolset-shortcode-gui-item-selector-has-related js-toolset-shortcode-gui-item-selector-has-related">
 					<label for="toolset-shortcode-gui-item-selector-user-id">
 						<input type="radio" class="js-toolset-shortcode-gui-item-selector" id="toolset-shortcode-gui-item-selector-user-id" name="toolset_shortcode_gui_object_id" value="object_id" />
 						<?php _e( 'A specific user', 'wpcf' ); ?>
 					</label>
 					<div class="toolset-advanced-settingtoolset-shortcode-gui-item-selector-is-related js-toolset-shortcode-gui-item-selector-is-related" style="display:none;padding-top:10px;">
-						<select id="toolset-shortcode-gui-item-selector-user-id-object_id" 
-							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2" 
-							name="specific_object_id" 
-							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ) ); ?>" 
-							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ) ); ?>" 
-							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ); ?>" 
-							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ); ?>" 
+						<select id="toolset-shortcode-gui-item-selector-user-id-object_id"
+							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2"
+							name="specific_object_id"
+							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ) ); ?>"
+							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ) ); ?>"
+							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ); ?>"
+							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ); ?>"
 							data-placeholder="<?php echo esc_attr( __( 'Search for a user', 'wpcf' ) ); ?>">
 						</select>
 					</div>
@@ -1973,27 +2147,27 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						<?php _e( 'The current user in the loop', 'wpcf' ); ?>
 					</label>
 				</li>
-				
+
 				<li class="toolset-shortcode-gui-item-selector-option">
 					<label for="toolset-shortcode-gui-item-selector-user-id-current">
 						<input type="radio" class="js-toolset-shortcode-gui-item-selector" id="toolset-shortcode-gui-item-selector-user-id-current" name="toolset_shortcode_gui_object_id" value="current" />
 						<?php _e( 'The current logged in user', 'wpcf' ); ?>
 					</label>
 				</li>
-				
+
 				<li class="toolset-shortcode-gui-item-selector-option toolset-shortcode-gui-item-selector-has-related js-toolset-shortcode-gui-item-selector-has-related">
 					<label for="toolset-shortcode-gui-item-selector-user-id">
 						<input type="radio" class="js-toolset-shortcode-gui-item-selector" id="toolset-shortcode-gui-item-selector-user-id" name="toolset_shortcode_gui_object_id" value="object_id" />
 						<?php _e( 'A specific user', 'wpcf' ); ?>
 					</label>
 					<div class="toolset-advanced-setting toolset-shortcode-gui-item-selector-is-related js-toolset-shortcode-gui-item-selector-is-related" style="display:none;padding-top:10px;">
-						<select id="toolset-shortcode-gui-item-selector-user-id-object_id" 
-							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2" 
-							name="specific_object_id" 
-							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ) ); ?>" 
-							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ) ); ?>" 
-							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ); ?>" 
-							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ); ?>" 
+						<select id="toolset-shortcode-gui-item-selector-user-id-object_id"
+							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2"
+							name="specific_object_id"
+							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ) ); ?>"
+							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ) ); ?>"
+							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_USERS ); ?>"
+							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_USER_BY_ID ); ?>"
 							data-placeholder="<?php echo esc_attr( __( 'Search for a user', 'wpcf' ) ); ?>">
 						</select>
 					</div>
@@ -2008,20 +2182,20 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						<?php _e( 'The current term in the loop', 'wpcf' ); ?>
 					</label>
 				</li>
-				
+
 				<li class="toolset-shortcode-gui-item-selector-option toolset-shortcode-gui-item-selector-has-related js-toolset-shortcode-gui-item-selector-has-related">
 					<label for="toolset-shortcode-gui-item-selector-term-id">
 						<input type="radio" class="js-toolset-shortcode-gui-item-selector" id="toolset-shortcode-gui-item-selector-term-id" name="toolset_shortcode_gui_object_id" value="object_id" />
 						<?php _e( 'A specific term', 'wpcf' ); ?>
 					</label>
 					<div class="toolset-advanced-setting toolset-shortcode-gui-item-selector-is-related js-toolset-shortcode-gui-item-selector-is-related" style="display:none;padding-top:10px;">
-						<select id="toolset-shortcode-gui-item-selector-term-id-object_id" 
-							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2" 
-							name="specific_object_id" 
-							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_TERMS ) ); ?>" 
-							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_TERM_BY_ID ) ); ?>" 
-							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_TERMS ); ?>" 
-							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_TERM_BY_ID ); ?>" 
+						<select id="toolset-shortcode-gui-item-selector-term-id-object_id"
+							class="js-toolset-shortcode-gui-item-selector_object_id js-toolset-shortcode-gui-field-ajax-select2"
+							name="specific_object_id"
+							data-action="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_TERMS ) ); ?>"
+							data-prefill="<?php echo esc_attr( $toolset_ajax->get_action_js_name( Toolset_Ajax::CALLBACK_GET_TERM_BY_ID ) ); ?>"
+							data-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_SELECT2_SUGGEST_TERMS ); ?>"
+							data-prefill-nonce="<?php echo wp_create_nonce( Toolset_Ajax::CALLBACK_GET_TERM_BY_ID ); ?>"
 							data-placeholder="<?php echo esc_attr( __( 'Search for a term', 'wpcf' ) ); ?>">
 						</select>
 					</div>
@@ -2045,7 +2219,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			$template_repository->get( Types_Output_Template_Repository::INSERT_POST_REFERENCE_FIELD_WIZARD_THIRD_TEMPLATE ),
 			null
 		);
-		
+
 		$renderer->render(
 			$template_repository->get( Types_Output_Template_Repository::INSERT_REPEATING_FIELDS_GROUP_TEMPLATE ),
 			null
@@ -2063,13 +2237,13 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			null
 		);
 	}
-	
+
 	/*
 	 * ====================================
 	 * Compatibility
 	 * ====================================
 	 */
-	
+
 	/**
 	 * Gravity Forms compatibility.
 	 *
@@ -2082,7 +2256,7 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	 *
 	 * @since m2m
 	 */
-	
+
 	public function gform_noconflict_scripts( $required_objects ) {
 		$required_objects[] = 'types-shortcode';
 		return $required_objects;
@@ -2093,6 +2267,6 @@ class Types_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		$required_objects[] = 'onthego-admin-styles';
 		return $required_objects;
 	}
-	
+
 
 }

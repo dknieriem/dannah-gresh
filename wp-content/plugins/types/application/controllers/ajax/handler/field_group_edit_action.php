@@ -473,7 +473,7 @@ class Types_Ajax_Handler_Field_Group_Edit_Action extends Toolset_Ajax_Handler_Ab
 				if( ! $factory->delete_definition( $definition ) ) {
 					// error while deleting the field
 					$this->get_ajax_manager()->ajax_finish(
-						array( 'error' => __( 'An issue occured while deleting the field.', 'wpcf' ) ),
+						array( 'error' => __( 'An issue occurred while deleting the field.', 'wpcf' ) ),
 						false
 					);
 				}

@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\PostStatus;
+
 /**
  * Association query class with a more OOP/functional approach.
  *
@@ -128,6 +130,13 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	private $cache_object;
 
 
+	private $result_transformation_factory;
+
+
+	/** @var PostStatus */
+	private $post_status;
+
+
 	/**
 	 * Toolset_Association_Query_V2 constructor.
 	 *
@@ -141,6 +150,9 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 * @param Toolset_Association_Query_Orderby_Factory|null $orderby_factory_di
 	 * @param Toolset_Association_Query_Element_Selector_Provider|null $element_selector_provider_di
 	 * @param Toolset_WPML_Compatibility|null $wpml_service_di
+	 * @param Toolset_Association_Query_Cache|null $cache_object_di
+	 * @param Toolset_Association_Query_Result_Transformation_Factory|null $result_transformation_factory_di
+	 * @param PostStatus|null $post_status_di
 	 */
 	public function __construct(
 		wpdb $wpdb_di = null,
@@ -153,7 +165,9 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 		Toolset_Association_Query_Orderby_Factory $orderby_factory_di = null,
 		Toolset_Association_Query_Element_Selector_Provider $element_selector_provider_di = null,
 		Toolset_WPML_Compatibility $wpml_service_di = null,
-		Toolset_Association_Query_Cache $cache_object_di = null
+		Toolset_Association_Query_Cache $cache_object_di = null,
+		Toolset_Association_Query_Result_Transformation_Factory $result_transformation_factory_di = null,
+		PostStatus $post_status_di = null
 	) {
 		parent::__construct( $wpdb_di );
 		$this->unique_table_alias = $unique_table_alias_di ?: new Toolset_Relationship_Database_Unique_Table_Alias();
@@ -166,6 +180,8 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 		$this->_definition_repository = $definition_repository_di;
 		$this->wpml_service = $wpml_service_di ?: Toolset_WPML_Compatibility::get_instance();
 		$this->cache_object = $cache_object_di ?: Toolset_Association_Query_Cache::get_instance();
+		$this->result_transformation_factory = $result_transformation_factory_di ?: new Toolset_Association_Query_Result_Transformation_Factory();
+		$this->post_status = $post_status_di ?: new PostStatus();
 	}
 
 
@@ -682,15 +698,22 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 *
 	 * @param string|string[] $statuses 'any'|'is_available'|'is_public' or one or more specific status values in an array.
 	 *      Meaning of these options is domain-dependant.
-	 * @param IToolset_Relationship_Role $for_role
+	 * @param IToolset_Relationship_Role|null $for_role
 	 *
 	 * @return IToolset_Association_Query_Condition
 	 */
-	public function element_status( $statuses, IToolset_Relationship_Role $for_role ) {
+	public function element_status( $statuses, IToolset_Relationship_Role $for_role = null ) {
 		$this->has_element_status_condition = true;
 
+		if( null === $for_role ) {
+			$that = $this;
+			return $this->do_and( array_map( function( IToolset_Relationship_Role $for_role ) use( $that, $statuses ) {
+				return $that->element_status( $statuses, $for_role );
+			}, Toolset_Relationship_Role::all() ) );
+		}
+
 		return $this->condition_factory->element_status(
-			$statuses, $for_role, $this->join_manager, $this->element_selector_provider
+			$statuses, $for_role, $this->join_manager, $this->element_selector_provider, $this->post_status
 		);
 	}
 
@@ -792,7 +815,7 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 *
 	 * @param String $origin Origin.
 	 *
-	 * @return IToolset_Relationship_Query_Condition
+	 * @return IToolset_Association_Query_Condition
 	 */
 	public function has_origin( $origin ) {
 		return $this->condition_factory->has_origin( $origin, $this->join_manager );
@@ -880,12 +903,25 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 
 
 	/**
+	 * Query associations by the fact whether they have an intermediary post that can be automatically deleted
+	 * together with the association (which is a setting of the relationship definition).
+	 *
+	 * @param bool $expected_value Value of the condition.
+	 *
+	 * @return IToolset_Association_Query_Condition
+	 */
+	public function has_autodeletable_intermediary_post( $expected_value = true ) {
+		return $this->condition_factory->has_autodeletable_intermediary_post( $expected_value, $this->join_manager );
+	}
+
+
+	/**
 	 * Indicate that get_results() should return instances of IToolset_Association.
 	 *
 	 * @return $this
 	 */
 	public function return_association_instances() {
-		$this->result_transformation = new Toolset_Association_Query_Result_Transformation_Association_Instance();
+		$this->result_transformation = $this->result_transformation_factory->association_instance();
 		return $this;
 	}
 
@@ -896,7 +932,7 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 * @return $this
 	 */
 	public function return_association_uids() {
-		$this->result_transformation = new Toolset_Association_Query_Result_Transformation_Association_Uid();
+		$this->result_transformation = $this->result_transformation_factory->association_uids();
 		return $this;
 	}
 
@@ -908,7 +944,7 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 * @return $this
 	 */
 	public function return_element_ids( IToolset_Relationship_Role $role ) {
-		$this->result_transformation = new Toolset_Association_Query_Result_Transformation_Element_Id( $role );
+		$this->result_transformation = $this->result_transformation_factory->element_ids( $role );
 		return $this;
 	}
 
@@ -920,8 +956,23 @@ class Toolset_Association_Query_V2 extends Toolset_Wpdb_User {
 	 * @return $this
 	 */
 	public function return_element_instances( IToolset_Relationship_Role $role ) {
-		$this->result_transformation = new Toolset_Association_Query_Result_Transformation_Element_Instance( $role );
+		$this->result_transformation = $this->result_transformation_factory->element_instances( $role );
 		return $this;
+	}
+
+
+	/**
+	 * Indicate that get_results() should return arrays with elements indexed by their role names.
+	 *
+	 * This needs further configuration, see Toolset_Association_Query_Result_Transformation_Element_Per_Role for
+	 * further details.
+	 *
+	 * @return Toolset_Association_Query_Result_Transformation_Element_Per_Role
+	 * @since 3.0.9
+	 */
+	public function return_per_role() {
+		$this->result_transformation = $this->result_transformation_factory->element_per_role( $this );
+		return $this->result_transformation;
 	}
 
 

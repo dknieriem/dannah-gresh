@@ -38,8 +38,9 @@
                         <div class="tablenav top">
 
                             {% block bulkActions %}
-                                <div class="alignleft actions bulkactions">
-                                    <select data-bind="options: bulkActions, optionsText: 'displayName', optionsValue: 'value', value: selectedBulkAction"></select>
+                                <div class="alignleft actions bulkactions" data-bind="visible: bulkActions().length > 0">
+                                    <!--suppress HtmlFormInputWithoutLabel -->
+									<select data-bind="options: bulkActions, optionsText: 'displayName', optionsValue: 'value', value: selectedBulkAction"></select>
                                     <input id="doaction" class="button action" type="submit"
                                            value="{{ strings.misc.applyBulkAction }}"
                                            data-bind="click: onBulkAction, enable: isBulkActionAllowed"/>
@@ -47,9 +48,11 @@
                                 </div>
                             {% endblock %}
 
-                            {% block pagination %}
-                                {% include "@toolset/listing_pagination.twig" %}
-                            {% endblock %}
+							{% block topPagination %}
+								{% block pagination %}
+									{% include "@toolset/listing_pagination.twig" %}
+								{% endblock %}
+							{% endblock %}
 
                             {% block searchBox %}
                                 <div class="alignright">
@@ -71,10 +74,11 @@
                             {% block th %}
                                 <tr>
                                     {% block checkboxColumnHeader %}
-                                        <td scope="col" class="manage-column column-bulk-actions check-column">
-                                            <input type="checkbox" name="bulk_select" data-bind="
+                                        <td scope="col" class="manage-column column-bulk-actions check-column" data-bind="visible: bulkActions().length > 0">
+                                            <!--suppress HtmlFormInputWithoutLabel -->
+											<input type="checkbox" name="bulk_select" data-bind="
                                                 checked: allVisibleItemsSelection,
-                                                disable: (itemsToShow().length == 0)" />
+                                                enable: allowSelectAllVisibleItems" />
                                         </td>
                                     {% endblock %}
 
@@ -94,8 +98,9 @@
                                         <tr data-bind="attr: { class: trClass }">
 
                                             {% block checkboxCell %}
-                                                <td>
-                                                    <input type="checkbox" data-bind="checked: isSelectedForBulkAction" />
+                                                <td data-bind="visible: $parent.bulkActions().length > 0">
+                                                    <!--suppress HtmlFormInputWithoutLabel -->
+													<input type="checkbox" data-bind="checked: isCheckedForBulkAction, enable: isBulkActionAllowed" />
                                                 </td>
                                             {% endblock %}
 
@@ -126,6 +131,8 @@
                                             {% endblock %}
 
                                         </tr>
+										{% block afterNormalRow %}
+										{% endblock %}
                                     {% endblock %}
                                 </tbody>
                             {% endblock %}
@@ -135,8 +142,9 @@
                             {% block tbodyNoItems %}
                                 <tbody>
                                     <tr>
-                                        <td>
-                                            <input type="checkbox" disabled />
+                                        <td data-bind="visible: bulkActions().length > 0">
+                                            <!--suppress HtmlFormInputWithoutLabel -->
+											<input type="checkbox" disabled />
                                         </td>
 
                                         <td colspan="5">{{ strings.misc.noItemsFound|e }}</td>
@@ -153,7 +161,9 @@
                     {% block tablenavBottom %}
                         <div class="tablenav bottom">
                             {{ block('bulkActions') }}
-                            {{ block('pagination') }}
+							{% block bottomPagination %}
+                            	{{ block('pagination') }}
+							{% endblock %}
                         </div>
                     {% endblock %}
 

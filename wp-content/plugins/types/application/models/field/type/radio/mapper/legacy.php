@@ -58,10 +58,8 @@ class Types_Field_Type_Radio_Mapper_Legacy extends Types_Field_Mapper_Abstract {
 
 			if( isset( $option_data['value'] ) ) {
 				$option_data['store_value'] = $option_data['value'];
-
-				if( $value == $option_data['value'] ) {
-					$option_data['checked'] = $option_data['value'];
-				}
+				$option_data['db_value'] = $option_data['value'];
+				$option_data['checked'] = $value == $option_data['value'];
 			}
 
 			if( isset( $option_data['display_value'] ) ) {

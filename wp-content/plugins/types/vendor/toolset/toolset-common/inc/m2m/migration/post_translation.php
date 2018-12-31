@@ -74,7 +74,7 @@ class Toolset_Relationship_Migration_Post_Translation {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Skipping the association between posts #%d (%s) and #%d (%s) because #%d doesn\'t have a default language version and you chose to skip such associations.', 'wpcf' ),
+					__( 'Skipping the association between posts #%d (%s) and #%d (%s) because #%d doesn\'t have a default language version and you chose to skip such associations.', 'wpv-views' ),
 					$this->parent->get_id(),
 					$this->parent->get_title(),
 					$this->child->get_id(),
@@ -149,7 +149,7 @@ class Toolset_Relationship_Migration_Post_Translation {
 		return new Toolset_Result(
 			true,
 			sprintf(
-				__( 'Created a default language translation for post #%d (%s) in draft mode.', 'wpcf' ),
+				__( 'Created a default language translation for post #%d (%s) in draft mode.', 'wpv-views' ),
 				$post->get_id(),
 				$post->get_title()
 			)
@@ -173,7 +173,7 @@ class Toolset_Relationship_Migration_Post_Translation {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Unable to create a default language translation for post #%d (%s).', 'wpcf' ),
+					__( 'Unable to create a default language translation for post #%d (%s).', 'wpv-views' ),
 					$post->get_id(),
 					$post->get_title()
 				)
@@ -202,7 +202,7 @@ class Toolset_Relationship_Migration_Post_Translation {
 		return new Toolset_Result(
 			true,
 			sprintf(
-				__( 'Created a default language translation for post #%d (%s) in draft mode.', 'wpcf' ),
+				__( 'Created a default language translation for post #%d (%s) in draft mode.', 'wpv-views' ),
 				$post->get_id(),
 				$post->get_title()
 			)

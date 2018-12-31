@@ -4492,6 +4492,7 @@ var Select2 = function (_Component) {
 			// the search.
 			var restPath = this.props.restInfo.base + Object(__WEBPACK_IMPORTED_MODULE_7_querystringify__["stringify"])(this.props.restInfo.args, true).replace('%25s', '%s');
 
+			// @deprecated use wp.apiFetch instead
 			this.suggestionsRequest = wp.apiRequest({
 				path: sprintf(restPath, this.sanitizeInput(input))
 			});
@@ -24856,14 +24857,16 @@ var __ = wp.i18n.__;
 var registerBlockType = wp.blocks.registerBlockType;
 var Placeholder = wp.components.Placeholder;
 var RawHTML = wp.element.RawHTML;
+var _window = window,
+    i18n = _window.toolset_view_block_strings;
 
 
-var name = window.toolset_view_block_strings.block_name;
+var name = i18n.blockName;
 
 var settings = {
 	title: __('View'),
 	description: __('Add a Post, User, or Taxonomy View to the editor.'),
-	category: 'widgets',
+	category: i18n.blockCategory,
 	icon: __WEBPACK_IMPORTED_MODULE_3__icon__["a" /* default */].blockIcon,
 	keywords: [__('Toolset'), __('View'), __('Shortcode')],
 
@@ -24928,10 +24931,10 @@ var settings = {
 			}
 		};
 
-		var _window$toolset_view_ = window.toolset_view_block_strings.published_views,
-		    posts = _window$toolset_view_.posts,
-		    taxonomy = _window$toolset_view_.taxonomy,
-		    users = _window$toolset_view_.users;
+		var _i18n$publishedViews = i18n.publishedViews,
+		    posts = _i18n$publishedViews.posts,
+		    taxonomy = _i18n$publishedViews.taxonomy,
+		    users = _i18n$publishedViews.users;
 
 
 		return [!!(props.focus || props.isSelected) && wp.element.createElement(__WEBPACK_IMPORTED_MODULE_4__inspector_inspector__["a" /* default */], {
@@ -24975,25 +24978,21 @@ var settings = {
 				{ className: 'wp-block-toolset-view-placeholder' },
 				__WEBPACK_IMPORTED_MODULE_3__icon__["a" /* default */].blockPlaceholder,
 				wp.element.createElement(
-					'p',
+					'h2',
 					null,
-					wp.element.createElement(
-						'strong',
-						null,
-						__('Toolset View')
-					)
-				)
-			),
-			wp.element.createElement(__WEBPACK_IMPORTED_MODULE_5__inspector_view_select__["a" /* default */], {
-				attributes: {
-					posts: posts,
-					taxonomy: taxonomy,
-					users: users,
-					view: props.attributes.view
-				},
-				className: __WEBPACK_IMPORTED_MODULE_7_classnames___default()('components-select-control__input'),
-				onChangeView: onChangeView
-			})
+					__('Toolset View')
+				),
+				wp.element.createElement(__WEBPACK_IMPORTED_MODULE_5__inspector_view_select__["a" /* default */], {
+					attributes: {
+						posts: posts,
+						taxonomy: taxonomy,
+						users: users,
+						view: props.attributes.view
+					},
+					className: __WEBPACK_IMPORTED_MODULE_7_classnames___default()('components-select-control__input'),
+					onChangeView: onChangeView
+				})
+			)
 		) : wp.element.createElement(__WEBPACK_IMPORTED_MODULE_6__view_preview__["a" /* default */], {
 			key: 'toolset-view-gutenberg-block-preview',
 			className: __WEBPACK_IMPORTED_MODULE_7_classnames___default()(props.className, 'wp-block-toolset-view-preview'),
@@ -25087,7 +25086,7 @@ var settings = {
 	}
 };
 
-if ('undefined' !== typeof WPViews) {
+if (i18n.isViewsActive) {
 	registerBlockType(name, settings);
 }
 
@@ -25138,7 +25137,11 @@ __webpack_require__(66)('keys', function () {
 
 
 
-var blockIcon = wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-image', 'toolset-view-gutenberg-block', 'dashicon') });
+var blockIcon = wp.element.createElement(
+  'span',
+  null,
+  wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-image', 'toolset-view-gutenberg-block', 'dashicon') })
+);
 
 var blockPlaceholder = wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-placeholder', 'toolset-view-gutenberg-block', 'dashicon') });
 
@@ -25208,6 +25211,8 @@ var _wp$components = wp.components,
     RangeControl = _wp$components.RangeControl,
     SelectControl = _wp$components.SelectControl,
     RadioControl = _wp$components.RadioControl;
+var _window = window,
+    i18n = _window.toolset_view_block_strings;
 
 /**
  * Create an Inspector Controls wrapper Component
@@ -25257,10 +25262,10 @@ var Inspector = function (_Component) {
 
 			var formOnlyDisplayOptions = hasSubmit ? [{ value: 'samePage', label: __('In other place on this same page') }, { value: 'otherPage', label: __('On another page') }] : [{ value: 'samePage', label: __('In other place on this same page') }];
 
-			var _window$toolset_view_ = window.toolset_view_block_strings.published_views,
-			    posts = _window$toolset_view_.posts,
-			    taxonomy = _window$toolset_view_.taxonomy,
-			    users = _window$toolset_view_.users;
+			var _i18n$publishedViews = i18n.publishedViews,
+			    posts = _i18n$publishedViews.posts,
+			    taxonomy = _i18n$publishedViews.taxonomy,
+			    users = _i18n$publishedViews.users;
 
 
 			return wp.element.createElement(
@@ -26170,6 +26175,8 @@ var _wp$i18n = wp.i18n,
     sprintf = _wp$i18n.sprintf;
 var Component = wp.element.Component;
 var Spinner = wp.components.Spinner;
+var _window = window,
+    i18n = _window.toolset_view_block_strings;
 
 var ViewPreview = function (_Component) {
 	__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default()(ViewPreview, _Component);
@@ -26279,15 +26286,15 @@ var ViewPreview = function (_Component) {
 		key: 'viewExists',
 		value: function viewExists() {
 			var viewID = this.props.attributes.view.ID;
-			var foundInPosts = window.toolset_view_block_strings.published_views.posts.find(function (view) {
+			var foundInPosts = i18n.publishedViews.posts.find(function (view) {
 				return view.ID === viewID;
 			});
 
-			var foundInTaxonomy = window.toolset_view_block_strings.published_views.taxonomy.find(function (view) {
+			var foundInTaxonomy = i18n.publishedViews.taxonomy.find(function (view) {
 				return view.ID === viewID;
 			});
 
-			var foundInUsers = window.toolset_view_block_strings.published_views.users.find(function (view) {
+			var foundInUsers = i18n.publishedViews.users.find(function (view) {
 				return view.ID === viewID;
 			});
 
@@ -26507,8 +26514,8 @@ var ViewPreview = function (_Component) {
 			};
 
 			var data = new window.FormData();
-			data.append('action', window.toolset_view_block_strings.actionName);
-			data.append('wpnonce', window.toolset_view_block_strings.wpnonce);
+			data.append('action', i18n.actionName);
+			data.append('wpnonce', i18n.wpnonce);
 			data.append('view_id', 'undefined' === typeof viewId ? this.props.attributes.view.ID : viewId);
 			data.append('limit', 'undefined' === typeof limit ? this.props.attributes.limit : limit);
 			data.append('offset', 'undefined' === typeof offset ? this.props.attributes.offset : offset);
@@ -26526,7 +26533,8 @@ var ViewPreview = function (_Component) {
 			}).then(function (response) {
 				var newState = {};
 				if (0 !== response && response.success) {
-					var items = response.data.view_output,
+					var viewID = response.data.view_id,
+					    items = response.data.view_output,
 					    viewTitle = response.data.view_title,
 					    viewPurpose = response.data.view_purpose,
 					    style = null !== response.data.view_meta && 'undefined' !== typeof response.data.view_meta.style ? response.data.view_meta.style : '',
@@ -26537,6 +26545,7 @@ var ViewPreview = function (_Component) {
 					    overlay = response.data.overlay;
 
 					newState = {
+						viewID: viewID,
 						items: items,
 						viewTitle: viewTitle,
 						viewPurpose: viewPurpose,
@@ -26566,26 +26575,20 @@ var ViewPreview = function (_Component) {
 			});
 		}
 	}, {
-		key: 'componentWillMount',
-		value: function componentWillMount() {
-			if (this.props.attributes.view.ID) {
-				// If the View is already there, we're loading a saved block, so we need to render
-				// a different thing, which is why this doesn't use 'fetching', as that
-				// is for when the user is putting in a new url on the placeholder form
-				this.setState({ fetching: true });
-				this.getViewInfo();
-			}
+		key: 'componentDidMount',
+		value: function componentDidMount() {
+			this.getViewInfo();
 		}
 	}, {
-		key: 'componentWillReceiveProps',
-		value: function componentWillReceiveProps(nextProps) {
-			var newView = this.props.attributes.view.ID !== nextProps.attributes.view.ID;
-			var newLimit = this.props.attributes.limit !== nextProps.attributes.limit;
-			var newOffset = this.props.attributes.offset !== nextProps.attributes.offset;
-			var newOrderby = this.props.attributes.orderby !== nextProps.attributes.orderby;
-			var newOrder = this.props.attributes.order !== nextProps.attributes.order;
-			var newSecondaryOrderby = this.props.attributes.secondaryOrderby !== nextProps.attributes.secondaryOrderby;
-			var newSecondaryOrder = this.props.attributes.secondaryOrder !== nextProps.attributes.secondaryOrder;
+		key: 'componentDidUpdate',
+		value: function componentDidUpdate(prevProps) {
+			var newView = this.props.attributes.view.ID !== prevProps.attributes.view.ID;
+			var newLimit = this.props.attributes.limit !== prevProps.attributes.limit;
+			var newOffset = this.props.attributes.offset !== prevProps.attributes.offset;
+			var newOrderby = this.props.attributes.orderby !== prevProps.attributes.orderby;
+			var newOrder = this.props.attributes.order !== prevProps.attributes.order;
+			var newSecondaryOrderby = this.props.attributes.secondaryOrderby !== prevProps.attributes.secondaryOrderby;
+			var newSecondaryOrder = this.props.attributes.secondaryOrder !== prevProps.attributes.secondaryOrder;
 
 			if (newView || newLimit || newOffset || newOrderby || newOrder || newSecondaryOrderby || newSecondaryOrder) {
 				this.setState({
@@ -26594,8 +26597,20 @@ var ViewPreview = function (_Component) {
 					errorMessage: ''
 				});
 
-				this.getViewInfo(nextProps.attributes.view.ID, nextProps.attributes.limit, nextProps.attributes.offset, nextProps.attributes.orderby, nextProps.attributes.order, nextProps.attributes.secondaryOrderby, nextProps.attributes.secondaryOrder);
+				this.getViewInfo(this.props.attributes.view.ID, this.props.attributes.limit, this.props.attributes.offset, this.props.attributes.orderby, this.props.attributes.order, this.props.attributes.secondaryOrderby, this.props.attributes.secondaryOrder);
 			}
+		}
+	}], [{
+		key: 'getDerivedStateFromProps',
+		value: function getDerivedStateFromProps(nextProps, prevState) {
+			if (nextProps.attributes.view.ID && nextProps.attributes.view.ID !== prevState.viewID && prevState.fetching === false) {
+				// If the View is already there, we're loading a saved block, so we need to render
+				// a different thing, which is why this doesn't use 'fetching', as that
+				// is for when the user is putting in a new url on the placeholder form
+				prevState.fetching = true;
+			}
+
+			return prevState;
 		}
 	}]);
 

@@ -67,7 +67,7 @@ class Toolset_Field_Renderer_Toolset_Forms extends Toolset_Field_Renderer_Abstra
                     </div>
     			</div>',
 				sprintf(
-					__( 'The post reference field %s could not have been displayed here. In order to set the post reference, visit the Edit Post page.', 'wpcf' ),
+					__( 'The post reference field %s could not have been displayed here. In order to set the post reference, visit the Edit Post page.', 'wpv-views' ),
 					'<strong>' . $this->field->get_definition()->get_display_name() . '</strong>'
 				)
 			);

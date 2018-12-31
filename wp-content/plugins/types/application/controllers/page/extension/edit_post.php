@@ -5,9 +5,8 @@
  *
  * @since 2.0
  */
-final class Types_Page_Extension_Edit_Post {
+class Types_Page_Extension_Edit_Post {
 
-	private static $instance;
 
 	/**
 	 * We need to modifiy the $_POST data for updating RFG items
@@ -17,20 +16,14 @@ final class Types_Page_Extension_Edit_Post {
 	 */
 	private $backup_post_data = array();
 
-	public static function get_instance() {
-		if ( null == self::$instance ) {
-			self::$instance = new self();
-		}
 
-		return self::$instance;
-	}
+	public function initialize() {
 
-	private function __construct() {
 		$post = wpcf_admin_get_edited_post();
 		$post_type = wpcf_admin_get_edited_post_type( $post );
 
 		// if no post or no page
-		if ( $post_type != 'post' && $post_type != 'page' ) {
+		if ( $post_type !== 'post' && $post_type !== 'page' ) {
 			$post_type_option = new Types_Utils_Post_Type_Option();
 			$custom_types = $post_type_option->get_post_types();
 
@@ -39,16 +32,10 @@ final class Types_Page_Extension_Edit_Post {
 				// RFG/PRF saving for third party cpt
 				$this->repeatable_group_save();
 				add_action( 'wpcf_fields_type_post_save', array( $this, 'post_reference_save' ), 10, 3 );
-				return false;
+				return;
 			}
 		}
 
-		$this->prepare();
-	}
-
-	private function __clone() { }
-
-	public function prepare() {
 		// documentation urls
 		Types_Helper_Url::load_documentation_urls();
 
@@ -73,7 +60,7 @@ final class Types_Page_Extension_Edit_Post {
 
 		$wpcf_field = new WPCF_Field();
 		$this->backup_post_data = $_POST;
-		$updated_posts = array();
+		$sorted_rfg_items = array();
 
 		foreach ( $_POST['types-repeatable-group'] as $post_id => $fields ) {
 			$_POST = array();
@@ -119,18 +106,28 @@ final class Types_Page_Extension_Edit_Post {
 				remove_action( 'wpml_tm_save_post', 'wpml_tm_save_post', 10, 3 ); // prevent creating a translation job
 			}
 
-			// run wp_update_post
-			$updated_posts[] = wp_update_post( array( 'ID' => $post_id ) );
+			if( isset( $_POST['wpcf']['_id'] ) ) {
+				// we don't want to store this value
+				unset( $_POST['wpcf']['_id'] );
+			}
 
-			/*
-			 * Action 'toolset_post_update'
-			 *
-			 * @var WP_Post $affected_post
-			 *
-			 * @since 3.0
-			 */
-			$affected_post = get_post( $post_id );
-			do_action( 'toolset_post_update', $affected_post );
+			if( ! empty( $_POST['wpcf'] ) ) {
+				// field data available... run wp_update_post
+				$sorted_rfg_items[] = wp_update_post( array( 'ID' => $post_id ) );
+
+				/*
+				 * Action 'toolset_post_update'
+				 *
+				 * @var WP_Post $affected_post
+				 *
+				 * @since 3.0
+				 */
+				$affected_post = get_post( $post_id );
+				do_action( 'toolset_post_update', $affected_post );
+			} else {
+				// no fields, we still want store the position of the rfg item
+				$sorted_rfg_items[] = $post_id;
+			}
 
 			// re-apply temp hook removements
 			if( $is_wpml_tm_save_post_action_active ) {
@@ -147,7 +144,7 @@ final class Types_Page_Extension_Edit_Post {
 
 		// Store the order of the items
 		$sortorder = 1;
-		foreach ( $updated_posts as $post_id ) {
+		foreach ( $sorted_rfg_items as $post_id ) {
 			update_post_meta( $post_id, Toolset_Post::SORTORDER_META_KEY, $sortorder );
 			$sortorder ++;
 		}
@@ -164,11 +161,16 @@ final class Types_Page_Extension_Edit_Post {
 	 *
 	 * @return mixed
 	 */
-	public function filter_conditional_value_for_rfg( $value, $field_type, $field_slug = null ) {
+	public function filter_conditional_value_for_rfg(
+		$value, /** @noinspection PhpUnusedParameterInspection */ $field_type, $field_slug = null
+	) {
 		if( $field_slug === null ) {
 			// no field_slug given
 			return $value;
 		}
+
+		// we need to remove the wpcf- from the field slug as the prefix is stored as key on the $_POST array
+		$field_slug = preg_replace('/^(wpcf\-)/', '', $field_slug);
 
 		if( isset( $_POST['wpcf'][$field_slug] ) ) {
 			// for RFG saving we overwrite the $_POST data to only have the current RFG item data
@@ -179,7 +181,6 @@ final class Types_Page_Extension_Edit_Post {
 
 		// at this point we know the field_slug is not part of the current rfg item
 		// and we need to check outer field groups for the field slug
-		$field_slug = preg_replace('/^(wpcf\-)/', '', $field_slug);
 		if(
 			isset( $this->backup_post_data['wpcf'] )
 			&& isset( $this->backup_post_data['wpcf'][$field_slug] )
@@ -215,6 +216,7 @@ final class Types_Page_Extension_Edit_Post {
 	 * @param WPCF_Field $wpcf_field
 	 *
 	 * @return mixed
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
 	public function post_reference_save( $value, $field, $wpcf_field ) {
 		$new_parent_id = $value;

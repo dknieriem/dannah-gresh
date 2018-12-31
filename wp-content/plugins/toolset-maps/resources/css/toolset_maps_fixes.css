@@ -35,6 +35,12 @@
     background-position: 50% 50%;
     background-repeat: no-repeat;
 }
+
+/* No Google style background for Azure */
+.toolset-google-map-preview.mapboxgl-map {
+    background: none;
+}
+
 .toolset-google-map-preview-closest-address {
     width: 100%;
     float: right;

@@ -98,30 +98,30 @@ if ( ! class_exists( 'Toolset_Promotion', false ) ) {
             </div>
             <script type="text/html" id="js-buy-toolset-embedded-message">
                 <div class="toolset-modal">
-                    <h2><?php _e('Want to edit Views, CRED forms and Layouts? Get the full <em>Toolset</em> package!', 'wpcf'); ?></h2>
+                    <h2><?php _e('Want to edit Views, CRED forms and Layouts? Get the full <em>Toolset</em> package!', 'wpv-views'); ?></h2>
 
                     <div class="content">
-                        <p class="full"><?php _e('The full <em>Toolset</em> package allows you to develop and customize themes without touching PHP. You will be able to:', 'wpcf'); ?></p>
+                        <p class="full"><?php _e('The full <em>Toolset</em> package allows you to develop and customize themes without touching PHP. You will be able to:', 'wpv-views'); ?></p>
 
                         <div class="icons">
                             <ul>
-                                <li class="template"><?php _e('Create templates', 'wpcf'); ?></li>
-                                <li class="layout"><?php _e('Design page layouts using drag-and-drop', 'wpcf'); ?></li>
-                                <li class="toolset-search"><?php _e('Build custom searches', 'wpcf'); ?></li>
+                                <li class="template"><?php _e('Create templates', 'wpv-views'); ?></li>
+                                <li class="layout"><?php _e('Design page layouts using drag-and-drop', 'wpv-views'); ?></li>
+                                <li class="toolset-search"><?php _e('Build custom searches', 'wpv-views'); ?></li>
                             </ul>
                             <ul>
-                                <li class="list"><?php _e('Display lists of content', 'wpcf'); ?></li>
-                                <li class="form"><?php _e('Create front-end content editing forms', 'wpcf'); ?></li>
-                                <li class="more"><?php _e('and more…', 'wpcf'); ?></li>
+                                <li class="list"><?php _e('Display lists of content', 'wpv-views'); ?></li>
+                                <li class="form"><?php _e('Create front-end content editing forms', 'wpv-views'); ?></li>
+                                <li class="more"><?php _e('and more…', 'wpv-views'); ?></li>
                             </ul>
                         </div>
 
-                        <p class="description"><?php _e('Once you buy the full Toolset, you will be able to edit Views, CRED forms and Layouts in your site, as well as build new ones.', 'wpcf'); ?></p>
+                        <p class="description"><?php _e('Once you buy the full Toolset, you will be able to edit Views, CRED forms and Layouts in your site, as well as build new ones.', 'wpv-views'); ?></p>
 
                         <a href="<?php echo $link_button; ?>"
-                           class="button"><?php _e('<em>Toolset</em> Package Options', 'wpcf'); ?></a>
+                           class="button"><?php _e('<em>Toolset</em> Package Options', 'wpv-views'); ?></a>
                         <a href="<?php echo $link_learn; ?>"
-                           class="learn"><?php _e('Learn more about <em>Toolset</em>', 'wpcf'); ?></a>
+                           class="learn"><?php _e('Learn more about <em>Toolset</em>', 'wpv-views'); ?></a>
 
                     </div>
                     <span class="icon-toolset-logo"></span>

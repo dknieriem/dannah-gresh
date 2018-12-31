@@ -120,6 +120,7 @@ Types.page.fieldControl.Class = function() {
         var modelData = self.getModelData();
         //noinspection JSUnresolvedVariable
         Types.page.fieldControl.jsPath = modelData.jsIncludePath;
+        Types.page.fieldControl.typesVersion = modelData.typesVersion;
 
         self.initStaticData(modelData);
         self.initAjax();
@@ -158,14 +159,15 @@ Types.page.fieldControl.Class = function() {
 
 
     self.loadDependencies = function(nextStep) {
+        var typesVersion = Types.page.fieldControl.typesVersion;
         // Continue after loading the view of the listing table.
         Types.head.load(
-            Types.page.fieldControl.jsPath + '/viewmodels/BulkChangeManagementStatusDialogViewModel.js',
-            Types.page.fieldControl.jsPath + '/viewmodels/DeleteDialogViewModel.js',
-            Types.page.fieldControl.jsPath + '/viewmodels/ChangeAssignDialogViewModel.js',
-            Types.page.fieldControl.jsPath + '/viewmodels/ChangeFieldTypeDialogViewModel.js',
-            Types.page.fieldControl.jsPath + '/viewmodels/FieldDefinitionViewModel.js',
-            Types.page.fieldControl.jsPath + '/viewmodels/ListingViewModel.js',
+            Types.page.fieldControl.jsPath + '/viewmodels/BulkChangeManagementStatusDialogViewModel.js?ver=' + typesVersion,
+            Types.page.fieldControl.jsPath + '/viewmodels/DeleteDialogViewModel.js?ver=' + typesVersion,
+            Types.page.fieldControl.jsPath + '/viewmodels/ChangeAssignDialogViewModel.js?ver=' + typesVersion,
+            Types.page.fieldControl.jsPath + '/viewmodels/ChangeFieldTypeDialogViewModel.js?ver=' + typesVersion,
+            Types.page.fieldControl.jsPath + '/viewmodels/FieldDefinitionViewModel.js?ver=' + typesVersion,
+            Types.page.fieldControl.jsPath + '/viewmodels/ListingViewModel.js?ver=' + typesVersion,
             nextStep
         );
     };

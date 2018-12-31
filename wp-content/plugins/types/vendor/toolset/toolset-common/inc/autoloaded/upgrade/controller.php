@@ -90,11 +90,6 @@ class Toolset_Upgrade_Controller {
 				return;
 			}
 
-			// This is required by the tcl-status plugin.
-			// if( apply_filters( 'toolset_disable_upgrade_routine', false ) ) {
-			//	return;
-			// }
-
 			$this->do_upgrade( $database_version, $library_version );
 		}
 	}
@@ -216,9 +211,9 @@ class Toolset_Upgrade_Controller {
 		$notice = new Toolset_Admin_Notice_Error(
 			'toolset-database-upgrade-error',
 			'<p>'
-				. __( 'Oops! There\'s been a problem when upgrading Toolset data structures. Please make sure your current configuration allows WordPress to alter database tables.', 'wpcf' )
+				. __( 'Oops! There\'s been a problem when upgrading Toolset data structures. Please make sure your current configuration allows WordPress to alter database tables.', 'wpv-views' )
 				. sprintf(
-					__( 'If the problem persists, please don\'t hesitate to contact %sour support%s with this technical information:', 'wpcf' ),
+					__( 'If the problem persists, please don\'t hesitate to contact %sour support%s with this technical information:', 'wpv-views' ),
 					'<a href="https://toolset.com/forums/forum/professional-support/" target="_blank">',
 					' <i class="fa fa-external-link"></i></a>'
 				)

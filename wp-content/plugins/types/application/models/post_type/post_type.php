@@ -1,5 +1,8 @@
 <?php
 
+use OTGS\Toolset\Common\PostType\BuiltinPostTypeWithOverrides;
+use OTGS\Toolset\Common\PostType\EditorMode;
+
 /**
  * FIXME please document this!
  */
@@ -12,6 +15,8 @@ class Types_Post_Type {
 
 	protected $field_groups;
 	protected $taxonomies;
+
+	private $post_type_model;
 
 	public function __construct( $post_type ) {
 		if( is_object( $post_type ) && isset( $post_type->name ) ) {
@@ -51,6 +56,7 @@ class Types_Post_Type {
 		return $this->name;
 	}
 
+
 	/**
 	 * Get the backend edit link.
 	 *
@@ -72,7 +78,7 @@ class Types_Post_Type {
 		global $wpdb;
 		$sql = 'SELECT post_id FROM ' .$wpdb->postmeta . '
                     WHERE meta_key="_wp_types_group_post_types"
-                    AND (meta_value LIKE "%' . $this->name . '%" OR meta_value="all" OR meta_value REGEXP "^[,]+$")
+                    AND (meta_value LIKE "%,' . $this->name . ',%" OR meta_value="all" OR meta_value REGEXP "^[,]+$")
                     ORDER BY post_id ASC';
 		$post_ids = $wpdb->get_col( $sql );
 
@@ -100,7 +106,7 @@ class Types_Post_Type {
 		$all_taxonomies = get_taxonomies( '', 'objects' );
 
 		foreach( $all_taxonomies as $tax ) {
-			if( in_array( $this->get_name(), $tax->object_type ) )
+			if( $tax->show_ui && in_array( $this->get_name(), $tax->object_type ) )
 				$taxonomies[] = new Types_Taxonomy( $tax );
 		}
 
@@ -114,19 +120,93 @@ class Types_Post_Type {
 		return $this->taxonomies;
 	}
 
-	/**
-	 * Assigned Templates
-	 */
 
 	/**
-	 * Assigned Archives
+	 * @return IToolset_Post_Type|null
 	 */
+	private function get_post_type_model() {
+		if( null === $this->post_type_model ) {
+			$this->post_type_model = Toolset_Post_Type_Repository::get_instance()->get( $this->get_name() );
+		}
+
+		return $this->post_type_model;
+	}
+
 
 	/**
-	 * Assigned Views
+	 * @return string One of the EditorMode values or an empty string if the mode is not defined.
+	 * @since 3.2.2
 	 */
+	public function get_editor_mode() {
+		$post_type_model = $this->get_post_type_model();
+		if( null === $post_type_model ) {
+			return '';
+		}
+
+		return $post_type_model->get_editor_mode();
+	}
+
 
 	/**
-	 * Assigned Forms
+	 * @return bool
+	 * @since 3.2.2
 	 */
+	public function is_from_types() {
+		$post_type_model = $this->get_post_type_model();
+		if( null === $post_type_model ) {
+			return false;
+		}
+
+		return $post_type_model->is_from_types();
+	}
+
+
+	/**
+	 * @return bool
+	 * @since 3.2.2
+	 */
+	public function is_builtin() {
+		$post_type_model = $this->get_post_type_model();
+		if( null === $post_type_model ) {
+			return false;
+		}
+
+		return $post_type_model->is_builtin();
+	}
+
+
+	/**
+	 * @return bool True, if the post type is a built-in that has already been altered by Types.
+	 * @since 3.2.2
+	 */
+	public function is_builtin_editable() {
+		if( ! $this->is_builtin() ) {
+			return false;
+		}
+
+		return ( $this->get_post_type_model() instanceof BuiltinPostTypeWithOverrides );
+	}
+
+
+	/**
+	 * Get the display name of the post type's editor mode.
+	 *
+	 * @return string
+	 * @since 3.2.2
+	 */
+	public function get_editor_mode_label() {
+		switch( $this->get_editor_mode() ) {
+			case EditorMode::CLASSIC:
+				// Translators: Editor mode for a post type.
+				return __( 'Classic editor', 'wpcf' );
+			case EditorMode::BLOCK:
+				// Translators: Editor mode for a post type.
+				return __( 'Block editor', 'wpcf' );
+			case EditorMode::PER_POST:
+				// Translators: Editor mode for a post type.
+				return __( 'Editor choice per post', 'wpcf' );
+			default:
+				return '';
+		}
+	}
 }

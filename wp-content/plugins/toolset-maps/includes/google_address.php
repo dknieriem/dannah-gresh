@@ -76,7 +76,12 @@ class Toolset_Addon_Maps_Types {
 		// RFG fields are loaded by ajax JSON, so we can't add our JS then, and we don't know if there are address
 		// fields on the page before. So this is the best hook we have: if there is RFG JS enqueued, enqueue our JS.
 		if ( wp_script_is('types-repeatable-group') ) {
-			wp_enqueue_script('toolset-google-map-editor-script');
+			if ( apply_filters( 'toolset_maps_get_api_used', '' ) === Toolset_Addon_Maps_Common::API_GOOGLE ) {
+				wp_enqueue_script( 'toolset-google-map-editor-script' );
+			} else {
+				wp_enqueue_script( 'toolset-maps-address-autocomplete' );
+				Toolset_Addon_Maps_Common::maybe_enqueue_azure_css();
+			}
 		}
 	}
 

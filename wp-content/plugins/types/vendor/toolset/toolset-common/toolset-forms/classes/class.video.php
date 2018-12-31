@@ -66,5 +66,27 @@ class WPToolset_Field_Video extends WPToolset_Field_File
             'message' => __( 'You can add only video.', 'wpv-views' ),
         );
         return $validation;
-    }
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when selecting a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_select_label() {
+		return __( 'Select video', 'wpv-views' );
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when editing a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_edit_label() {
+		return __( 'Edit video', 'wpv-views' );
+	}
 }

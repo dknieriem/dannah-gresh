@@ -1,10 +1,15 @@
 <?php
+
+use OTGS\Toolset\Maps\Model\Shortcode\Distance\ConditionalDisplay;
+use OTGS\Toolset\Maps\Model\Shortcode\Distance;
+
 /**
  * Shortcode generator for Toolset Maps, using Toolset Common.
  * @since 1.5
  */
 class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	const SCRIPT_MAPS_SHORTCODE = 'maps-shortcode';
+	const MAP_ID_PREFIX = 'map-';
 
 	protected $doing_ajax = false;
 	/** @var Toolset_Addon_Maps_Views using some of the stuff from this class until everything is ported */
@@ -16,7 +21,7 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 
 	/**
 	 * Initialize the Maps shortcodes generator.
-	 * 
+	 *
 	 * This is run at init, so most of the things can be done directly.
 	 *
 	 * @since 1.5
@@ -47,9 +52,31 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 				'marker' => array(
 					'name' => __( 'Marker', 'toolset-maps' ),
 					'shortcode' => 'wpv-map-marker',
-					'callback' =>
-						"Toolset.Maps.shortcodeManager.shortcodeDialogOpen({title:'Marker',shortcode:'wpv-map-marker'})"
-				)
+					'callback' => "Toolset.Maps.shortcodeManager.shortcodeDialogOpen({title:'"
+								. __( 'Marker', 'toolset-maps' )
+								. "',shortcode:'wpv-map-marker'})",
+				),
+				'reload_button' => array(
+					'name' => __( '&quot;Reload&quot; button', 'toolset-maps' ),
+					'callback' => "Toolset.Maps.shortcodeManager.shortcodeDialogOpen({title:'"
+								. __( '&quot;Reload&quot; button', 'toolset-maps' )
+								// This is not a shortcode, but we need the name for dialog indexing
+								. "',shortcode:'reload_button'})",
+				),
+				'conditional_display' => array(
+					'name' => __( 'Distance conditional display', 'toolset-maps' ),
+					'shortcode' => 'toolset-maps-distance-conditional-display',
+					'callback' => "Toolset.Maps.shortcodeManager.shortcodeDialogOpen({title:'"
+								. __( 'Distance conditional display', 'toolset-maps' )
+								. "',shortcode:'toolset-maps-distance-conditional-display'})",
+				),
+				'distance_value' => array(
+					'name' => __( 'Distance value', 'toolset-maps' ),
+					'shortcode' => 'toolset-maps-distance-value',
+					'callback' => "Toolset.Maps.shortcodeManager.shortcodeDialogOpen({title:'"
+								. __( 'Distance value', 'toolset-maps' )
+								. "',shortcode:'toolset-maps-distance-value'})",
+				),
 			)
 		);
 
@@ -114,10 +141,24 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 	}
 
 	protected function get_fields_expected_attributes() {
+		return array_merge(
+			$this->get_fields_expected_attributes_for_marker(),
+			$this->get_fields_expected_attributes_for_reload_button(),
+			$this->get_fields_expected_attributes_for_distance_conditional_display( ConditionalDisplay::get_defaults()),
+			$this->get_fields_expected_attributes_for_distance_value( Distance\Value::get_defaults() )
+		);
+	}
+
+	/**
+	 * @since 1.6
+	 *
+	 * @return array
+	 */
+	protected function get_fields_expected_attributes_for_marker() {
 		// Don't show the marker dialog if API key is not set.
 		if ( ! $this->maps_views->is_api_key_set() ) {
 			return array(
-				'marker' => array(
+				'wpv-map-marker' => array(
 					'marker' => array(
 						'header' => __( 'Missing an API key', 'toolset-maps' ),
 						'fields' => array(
@@ -132,7 +173,6 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 		}
 
 		$saved_options = apply_filters( 'toolset_filter_toolset_maps_get_options', array() );
-		$map_id = $saved_options['map_counter'];
 		$next_marker_id = $saved_options['marker_counter'] + 1;
 		$analytics_strings = array(
 			'utm_source'	=> 'toolsetmapsplugin',
@@ -148,15 +188,15 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
            . esc_html( __( 'Learn how to display rich content in the marker popups »', 'toolset-maps' ) )
            . '</a>';
 		$custom_markers_documentation_link = '<a href="'
-            . Toolset_Addon_Maps_Common::get_documentation_promotional_link( array( 'query' => $analytics_strings, 'anchor' => 'marker-icon' ) )
-            . '" target="_blank" title="'
-            . esc_attr( __( 'Learn about using custom markers', 'toolset-maps' ) )
-            . '">'
-			. esc_html( __( 'Learn about using custom markers', 'toolset-maps' ) . ' »' )
-			.'</a>';
+           . Toolset_Addon_Maps_Common::get_documentation_promotional_link( array( 'query' => $analytics_strings, 'anchor' => 'marker-icon' ), TOOLSET_ADDON_MAPS_DOC_LINK . 'displaying-markers-on-google-maps/' )
+           . '" target="_blank" title="'
+           . esc_attr( __( 'Learn about using custom markers', 'toolset-maps' ) )
+           . '">'
+           . esc_html( __( 'Learn about using custom markers', 'toolset-maps' ) . ' »' )
+           .'</a>';
 
 		return array(
-			'marker' => array(
+			'wpv-map-marker' => array(
 				'marker' => array(
 					'header' => __( 'Marker', 'toolset-maps' ),
 					'fields' => array(
@@ -167,14 +207,14 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 								'This is the unique identifier for the map that this marker belongs to.', 'toolset-maps'
 							),
 							'required'          => true,
-							'defaultForceValue' => 'map-' . $map_id
+							'defaultForceValue' => $this->get_last_map_id(),
 						),
 						'marker_id' => array(
 							'label'		        => __( 'Marker ID - required', 'toolset-maps' ),
 							'type'		        => 'text',
 							'description'       => __( 'This is the marker unique identifier.', 'toolset-maps' ),
 							'required'	        => true,
-							'defaultForceValue' => 'marker-' . $next_marker_id
+							'defaultForceValue' => 'marker-' . $next_marker_id,
 						),
 						'marker_source' => array(
 							'label' => __( 'Source of the marker', 'toolset-maps' ),
@@ -188,9 +228,9 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 								),
 								'marker_source_meta' => array(
 									'type' => 'text',
-									'defaultValue' => 'placeholder'
-								)
-							)
+									'defaultValue' => 'placeholder',
+								),
+							),
 						),
 						'address'   => array(
 							'type'          => 'text',
@@ -199,9 +239,9 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 							'dependsOn'     => array(
 								array(
 									'key'   => 'marker_source_options',
-									'value' => 'address'
-								)
-							)
+									'value' => 'address',
+								),
+							),
 						),
 						'postmeta'  => array(
 							'type'          => 'select',
@@ -398,7 +438,372 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 						)
 					)
 				)
+			),
+		);
+	}
+
+	/**
+	 * @since 1.6
+	 *
+	 * @param array $conditional_display_defaults
+	 *
+	 * @return array
+	 */
+	protected function get_fields_expected_attributes_for_distance_conditional_display(
+		array $conditional_display_defaults
+	) {
+		return array(
+			'toolset-maps-distance-conditional-display' => array(
+				'conditional_display' => array(
+					'fields' => array(
+						'information' => array(
+							'type'      => 'information',
+							'content'   => __(
+								sprintf(
+									'In order to get visitor location information, this shortcode %1$smust%2$s '
+									.'be inside the [wpv-geolocation] shortcode. To learn more, visit the %3$srelated '
+									.'documentation page%4$s.',
+									'<strong>',
+									'</strong>',
+									'<a href="https://toolset.com/documentation/user-guides/maps-shortcodes/#toolset-maps-distance-conditional-display">',
+									'</a>'
+								),
+								'toolset-maps'
+							)
+						),
+						'location' => array(
+							'label'             => __( 'Central location - required', 'toolset-maps' ),
+							'type'              => 'text',
+							'placeholder'       => __( 'Type your address here', 'toolset-maps' ),
+							'description'       => __(
+								"This is the central location to which the visitor's location will be compared to.",
+								'toolset-maps'
+							),
+							'required'          => true,
+						),
+						'distance_and_unit' => array(
+							'type'              => 'group',
+							'fields'            => array(
+								'distance' => array(
+									'label'             => __( 'Distance - required', 'toolset-maps' ),
+									'type'              => 'text',
+									'description'       => __( 'Distance from the central location.', 'toolset-maps' ),
+									'required'          => true,
+									'defaultValue'      => $conditional_display_defaults['distance'],
+								),
+								'unit' => array(
+									'label'             => __( 'Distance unit', 'toolset-maps' ),
+									'type'              => 'radio',
+									'options'           => array(
+										'km' => 'km',
+										'mi' => 'mi'
+									),
+									'defaultValue'      => $conditional_display_defaults['unit'],
+									'required'          => true,
+								),
+							)
+						),
+						'display' => array(
+							'label'             => __( 'When to display the conditional content', 'toolset-maps' ),
+							'type'              => 'select',
+							'options'           => array(
+								'inside'  => 'when inside the distance',
+								'outside' => 'when outside the distance'
+							),
+							'defaultValue'      => $conditional_display_defaults['display'],
+							'required'          => true,
+							'description'       => __(
+								"Select if the content is displayed when visitor's location is inside or outside of "
+								.'the distance radius from the central location.',
+								'toolset-maps'
+							),
+						),
+						'content' => array(
+							'label'             => __( 'Content', 'toolset-maps' ),
+							'type'	            => 'content',
+							'description'	    => __(
+								'Content inside this shortcode will be rendered only when the conditional rules are '
+								.'met.',
+								'toolset-maps'
+							)
+						),
+					)
+				)
 			)
+		);
+	}
+
+	/**
+	 * @since 1.6
+	 *
+	 * @param array $distance_value_defaults
+	 *
+	 * @return array
+	 */
+	protected function get_fields_expected_attributes_for_distance_value( array $distance_value_defaults ) {
+		return array(
+			'toolset-maps-distance-value' => array(
+				'distance_value' => array(
+					'fields' => array(
+						'origin_group' => array(
+							'label'             => __( 'Calculate distance between this origin...', 'toolset-maps' ),
+							'type'              => 'group',
+							'fields'            => array(
+								'origin_source' => array(
+									'type'              => 'radio',
+									'options'           => array(
+										'address'           => __( 'A specific address', 'toolset-maps' ),
+										'visitor_location'  => __(
+											'The location of the current visitor', 'toolset-maps'
+										),
+										'url_param'         => __(
+											'URL parameter (useful with custom distance filter)', 'toolset-maps'
+										),
+										'latlon'            => __(
+											'A pair of latitude and longitude coordinates', 'toolset-maps'
+										),
+									),
+									'defaultValue'      => $distance_value_defaults['origin_source'],
+								),
+								'location_source_meta' => array(
+									'type' => 'text',
+									'defaultValue' => ''
+								)
+							),
+							'description'       => __(
+								"This is the 1st location for distance calculation.",
+								'toolset-maps'
+							),
+						),
+						'location' => array(
+							'type'              => 'text',
+							'placeholder'       => __( 'Type your address here', 'toolset-maps' ),
+							'dependsOn'         => array(
+								array(
+									'key'   => 'origin_source',
+									'value' => 'address'
+								)
+							),
+							'required'          => true,
+						),
+						'url_param' => array(
+							'type'              => 'text',
+							'defaultValue'      => $distance_value_defaults['url_param'],
+							'dependsOn'         => array(
+								array(
+									'key'   => 'origin_source',
+									'value' => 'url_param'
+								)
+							),
+							'hidden'            => true
+						),
+						'lat' => array(
+							'type'          => 'text',
+							'placeholder'   => __( 'Latitude', 'toolset-maps' ),
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'origin_source',
+									'value' => 'latlon'
+								)
+							)
+						),
+						'lon' => array(
+							'type'          => 'text',
+							'placeholder'   => __( 'Longitude', 'toolset-maps' ),
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'origin_source',
+									'value' => 'latlon'
+								)
+							)
+						),
+						'target_group' => array(
+							'label'             => __( '...and this target.', 'toolset-maps' ),
+							'type'              => 'group',
+							'description'       => __(
+								'This is the 2nd location, coming from an address field.',
+								'toolset-maps'
+							),
+							'required'          => true,
+							'fields' => array(
+								'target_source' => array(
+									'type' => 'radio',
+									'options' => array(
+										'postmeta' => __( 'A post field storing an address', 'toolset-maps' ),
+										'termmeta' => __( 'A taxonomy field storing an address', 'toolset-maps' ),
+										'usermeta' => __( 'An user field storing an address', 'toolset-maps' ),
+									),
+									'defaultValue' => 'postmeta',
+								),
+								'target_source_meta' => array(
+									'type' => 'text',
+									'defaultValue' => ''
+								)
+							)
+						),
+						'postmeta'  => array(
+							'type'          => 'select',
+							'options'       => $this->get_post_field_options(),
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'postmeta',
+								),
+							),
+						),
+						'postmeta_id'   => array(
+							'pseudolabel'   => __( 'From this post', 'toolset-maps' ),
+							'type'          => 'postSelector',
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'postmeta',
+								),
+							),
+						),
+						'termmeta'  => array(
+							'type'          => 'select',
+							'options'       => $this->get_term_field_options(),
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'termmeta',
+								),
+							),
+						),
+						'termmeta_id' => array(
+							'pseudolabel'   => __( 'From this taxonomy term', 'toolset-maps' ),
+							'type'          => 'typesViewsTermSelector',
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'termmeta',
+								),
+							)
+						),
+						'usermeta'  => array(
+							'type'          => 'select',
+							'options'       => $this->get_user_field_options(),
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'usermeta',
+								),
+							),
+						),
+						'usermeta_id' => array(
+							'pseudolabel'   => __( 'From this user', 'toolset-maps' ),
+							'type'          => 'userSelector',
+							'hidden'        => true,
+							'dependsOn'     => array(
+								array(
+									'key'   => 'target_source',
+									'value' => 'usermeta',
+								),
+							)
+						),
+						'decimals_and_unit' => array(
+							'type' => 'group',
+							'fields' => array(
+								'decimals' => array(
+									'label'             => __( 'Decimal points for the number', 'toolset-maps'),
+									'type'              => 'text',
+									'defaultValue'      => $distance_value_defaults['decimals'],
+									'required'          => true,
+									'description'       => __(
+										"How many decimal places to show in distance number.",
+										'toolset-maps'
+									),
+								),
+								'unit' => array(
+									'label'             => __( 'Distance unit', 'toolset-maps' ),
+									'type'              => 'radio',
+									'options'           => array(
+										'km' => 'km',
+										'mi' => 'mi'
+									),
+									'defaultValue'      => $distance_value_defaults['unit'],
+									'required'          => true,
+									'description'       => __(
+										"Which unit to use to calculate the distance value.",
+										'toolset-maps'
+									),
+								),
+							)
+						)
+					)
+				)
+			)
+		);
+	}
+
+	/**
+	 * @since 1.7.1
+	 * @return string
+	 */
+	protected function get_last_map_id() {
+		$saved_options = apply_filters( 'toolset_filter_toolset_maps_get_options', array() );
+		return self::MAP_ID_PREFIX . $saved_options['map_counter'];
+	}
+
+	/**
+	 * @since 1.7.1
+	 * @return array
+	 */
+	protected function get_fields_expected_attributes_for_reload_button() {
+		return array(
+			'reload_button' => array(
+				'reload_button' => array(
+					'fields' => array(
+						'map_id' => array(
+							'label'         => __( 'Map ID - required', 'toolset-maps' ),
+							'description'   => __( 'ID of the map to reload', 'toolset-maps' ),
+							'type'          => 'text',
+							'required'      => true,
+							'defaultValue'  => $this->get_last_map_id()
+						),
+						'display' => array(
+							'label'         => __( 'Display', 'toolset-maps' ),
+							'type'          => 'group',
+							'fields'        => array(
+								'html_element' => array(
+									'description'   => __( 'Use this HTML element', 'toolset-maps' ),
+									'type'          => 'radio',
+									'options'       => array(
+										'link' => __( 'Link', 'toolset-maps' ),
+										'button' => __( 'Button', 'toolset-maps' )
+									),
+									'defaultValue'  => 'link'
+								),
+								'anchor_text' => array(
+									'description'   => __( 'Use this text - required', 'toolset-maps' ),
+									'type'          => 'text',
+									'required'      => true
+								)
+							)
+						),
+						'extra' => array(
+							'label'         => __( 'Extra classnames and styles', 'toolset-maps' ),
+							'type'          => 'group',
+							'fields'        => array(
+								'classnames' => array(
+									'description'   => __( 'Classnames', 'toolset-maps' ),
+									'type'          => 'text',
+								),
+								'styles' => array(
+									'description'   => __( 'Styles', 'toolset-maps' ),
+									'type'          => 'text',
+								),
+							),
+						),
+					),
+				),
+			),
 		);
 	}
 
@@ -530,10 +935,10 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 
 		global $wpdb;
 
-		if ( method_exists( $wpdb, 'esc_like' ) ) { 
-			$search = '%' . $wpdb->esc_like( $search ) . '%'; 
-		} else { 
-			$search = '%' . like_escape( esc_sql( $search ) ) . '%'; 
+		if ( method_exists( $wpdb, 'esc_like' ) ) {
+			$search = '%' . $wpdb->esc_like( $search ) . '%';
+		} else {
+			$search = '%' . like_escape( esc_sql( $search ) ) . '%';
 		}
 
 		$table = null;
@@ -561,11 +966,11 @@ class Toolset_Maps_Shortcode_Generator extends Toolset_Shortcode_Generator {
 			)
 		);
 
-		if ( 
-			isset( $results ) 
-			&& ! empty( $results ) 
+		if (
+			isset( $results )
+			&& ! empty( $results )
 		) {
-			
+
 			if ( is_array( $results ) ) {
 				$output['gathered'] = array(
 					'text' => __( 'Search results', 'toolset-maps' ),

@@ -60,7 +60,7 @@ if ( ! class_exists( 'Toolset_Utils', false ) ) {
 		 * @since 2.5.0
 		 */
 		public static function get_ajax_actions_array_to_exclude_on_frontend() {
-			return array( 'wpv_get_view_query_results', 'wpv_get_archive_query_results', 'render_element_changed' );
+			return array( 'wpv_get_view_query_results', 'wpv_get_archive_query_results', 'render_element_changed', 'toolset_get_cred_form_block_preview' );
 		}
 
 		/**
@@ -275,19 +275,30 @@ if ( ! class_exists( 'Toolset_Utils', false ) ) {
 				return null;
 			}
 
-			// Now we're going to quickly search the DB for any attachment GUID with a partial path match.
-			// Example: /uploads/2013/05/test-image.jpg
 			global $wpdb;
 
+			// Check for the guid with the exact url
+            // (will match in most cases and is way faster than partial match search)
 			$query = $wpdb->prepare(
-				"SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND guid LIKE %s",
+				"SELECT ID FROM $wpdb->posts WHERE guid = %s LIMIT 1",
+                $url
+			);
+
+			if( $attachment_id = $wpdb->get_var( $query ) ) {
+                // attachment id found
+			    return (int) $attachment_id;
+            }
+
+			// No match for the full $url. Checking for any attachment GUID with a partial path match.
+			// Example: /uploads/2013/05/test-image.jpg
+			$query = $wpdb->prepare(
+				"SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND guid LIKE %s LIMIT 1",
 				'%' . $attachment_path
 			);
 
-			$attachment = $wpdb->get_col( $query );
-
-			if ( is_array( $attachment ) && ! empty( $attachment ) ) {
-				return (int) array_shift( $attachment );
+			if( $attachment_id = $wpdb->get_var( $query ) ) {
+				// attachment id found
+				return (int) $attachment_id;
 			}
 
 			return null;
@@ -357,7 +368,7 @@ if ( ! class_exists( 'Toolset_Utils', false ) ) {
 
 		    // Use the native solution if available (which will happen in the vast majority of most cases).
 		    if( function_exists( 'mb_convert_case' ) && defined( 'MB_CASE_TITLE' ) ) {
-		        return mb_convert_case( $callback, MB_CASE_TITLE );
+		        return mb_convert_case( $callback, MB_CASE_TITLE, 'UTF-8' );
             }
 
             // mb_convert_case() works this way - it also capitalizes first letters after numbers
@@ -721,7 +732,7 @@ if ( ! function_exists( 'toolset_getarr' ) ) {
 	 * Checks if the key is set in the source array. If not, default value is returned. Optionally validates against array
 	 * of allowed values and returns default value if the validation fails.
 	 *
-	 * @param array $source The source array.
+	 * @param array|ArrayAccess $source The source array.
 	 * @param string $key The key to be retrieved from the source array.
 	 * @param mixed $default Default value to be returned if key is not set or the value is invalid. Optional.
 	 *     Default is empty string.

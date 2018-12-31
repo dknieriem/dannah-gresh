@@ -93,7 +93,7 @@ class Toolset_Relationship_Database_Operations {
 		if ( ! $relationship_definition instanceof Toolset_Relationship_Definition ) {
 			throw new InvalidArgumentException(
 				sprintf(
-					__( 'Relationship definition "%s" doesn\'t exist.', 'wpcf' ),
+					__( 'Relationship definition "%s" doesn\'t exist.', 'wpv-views' ),
 					is_string( $relationship_definition_source ) ? $relationship_definition_source : print_r( $relationship_definition_source, true )
 				)
 			);
@@ -251,7 +251,7 @@ class Toolset_Relationship_Database_Operations {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Unable to create table %s due to a MySQL Error: %s', 'wpcf' ),
+					__( 'Unable to create table %s due to a MySQL Error: %s', 'wpv-views' ),
 					$table_to_check,
 					$wpdb_error
 				)
@@ -260,7 +260,7 @@ class Toolset_Relationship_Database_Operations {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'MySQL error when creating table %s: %s', 'wpcf' ),
+					__( 'MySQL error when creating table %s: %s', 'wpv-views' ),
 					$table_to_check,
 					$wpdb_error
 				)
@@ -316,6 +316,7 @@ class Toolset_Relationship_Database_Operations {
 			role_label_child_plural VARCHAR(255) NOT NULL DEFAULT '',
 			needs_legacy_support tinyint(1) NOT NULL DEFAULT 0,
 			is_active tinyint(1) NOT NULL DEFAULT 0,
+			autodelete_intermediary tinyint(1) NOT NULL DEFAULT 1,
 			PRIMARY KEY  id (id),
 			KEY slug (slug),
 			KEY is_active (is_active),
@@ -384,12 +385,12 @@ class Toolset_Relationship_Database_Operations {
 		$message = (
 		$is_success
 			? sprintf(
-			__( 'The association table has been updated with the new relationship slug "%s". %d rows have been updated.', 'wpcf' ),
+			__( 'The association table has been updated with the new relationship slug "%s". %d rows have been updated.', 'wpv-views' ),
 			$new_definition->get_slug(),
 			$rows_updated
 		)
 			: sprintf(
-			__( 'There has been an error when updating the association table with the new relationship slug: %s', 'wpcf' ),
+			__( 'There has been an error when updating the association table with the new relationship slug: %s', 'wpv-views' ),
 			$this->wpdb->last_error
 		)
 		);
@@ -418,12 +419,12 @@ class Toolset_Relationship_Database_Operations {
 		if( false === $result ) {
 			return new Toolset_Result_Updated(
 				false, 0,
-				sprintf( __( 'Database error when deleting associations: "%s"', 'wpcf' ), $this->wpdb->last_error )
+				sprintf( __( 'Database error when deleting associations: "%s"', 'wpv-views' ), $this->wpdb->last_error )
 			);
 		} else {
 			return new Toolset_Result_Updated(
 				true, $result,
-				sprintf( __( 'Deleted all associations for the relationship #%d', 'wpcf'), $relationship_row_id )
+				sprintf( __( 'Deleted all associations for the relationship #%d', 'wpv-views'), $relationship_row_id )
 			);
 		}
 	}
@@ -470,6 +471,7 @@ class Toolset_Relationship_Database_Operations {
 			$relationships_table_alias.role_label_child_plural AS role_label_child_plural,
 			$relationships_table_alias.needs_legacy_support AS needs_legacy_support,
 			$relationships_table_alias.is_active AS is_active,
+			$relationships_table_alias.autodelete_intermediary AS autodelete_intermediary,
 			$relationships_table_alias.parent_types AS parent_types_set_id,
 			$relationships_table_alias.child_types AS child_types_set_id,
 			GROUP_CONCAT(DISTINCT $parent_types_table_alias.type) AS parent_types,
@@ -553,12 +555,12 @@ class Toolset_Relationship_Database_Operations {
 
 		$message = $is_success
 			? sprintf(
-				__( 'The type_sets table has been updated with the new type "%s". %d rows have been updated.', 'wpcf' ),
+				__( 'The type_sets table has been updated with the new type "%s". %d rows have been updated.', 'wpv-views' ),
 				$new_type,
 				$rows_updated
 			)
 			: sprintf(
-				__( 'There has been an error when updating the type_sets table with the new type "%s": %s', 'wpcf' ),
+				__( 'There has been an error when updating the type_sets table with the new type "%s": %s', 'wpv-views' ),
 				$new_type,
 				$this->wpdb->last_error
 			);

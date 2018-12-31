@@ -39,6 +39,7 @@ class Toolset_Twig_Extensions {
 		$twig->addFunction( 'printf', new Twig_SimpleFunction( 'printf', 'printf' ) );
 		$twig->addFunction( 'sprintf', new Twig_SimpleFunction( 'sprintf', 'sprintf' ) );
 		$twig->addFunction( 'apply_filters', new Twig_SimpleFunction( 'apply_filters', 'apply_filters' ) );
+		$twig->addFunction( 'do_action', new Twig_SimpleFunction( 'do_action', 'do_action' ) );
 
 		return $twig;
 	}

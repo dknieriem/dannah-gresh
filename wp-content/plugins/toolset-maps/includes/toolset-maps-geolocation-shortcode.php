@@ -41,18 +41,6 @@ class Toolset_Maps_Geolocation_Shortcode {
 			TOOLSET_ADDON_MAPS_VERSION,
 			true
 		);
-
-		add_action( 'wp_enqueue_scripts',		array( $this, 'enqueue_scripts' ) );
-		// We may need this later, when we hook other parts of code to use Toolset_Maps_Geolocation_Shortcode
-		//add_action( 'admin_enqueue_scripts',	array( $this, 'enqueue_scripts' ) );
-	}
-
-	/**
-	 * Do stuff on wp_enqueue_scripts event
-	 * @param $hook
-	 */
-	public function enqueue_scripts( $hook ) {
-		wp_enqueue_script( 'toolset-maps-location' );
 	}
 
 	/**
@@ -68,6 +56,8 @@ class Toolset_Maps_Geolocation_Shortcode {
 			),
 			$atts
 		);
+
+		wp_enqueue_script( 'toolset-maps-location' );
 
 		if ( $this->location ) {
 			return do_shortcode( $content );

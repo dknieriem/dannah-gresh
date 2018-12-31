@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\PostType\BuiltinPostTypeWithOverrides;
+
 /**
  * Factory for instantiating IToolset_Post_Type instances.
  *
@@ -29,5 +31,17 @@ class Toolset_Post_Type_Factory {
 	 */
 	public function registered_post_type( WP_Post_Type $wp_post_type ) {
 		return new Toolset_Post_Type_Registered( $wp_post_type );
+	}
+
+
+	/**
+	 * @param IToolset_Post_Type_Registered $original_instance
+	 * @param IToolset_Post_Type_From_Types $types_override
+	 *
+	 * @return BuiltinPostTypeWithOverrides
+	 * @since Types 3.2.2
+	 */
+	public function builtin_post_type_with_overrides( \IToolset_Post_Type_Registered $original_instance, \IToolset_Post_Type_From_Types $types_override ) {
+		return new BuiltinPostTypeWithOverrides( $original_instance, $types_override );
 	}
 }

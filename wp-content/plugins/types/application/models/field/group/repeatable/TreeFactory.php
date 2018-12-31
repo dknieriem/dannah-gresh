@@ -9,20 +9,23 @@ namespace OTGS\Toolset\Types\Field\Group\Repeatable;
  */
 class TreeFactory {
 
-	/** @var \wpdb */
-	private $wpdb;
+	/** @var \Toolset_Field_Group_Post_Factory */
+	private $field_group_factory;
 
 	/** @var \Types_Field_Group_Repeatable_Service  */
 	private $service_rfg;
 
+	/** @var \Toolset_Field_Group[] */
+	private $_field_groups;
+
 	/**
 	 * TreeFactory constructor.
 	 *
-	 * @param \wpdb $wpdb
+	 * @param \Toolset_Field_Group_Post_Factory $field_group_factory
 	 * @param \Types_Field_Group_Repeatable_Service $service_rfg
 	 */
-	public function __construct( \wpdb $wpdb, \Types_Field_Group_Repeatable_Service $service_rfg ) {
-		$this->wpdb = $wpdb;
+	public function __construct( \Toolset_Field_Group_Post_Factory $field_group_factory, \Types_Field_Group_Repeatable_Service $service_rfg ) {
+		$this->field_group_factory = $field_group_factory;
 		$this->service_rfg = $service_rfg;
 	}
 
@@ -84,17 +87,7 @@ class TreeFactory {
 	 * @return array
 	 */
 	private function loadParents( \Types_Field_Group_Repeatable $rfg, $parents = array() ) {
-		$parent_post_id = $this->wpdb->get_var(
-			$this->wpdb->prepare(
-				"SELECT `post_id` 
-				 FROM {$this->wpdb->postmeta}
-				 WHERE `meta_value` LIKE %s
-				 LIMIT 1",
-				'%' . $rfg->get_id_with_prefix() . '%' // as we're searching in a string of fields we need wildcards
-			)
-		);
-
-		if( $parent_post_id && $parent_rfg = $this->service_rfg->get_object_by_id( $parent_post_id ) ) {
+		if( $parent_rfg = $this->getParentGroup( $rfg ) ) {
 			$parents[ $parent_rfg->get_id() ] = $parent_rfg;
 
 			// go further up in the tree
@@ -123,5 +116,49 @@ class TreeFactory {
 		}
 
 		return $children;
+	}
+
+	/**
+	 * Get parent group of an rfg
+	 *
+	 * @param \Types_Field_Group_Repeatable $rfg
+	 *
+	 * @return false|\Types_Field_Group_Repeatable
+	 */
+	private function getParentGroup( \Types_Field_Group_Repeatable $rfg ) {
+		foreach( $this->getFieldGroups() as $field_group ) {
+			$field_group_slugs = $field_group->get_field_slugs();
+			foreach( (array) $field_group_slugs as $field_slug ) {
+				if( $field_slug == $rfg->get_id_with_prefix() ) {
+					// there can only be one parent
+					return $this->service_rfg->get_object_by_id( $field_group->get_id() );
+				}
+			}
+		}
+
+		// no parent found
+		return false;
+	}
+
+	/**
+	 * @return \Toolset_Field_Group[]
+	 */
+	private function getFieldGroups() {
+		if( $this->_field_groups === null ) {
+			// field groups not loaded yet
+			// query all fields including rfgs
+			$this->_field_groups = $this->field_group_factory->query_groups(
+				array(
+					'purpose' => '*',
+					'post_status' => 'any'
+				)
+			);
+
+			if( ! is_array( $this->_field_groups ) ) {
+				$this->_field_groups = array();
+			}
+		}
+
+		return $this->_field_groups;
 	}
 }

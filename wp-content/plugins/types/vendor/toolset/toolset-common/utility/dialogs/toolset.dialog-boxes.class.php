@@ -71,11 +71,11 @@ if ( ! class_exists( 'Toolset_DialogBoxes', false ) ) {
 				<script type="text/html" id="ddl-cell-dialog-tpl">
 					<div id="js-dialog-dialog-container">
 					<div class="ddl-dialog-content" id="js-dialog-content-dialog">
-						<?php printf(__('This is %s cell.', 'ddl-layouts'), '{{{ cell_type }}}'); ?>
+						<?php printf(__('This is %s cell.', 'wpv-views'), '{{{ cell_type }}}'); ?>
 					</div>
 
 					<div class="ddl-dialog-footer" id="js-dialog-footer-dialog">
-						<?php printf(__('This is %s cell.', 'ddl-layouts'), '{{{ cell_type }}}'); ?>
+						<?php printf(__('This is %s cell.', 'wpv-views'), '{{{ cell_type }}}'); ?>
 					</div>
 					</div>
 				</script>
@@ -99,7 +99,7 @@ if( ! class_exists( 'Toolset_PopUpBlockerAlert', false ) ) {
 				<div id="js-dialog-dialog-container">
 					<div class="ddl-dialog-content" id="js-dialog-content-dialog">
 						<?php printf(
-							__( '%sTo see the preview, you need to allow this page to show popups.%sHow to enable popups in your browser%s', 'ddl-layouts' ),
+							__( '%sTo see the preview, you need to allow this page to show popups.%sHow to enable popups in your browser%s', 'wpv-views' ),
 							'<p>',
 							'<br><a href="https://toolset.com/documentation/user-guides/enable-pop-ups-browser/?utm_source=layoutsplugin&utm_campaign=layouts&utm_medium=enable-pop-ups-browser&utm_term=help-link" title="enable popups" target="_blank">',
 							'</a></p>'
@@ -109,7 +109,7 @@ if( ! class_exists( 'Toolset_PopUpBlockerAlert', false ) ) {
 							<label for="disable-popup-message"><input type="checkbox"
 							                                          name="<?php echo self::POPUP_MESSAGE_OPTION; ?>"
 							                                          value="true"
-							                                          id="disable-popup-message"> <?php _e( 'Don\'t show this message again', 'ddl-layouts' ); ?>
+							                                          id="disable-popup-message"> <?php _e( 'Don\'t show this message again', 'wpv-views' ); ?>
 							</label>
 						</p>
 					</div>

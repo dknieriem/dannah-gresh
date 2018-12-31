@@ -243,6 +243,7 @@ class Toolset_Association_Cleanup_Post extends Toolset_Wpdb_User {
 				$query->element( $post, new Toolset_Relationship_Role_Parent(), true, false ),
 				$query->element( $post, new Toolset_Relationship_Role_Child(), true, false )
 			) )
+			->add( $query->has_autodeletable_intermediary_post() )
 			->do_not_add_default_conditions()
 			->limit( self::DELETE_POSTS_PER_BATCH )
 			->return_element_ids( new Toolset_Relationship_Role_Intermediary() )

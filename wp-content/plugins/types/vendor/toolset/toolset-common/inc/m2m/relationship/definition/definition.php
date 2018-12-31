@@ -76,14 +76,14 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 	/** @var string[] */
 	private $role_labels_plural;
 
-	/** @var string[] */
-	private $role_aliases;
-
 	/** @var bool */
 	private $is_legacy_support_needed;
 
 	/** @var bool */
 	private $is_active;
+
+	/** @var bool */
+	private $autodelete_intermediary;
 
 	/**
 	 * @var string|null Determines whether this relationship is an ownership and its direction.
@@ -116,6 +116,7 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 	const DA_ROLE_LABELS_PLURAL = 'role_labels_plural';
 	const DA_NEEDS_LEGACY_SUPPORT = 'needs_legacy_support';
 	const DA_IS_ACTIVE = 'is_active';
+	const DA_AUTODELETE_INTERMEDIARY = 'autodelete_intermediary';
 	const DA_ORIGIN = 'origin';
 	const DA_ROW_ID = 'row_id';
 
@@ -286,6 +287,8 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 		$this->is_legacy_support_needed = (bool) toolset_getarr( $definition_array, self::DA_NEEDS_LEGACY_SUPPORT, false );
 
 		$this->is_active( toolset_getarr( $definition_array, self::DA_IS_ACTIVE, true ) );
+
+		$this->is_autodeleting_intermediary_posts( toolset_getarr( $definition_array, self::DA_AUTODELETE_INTERMEDIARY, true ) );
 
 		$this->set_origin( toolset_getarr( $definition_array, self::DA_ORIGIN, Toolset_Relationship_Origin_Wizard::ORIGIN_KEYWORD ) );
 
@@ -640,6 +643,29 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 	}
 
 
+	/**
+	 * Set the intermediary post type for this relationship.
+	 *
+	 * Use with caution.
+	 *
+	 * @param IToolset_Post_Type $post_type
+	 * @param bool $override_integrity_check If this is true, do not check whether the given post type can be used as an intermediary.
+	 * @since 3.0.5
+	 */
+	public function set_intermediary_post_type( IToolset_Post_Type $post_type, $override_integrity_check = false ) {
+		$driver = $this->get_driver();
+		if( ! $driver instanceof Toolset_Relationship_Driver ) {
+			throw new InvalidArgumentException();
+		}
+
+		if( ! $override_integrity_check && ! $post_type->can_be_used_as_intermediary() ) {
+			throw new InvalidArgumentException( 'This post type cannot be used as intermediary in a relationship.' );
+		}
+
+		$driver->set_intermediary_post_type( $post_type, true );
+	}
+
+
 	public function is_ownership() {
 		return ( null != $this->ownership );
 	}
@@ -707,24 +733,32 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 	 *
 	 * @param int|WP_Post|Toolset_Element $parent Parent element (of matching domain, type and other conditions)
 	 * @param int|WP_Post|Toolset_Element $child Child element (of matching domain, type and other conditions)
+	 * @param null|int $intermediary_id ID of the intermediary post to set. If null, the post will be
+	 * 		created automatically (if the relationship needs it)
 	 *
 	 * @return Toolset_Result|IToolset_Association The newly created association or a negative Toolset_Result when it
 	 *     could not have been created.
 	 * @throws RuntimeException when the association cannot be created because of a known reason. The exception would
 	 *     contain a displayable error message.
 	 * @throws InvalidArgumentException when the method is used improperly.
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 *
 	 * @since m2m
-	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
-	public function create_association( $parent, $child ) {
+	public function create_association( $parent, $child, $intermediary_id = null ) {
 
 		$driver = $this->get_driver();
 		if( ! $driver instanceof Toolset_Relationship_Driver ) {
 			throw new RuntimeException( 'Not implemented!' );
 		}
 
-		$association = Toolset_Relationship_Database_Operations::create_association( $this, $parent, $child, 0 );
+		if( null === $intermediary_id ) {
+			$intermediary_id = 0;
+		} elseif( ! Toolset_Utils::is_natural_numeric( $intermediary_id ) ) {
+			throw new InvalidArgumentException();
+		}
+
+		$association = Toolset_Relationship_Database_Operations::create_association( $this, $parent, $child, $intermediary_id, true );
 
 		return $association;
 	}
@@ -1073,6 +1107,24 @@ class Toolset_Relationship_Definition implements IToolset_Relationship_Definitio
 		}
 
 		return $this->is_active;
+	}
+
+
+	/**
+	 * Defines whether intermediary posts of this relationship should be automatically deleted
+	 * together with an association.
+	 *
+	 * @param null|bool $value If a boolean value is provided, it will be set.
+	 *
+	 * @return bool
+	 * @since Types 3.2
+	 */
+	public function is_autodeleting_intermediary_posts( $value = null ) {
+		if ( null !== $value && is_bool( $value ) ) {
+			$this->autodelete_intermediary = (bool) $value;
+		}
+
+		return $this->autodelete_intermediary;
 	}
 
 

@@ -99,19 +99,6 @@ class Toolset_Upgrade_Command_M2M_V2_Database_Structure_Upgrade implements ITool
 	}
 
 
-	/**
-	 * Execute a dbDelta() query, ensuring that the function is available.
-	 *
-	 * @param string $query MySQL query.
-	 *
-	 * @return array dbDelta return value.
-	 */
-	private static function dbdelta( $query ) {
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-		return dbDelta( $query );
-	}
-
-
 	private function get_relationships_table_name() {
 		return $this->wpdb->prefix . 'toolset_relationships';
 	}

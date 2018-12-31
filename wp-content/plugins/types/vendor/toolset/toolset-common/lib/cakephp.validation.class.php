@@ -373,7 +373,7 @@ if ( ! class_exists( 'Toolset_CakePHP_Validation', false ) ) {
                     break;
                 default:
                     $_this = & Toolset_CakePHP_Validation::getInstance();
-                    $_this->errors[] = __('You must define the $operator parameter for Toolset_CakePHP_Validation::comparison()', 'wpcf');
+                    $_this->errors[] = __('You must define the $operator parameter for Toolset_CakePHP_Validation::comparison()', 'wpv-views');
                     break;
             }
             return false;
@@ -397,7 +397,7 @@ if ( ! class_exists( 'Toolset_CakePHP_Validation', false ) ) {
                 $_this->_extract($check);
             }
             if ($_this->regex === null) {
-                $_this->errors[] = __('You must define a regular expression for Toolset_CakePHP_Validation::custom()', 'wpcf');
+                $_this->errors[] = __('You must define a regular expression for Toolset_CakePHP_Validation::custom()', 'wpv-views');
                 return false;
             }
             return $_this->_check();

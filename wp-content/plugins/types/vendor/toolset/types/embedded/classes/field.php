@@ -755,8 +755,8 @@ class WPCF_Field
     /**
      * Return slug.
      *
-     * @param type $meta_key
-     * @return type
+     * @param string $meta_key
+     * @return string
      */
     function get_slug_no_prefix( $meta_key ) {
         return strpos( $meta_key, WPCF_META_PREFIX ) === 0 ? substr( $meta_key,

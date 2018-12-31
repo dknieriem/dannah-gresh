@@ -57,8 +57,8 @@ Types.page.addTerm = (function($) {
      */
     self.createFauxSubmitButton = function() {
 
-        var form = $(self.formSelector);
-        var submitSection = form.find('p.submit');
+        var $form = $(self.formSelector);
+        var submitSection = $form.find('p.submit');
         var originalSubmitButton = submitSection.find('#submit');
 
         var customSubmitButton = originalSubmitButton.clone();
@@ -70,9 +70,15 @@ Types.page.addTerm = (function($) {
 
         var handleSubmitAction = function(e) {
 
-            if(form.valid()) {
-                WPV_Toolset.Utils.Spinner.show(WPV_Toolset.Utils.Spinner.find(form));
-                originalSubmitButton.click();
+            if($form.valid()) {
+                WPV_Toolset.Utils.Spinner.show(WPV_Toolset.Utils.Spinner.find($form));
+
+                // Our WYSIWYG fields weren't saving automatically.
+				if ( 'undefined' !== typeof( window.tinyMCE ) ) {
+					window.tinyMCE.triggerSave();
+				}
+
+				originalSubmitButton.click();
             }
 
             // If the form isn't valid, the validation code has displayed all the required messages, etc.
@@ -87,7 +93,7 @@ Types.page.addTerm = (function($) {
         submitSection.append(customSubmitButton).append(WPV_Toolset.Utils.Spinner.create());
 
         // Set the new custom button as default.
-        self.setDefaultSubmitButton(form, customSubmitButton);
+        self.setDefaultSubmitButton($form, customSubmitButton);
     };
 
 
@@ -181,7 +187,6 @@ Types.page.addTerm = (function($) {
         }
 
     };
-
 
     self.init();
 

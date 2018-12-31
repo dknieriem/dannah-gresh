@@ -1,7 +1,7 @@
 /**
- * Backend script to be used when editing Content Templates using Gutenberg Editor.
+ * Backend script to be used when editing Content Templates using Gutenberg.
  *
- * @summary Content Template editor manager for Gutenberg Editor.
+ * @summary Content Template editor manager for Gutenberg.
  *
  * @since 2.6.9
  * @requires jquery.js

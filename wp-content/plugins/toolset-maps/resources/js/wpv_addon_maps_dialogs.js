@@ -15,27 +15,27 @@ WPViews.AddonMapsDialogs = function( $ ) {
 	var self = this;
 
 	const API_GOOGLE = 'google';
-	
+
 	self.cache = {};
 	self.map_counter = 0;
 	self.marker_counter = 0;
 	self.inserted_map_ids = [];
-	
+
 	self.current_active_editor = null;
-	
+
 	self.has_colorpicker = ( typeof $.fn.wpColorPicker == 'function' );
-	
+
 	self.dialogs = {};
-	
+
 	self.extended_links_computed_classname_filters = {};
-	
+
 	if ( typeof WPV_Toolset.only_img_src_allowed_here !== "undefined" ) {
 		WPV_Toolset.only_img_src_allowed_here.push( "js-wpv-toolset-maps-add-map-image" );
 		WPV_Toolset.only_img_src_allowed_here.push( "js-wpv-toolset-maps-add-map-image-hover" );
 		WPV_Toolset.only_img_src_allowed_here.push( "js-wpv-toolset-maps-add-marker-image" );
 		WPV_Toolset.only_img_src_allowed_here.push( "js-wpv-toolset-maps-add-marker-image-hover" );
 	}
-	
+
 	self.is_views_editor = false;
 	self.is_wpa_editor = false;
 	self.current_content_type = 'posts';
@@ -59,7 +59,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		result += '</ul>';
 		return result;
 	};
-	
+
 	self.add_marker_result = function( context, type, value ) {
 		var result = '',
 		thiz_name = '';
@@ -80,14 +80,14 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		result += '<span class="wpv-icon-img js-wpv-icon-img" data-img="' + value + '" style="background-image:url(' + value + ');"></span></label></li>';
 		return result;
 	};
-	
+
 	self.after_closing_media_modal = function() {
 		if ( self.current_active_editor !== null ) {
 			$( 'body' ).addClass( 'modal-open' );
 			window.wpcfActiveEditor = self.current_active_editor;
 		}
 	};
-	
+
 	$( document ).on( 'click', '.media-modal-close', function() {
 		self.after_closing_media_modal();
 	});
@@ -143,7 +143,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		'#js-wpv-toolset-maps-add-map-style, #js-wpv-toolset-maps-add-map-style-hover',
 		self.on_js_icl_media_manager_inserted_at_map_style
 	);
-	
+
 	$( document ).on( 'js_icl_media_manager_inserted', '#js-wpv-toolset-maps-add-map-image, #js-wpv-toolset-maps-add-map-image-hover, #js-wpv-toolset-maps-add-marker-image, #js-wpv-toolset-maps-add-marker-image-hover', function( event ) {
 		var thiz = $( this ),
 		thiz_context = thiz.data( 'context' ),
@@ -162,16 +162,16 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			cstarget: thiz.val(),
 			wpnonce: wpv_addon_maps_dialogs_local.global_nonce
 		};
-		
+
 		self.after_closing_media_modal();
-		
+
 		if ( $( 'span[data-img="' + thiz.val() + '"]', marker_container ).length > 0 ) {
 			thiz.val('');
 			return;
 		}
-		
+
 		$( '.js-wpv-toolset-maps-media-manager' ).prop( 'disabled', true );
-		
+
 		$.ajax({
 			type: "POST",
 			dataType: "json",
@@ -211,16 +211,16 @@ WPViews.AddonMapsDialogs = function( $ ) {
 				}
 			},
 			error: function( ajaxContext ) {
-				
+
 			},
 			complete: function() {
 				thiz.val('');
 				$( '.js-wpv-toolset-maps-media-manager' ).prop( 'disabled', false );
 			}
 		});
-		
+
 	});
-	
+
 	self.init_colorpicker = function() {
 		if ( ! self.has_colorpicker ) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-background_color .description' )
@@ -229,19 +229,19 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		}
 		$( '#wpv-map-render-background_color' ).wpColorPicker({
 			change: function( event, ui ) {
-				
+
 			},
 			clear: function() {
-				
+
 			},
 			palettes: true
 		});
 	};
-	
+
 	self.wpv_open_dialog = function( kind, title ) {
-		
+
 		var dialog_height = $( window ).height() - 100;
-		
+
 		if ( kind in self.dialogs ) {
 			// This triggers on onclick="" and underlying dialog close triggers on $( document ).on( 'click' ),
 			// which happens later. Until an event is available for underlying dialog closed, using _.defer to push
@@ -262,7 +262,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			} );
 		}
 	};
-	
+
 	self.init_counters = function() {
 		self.map_counter = wpv_addon_maps_dialogs_local.counters.map;
 		self.marker_counter = wpv_addon_maps_dialogs_local.counters.map;
@@ -283,47 +283,8 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			dataType: "json"
 		});
 	};
-	
+
 	self.init_dialogs = function() {
-		self.dialogs['reload'] = $( "#js-wpv-addon-maps-dialog-reload" ).dialog({
-			autoOpen: false,
-			modal: true,
-			minWidth: 450,
-			open: function( event, ui ) {
-				$( 'body' ).addClass( 'modal-open' );
-				$( '.js-wpv-addon-maps-links, .js-wpv-addon-maps-anchor, .js-wpv-addon-maps-class, .js-wpv-addon-maps-style', '#js-wpv-addon-maps-dialog-reload' ).val( '' );
-				$( '.js-wpv-addon-maps-insert-reload' )
-					.addClass( 'button-secondary' )
-					.removeClass( 'button-primary' )
-					.prop( 'disabled', true );
-				$( '.js-wpv-addon-maps-reload-tabs' )
-					.tabs()
-					.addClass( 'ui-tabs-vertical ui-helper-clearfix' )
-					.removeClass( 'ui-corner-top ui-corner-right ui-corner-bottom ui-corner-left ui-corner-all' );
-				$( '.js-wpv-addon-maps-reload-tabs, .js-wpv-addon-maps-reload-tabs li' ).removeClass( 'ui-corner-top ui-corner-right ui-corner-bottom ui-corner-left ui-corner-all' );
-				$( document ).trigger( 'js_event_wpv_addon_maps_extra_dialog_opened', ['reload'] );
-			},
-			close: function( event, ui ) {
-				$( 'body' ).removeClass( 'modal-open' );
-			},
-			buttons: [
-				{
-					class: 'button-secondary',
-					text: wpv_addon_maps_dialogs_local.close_dialog,
-					click: function() {
-						$( this ).dialog( "close" );
-					}
-				},
-				{
-					class: 'button-secondary js-wpv-addon-maps-insert-reload toolset-shortcode-gui-dialog-button-align-right',
-					text: wpv_addon_maps_dialogs_local.insert_link,
-					'data-kind': 'reload',
-					click: function() {
-						self.insert_to_editor( 'reload' );
-					}
-				}
-			]
-		});
 		self.dialogs['focus'] = $( "#js-wpv-addon-maps-dialog-focus" ).dialog({
 			autoOpen: false,
 			modal: true,
@@ -404,7 +365,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			]
 		});
 	};
-	
+
 	$( document ).on( 'input change paste cut', '.js-wpv-addon-maps-links, .js-wpv-addon-maps-anchor', function() {
 		var thiz = $( this ),
 		thiz_container = thiz.closest( '.js-wpv-dialog' ),
@@ -429,7 +390,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 				.prop( 'disabled', true );
 		}
 	});
-	
+
 	self.insert_to_editor = function( kind ) {
 		var shortcode_to_insert,
 		container,
@@ -465,18 +426,18 @@ WPViews.AddonMapsDialogs = function( $ ) {
 					attribute[ $( this ).data( 'attribute' ) ] = $( this ).val();
 					atribute_string += ' data-' + $( this ).data( 'attribute' ) + '="' + $( this ).val() + '"';
 				});
-				
+
 				classname = self.extended_links_computed_classname( kind, classname, style, attribute );
-				
+
 				shortcode_to_insert += ' class="' + classname + '"';
 				shortcode_to_insert += style;
 				shortcode_to_insert += atribute_string;
-				
+
 				shortcode_to_insert += '>';
 				shortcode_to_insert += container.find( '.js-wpv-addon-maps-anchor' ).val();
 				shortcode_to_insert += tag_end;
 				self.dialogs[ kind ].dialog('close');
-				
+
 				if ( WPViews.shortcodes_gui.shortcode_gui_insert == 'insert' ) {
 					window.icl_editor.insert( shortcode_to_insert );
 				}
@@ -484,7 +445,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			} else {
 				self.dialogs[ kind ].dialog('close');
 			}
-			
+
 		}
 	};
 
@@ -512,7 +473,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			}
 		}
 	} );
-	
+
 	$( document ).on( 'js_event_wpv_shortcode_inserted', function( event, shortcode_name, shortcode_content, shortcode_attribute_values, shortcode_to_insert ) {
 		if ( shortcode_name == 'wpv-map-render' ) {
 			self.current_active_editor = null;
@@ -583,15 +544,15 @@ WPViews.AddonMapsDialogs = function( $ ) {
 				break;
 		}
 	});
-	
+
 	self.init_ids_for_marker = function() {
 		// Preload the map ID input with the latests cached value
 		// Show other options for map IDs used in this page, if there is more than one - ¿?
 		// Not sure about this, because you might have deleted it to re-create it again... - skipping
 		// In case there is no map ID cached -> No map was inserted since last page reload -> Show warning/info/something
-		if ( 
-			'map_id' in self.cache 
-			&& self.cache['map_id'] != '' 
+		if (
+			'map_id' in self.cache
+			&& self.cache['map_id'] != ''
 		) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-map_id #wpv-map-marker-map_id' ).val( self.cache['map_id'] );
 		} else {
@@ -599,8 +560,8 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		}
 		// Preload a marker ID value
 		// Note than on Loop Outputs in Views it better includes a [wpv-post-id] shortcode
-		if ( 
-			self.is_views_editor 
+		if (
+			self.is_views_editor
 			|| self.is_wpa_editor
 		) {
 			var marker_placeholder_shortcode = '[wpv-post-id]';
@@ -733,11 +694,11 @@ WPViews.AddonMapsDialogs = function( $ ) {
 						marker_position_extra = '<div style="display:none" class="custom-combo-target js-wpv-map-marker-marker_position-target">';
 						marker_position_extra += '<label for="toolset-gui-google-map-generic" class="toolset-google-map-label">' + wpv_addon_maps_dialogs_local.generic_field_label[ self.current_content_type ] + '</label>';
 						marker_position_extra += '<input type="text" id="toolset-gui-google-map-generic" class="js-wpv-map-marker-marker_position-generic_field js-wpv-shortcode-gui-suggest" data-action="' + current_suggest_callback + '" autocomplete="off" value="" />';
-						
+
 						marker_position_extra += '<br /><label for="wpv-map-marker-marker_position-generic_field-id" class="toolset-google-map-label">' + wpv_addon_maps_dialogs_local.id_attribute_label[ self.current_content_type ] + '</label>';
 						marker_position_extra += '<input id="wpv-map-marker-marker_position-generic_field-id" type="text" class="js-wpv-map-marker-marker_position-generic_field-id" value="" />';
 						marker_position_extra += '<p class="description">' + current_generic_description + '</p>';
-						
+
 						marker_position_extra += '</div>';
 						break;
 					case 'address':
@@ -838,9 +799,15 @@ WPViews.AddonMapsDialogs = function( $ ) {
 				$('input[name="wpv-map-render-street_view"]').on('change', function( event ) {
 					if ( $( event.target ).val() === 'on' ) {
 						$('div.js-wpv-shortcode-gui-attribute-wrapper-for-location').slideDown();
-						// Geocomplete adds 'placeholder' attribute, so we can check for its presence and init lazily
-						if ( !$('#wpv-map-street-view-address').is('[placeholder]') ) {
-							$('#wpv-map-street-view-address').geocomplete();
+
+						// Init address autocomplete, depending on API used
+						if ( API_GOOGLE === views_addon_maps_i10n.api_used ) {
+							// Geocomplete adds 'placeholder' attribute, so we can check for its presence and init lazy
+							if ( !$('#wpv-map-street-view-address').is('[placeholder]') ) {
+								$('#wpv-map-street-view-address').geocomplete();
+							}
+						} else {
+							WPViews.mapsAddressAutocomplete.initField( $('#wpv-map-street-view-address') );
 						}
 					} else {
 						$('div.js-wpv-shortcode-gui-attribute-wrapper-for-location').slideUp();
@@ -884,11 +851,11 @@ WPViews.AddonMapsDialogs = function( $ ) {
 				);
 		}
 	};
-	
+
 	self.init_marker_icons_inherit = function() {
 		$( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon, .js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover' ).hide();
 	};
-	
+
 	self.init_cluster_options = function() {
 		var options_container = '';
 		options_container += '<div class="wpv-shortcode-gui-attribute-wrapper js-wpv-shortcode-gui-attribute-wrapper-for-cluster_extra_options" style="display:none">';
@@ -902,7 +869,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		options_container += '</div>';
 		$( '.js-wpv-shortcode-gui-attribute-wrapper-for-cluster' ).after( options_container );
 	}
-	
+
 	$( document ).on( 'change', '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_position .js-shortcode-gui-field', function() {
 		$( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_position .js-wpv-map-marker-marker_position-target' ).hide();
 		$( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_position .js-shortcode-gui-field:checked' )
@@ -918,7 +885,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			}
 		}
 	});
-	
+
 	$( document ).on( 'change', '.js-wpv-shortcode-gui-attribute-wrapper-for-fitbounds .js-shortcode-gui-field', function() {
 		var value_selected = $( '.js-wpv-shortcode-gui-attribute-wrapper-for-fitbounds .js-shortcode-gui-field:checked' ).val();
 		if ( value_selected == 'on' ) {
@@ -927,7 +894,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-general_zoom, .js-wpv-shortcode-gui-attribute-wrapper-for-general_center_lat, .js-wpv-shortcode-gui-attribute-wrapper-for-general_center_lon, .js-wpv-shortcode-gui-attribute-wrapper-for-single_center' ).slideDown();
 		}
 	});
-	
+
 	$( document ).on( 'change', '.js-wpv-addon-maps-different-hover-image', function() {
 		var thiz_val = $( '.js-wpv-addon-maps-different-hover-image:checked' ).val();
 		if ( thiz_val == 'same' ) {
@@ -936,7 +903,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover ul:not(.js-wpv-dismiss)' ).slideDown();
 		}
 	});
-	
+
 	$( document ).on( 'change', '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_inherit .js-shortcode-gui-field', function() {
 		var inherit_selected = $( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_inherit .js-shortcode-gui-field:checked' ).val();
 		if ( inherit_selected == 'yes' ) {
@@ -945,7 +912,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon, .js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover' ).slideDown();
 		}
 	});
-	
+
 	$( document ).on( 'change', '.js-wpv-shortcode-gui-attribute-wrapper-for-cluster .js-shortcode-gui-field', function() {
 		var value_selected = $( '.js-wpv-shortcode-gui-attribute-wrapper-for-cluster .js-shortcode-gui-field:checked' ).val();
 		if ( value_selected == 'on' ) {
@@ -954,11 +921,11 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			$( '.js-wpv-shortcode-gui-attribute-wrapper-for-cluster_click_zoom, .js-wpv-shortcode-gui-attribute-wrapper-for-cluster_extra_options' ).slideUp();
 		}
 	});
-	
+
 	$( document ).on( 'js_event_wpv_addon_maps_extra_dialog_opened', function( event, kind ) {
-		if ( 
-			'map_id' in self.cache 
-			&& self.cache['map_id'] != '' 
+		if (
+			'map_id' in self.cache
+			&& self.cache['map_id'] != ''
 		) {
 			switch ( kind ) {
 				case 'reload':
@@ -973,7 +940,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			}
 		}
 	});
-	
+
 	self.focus_computed_classname_filter = function( classname, style, attribute ) {
 		$( '#js-wpv-addon-maps-focus-interaction .js-wpv-addon-maps-focus-interaction:checked' ).each( function() {
 			var value = $( this ).val();
@@ -988,7 +955,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		});
 		return classname;
 	};
-	
+
 	self.extended_links_computed_classname = function( shortcode_name, classname, style, attribute ) {
 		if ( shortcode_name in self.extended_links_computed_classname_filters ) {
 			var filter_callback_func = self.extended_links_computed_classname_filters[ shortcode_name ];
@@ -998,7 +965,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		}
 		return classname;
 	};
-	
+
 	self.init_filters = function() {
 		WPViews.shortcodes_gui.shortcode_gui_computed_attribute_pairs_filters[ 'wpv-map-render' ] = self.map_computed_attribute_pairs_filter;
 		WPViews.shortcodes_gui.shortcode_gui_computed_attribute_pairs_filters[ 'wpv-map-marker' ] = self.marker_computed_attribute_pairs_filter;
@@ -1018,8 +985,8 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			shortcode_attribute_values['general_center_lon'] = false;
 			shortcode_attribute_values['single_center'] = false;
 		}
-		if ( 
-			$( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-render-dialog' ).length > 0 
+		if (
+			$( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-render-dialog' ).length > 0
 			&& $( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-render-dialog' ).val() == 'other'
 		) {
 			shortcode_attribute_values[ 'marker_icon_hover' ] = $( '.js-insert-wpv-map-render-dialog .js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover' )
@@ -1067,7 +1034,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 
 		return shortcode_attribute_values;
 	};
-	
+
 	self.marker_computed_attribute_pairs_filter = function( shortcode_attribute_values ) {
 		if ( 'marker_position' in shortcode_attribute_values ) {
 			var marker_position_option = shortcode_attribute_values[ 'marker_position' ],
@@ -1128,8 +1095,8 @@ WPViews.AddonMapsDialogs = function( $ ) {
 						.closest( 'li' )
 							.find( '.js-wpv-icon-img' )
 								.data( 'img' );
-				if ( 
-					$( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-marker-dialog' ).length > 0 
+				if (
+					$( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-marker-dialog' ).length > 0
 					&& $( '.js-wpv-addon-maps-different-hover-image:checked', '.js-insert-wpv-map-marker-dialog' ).val() == 'other'
 				) {
 					shortcode_attribute_values[ 'marker_icon_hover' ] = $( '.js-insert-wpv-map-marker-dialog .js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover' )
@@ -1148,24 +1115,24 @@ WPViews.AddonMapsDialogs = function( $ ) {
 		}
 		return shortcode_attribute_values;
 	};
-	
+
 	$( document ).on( 'change', '.js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon .js-shortcode-gui-field, .js-wpv-shortcode-gui-attribute-wrapper-for-marker_icon_hover .js-shortcode-gui-field', function() {
 			self.highlight_selected( $( this ).closest( '.js-wpv-shortcode-gui-attribute-wrapper' ) );
 	});
-	
+
 	self.highlight_selected = function( container ) {
 		$( 'label', container ).removeClass( 'selected' );
 		$( '.js-shortcode-gui-field:checked', container )
 			.closest( 'label' )
 				.addClass( 'selected' );
 	};
-	
+
 	self.init = function() {
 		self.init_templates();
 		self.init_counters();
 		self.init_dialogs();
 		self.init_filters();
-		
+
 		self.is_views_editor = ( typeof WPViews.view_edit_screen != 'undefined' );
 		self.is_wpa_editor = ( typeof WPViews.wpa_edit_screen != 'undefined' );
 		if ( self.is_views_editor ) {
@@ -1175,7 +1142,7 @@ WPViews.AddonMapsDialogs = function( $ ) {
 			});
 		}
 	};
-	
+
 	self.init();
 
 };

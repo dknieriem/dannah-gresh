@@ -6,8 +6,6 @@
  * @since 2.0
  */
 final class Types_Admin {
-
-
 	/**
 	 * Initialize Types for backend.
 	 *
@@ -39,9 +37,16 @@ final class Types_Admin {
 			Types_Admin_Menu::initialize();
 		}
 
+		$dic = toolset_dic();
+
+		/** @var \OTGS\Toolset\Types\TypeRegistration\Controller $type_registration_controller */
+		/** @noinspection PhpUnhandledExceptionInspection */
+		$type_registration_controller = $dic->make( '\OTGS\Toolset\Types\TypeRegistration\Controller' );
+		$type_registration_controller->initialize();
+
 		$this->init_page_extensions();
 
-		$this->init_shortcodes();
+		$this->register_types_style();
 	}
 
 
@@ -51,8 +56,25 @@ final class Types_Admin {
 	 * @since 2.1
 	 */
 	private function init_page_extensions() {
+
+		$load_add_or_edit_post_extension = function() {
+			$dic = toolset_dic();
+			/** @var \OTGS\Toolset\Types\Page\Extension\AddOrEditPost $add_or_edit_extension */
+			$add_or_edit_extension = $dic->make( '\OTGS\Toolset\Types\Page\Extension\AddOrEditPost' );
+			$add_or_edit_extension->initialize();
+		};
+
 		// extensions for post edit page
-		add_action( 'load-post.php', array( 'Types_Page_Extension_Edit_Post', 'get_instance' ) );
+		add_action( 'load-post.php', function() use( $load_add_or_edit_post_extension ){
+			$dic = toolset_dic();
+			/** @var Types_Page_Extension_Edit_Post $edit_post_extension */
+			$edit_post_extension = $dic->make( '\Types_Page_Extension_Edit_Post' );
+			$edit_post_extension->initialize();
+
+			$load_add_or_edit_post_extension();
+		} );
+
+		add_action( 'load-post-new.php', $load_add_or_edit_post_extension );
 
 		// extension for post type edit page
 		add_action( 'load-toolset_page_wpcf-edit-type', array( 'Types_Page_Extension_Edit_Post_Type', 'get_instance' ) );
@@ -87,39 +109,17 @@ final class Types_Admin {
 		$settings->build();
 	}
 
-	/**
-	 * Maybe initialize the Types shortcodes in the backend.
-	 *
-	 * Type shortcodes do not need to be registered in the backend;
-	 * however, some page builders with backend editors include previews,
-	 * so we need to register them to avoid raw shortcodes to be printed.
-	 *
-	 * @since 3.0.x
-	 */
-	private function init_shortcodes() {
-		// shortcode [types]
-		$factory = new Types_Shortcode_Factory();
-		if( $shortcode = $factory->get_shortcode( 'types' ) ) {
-			add_shortcode( 'types', array( $shortcode, 'render' ) );
-		};
-	}
 
 	/**
-	 * Check whether the current admin page is the backend editor for a known page buildr.
-	 *
-	 * @return boolean
-	 * @since 3.0.x
+	 * Registers Types style
+	 * The goal for the future is to only have this Types css file.
 	 */
-	private function is_page_builder_editor_with_preview() {
-		// Elementor first pageload includes those GET parameters
-		// Any further preview update happens on AJAX
-		if (
-			'elementor' == toolset_getget( 'action' )
-			&& '' != toolset_getget( 'post' )
-		) {
-			return true;
-		}
-		return false;
+	private function register_types_style(){
+		wp_register_style(
+			'toolset-types',
+			TYPES_RELPATH . '/public/css/types.css',
+			array(),
+			TYPES_VERSION
+		);
 	}
-
 }

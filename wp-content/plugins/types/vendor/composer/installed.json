@@ -122,6 +122,41 @@
         ]
     },
     {
+        "name": "jakeasmith/http_build_url",
+        "version": "1.0.1",
+        "version_normalized": "1.0.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/jakeasmith/http_build_url.git",
+            "reference": "93c273e77cb1edead0cf8bcf8cd2003428e74e37"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/jakeasmith/http_build_url/zipball/93c273e77cb1edead0cf8bcf8cd2003428e74e37",
+            "reference": "93c273e77cb1edead0cf8bcf8cd2003428e74e37",
+            "shasum": ""
+        },
+        "time": "2017-05-01T15:36:40+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "files": [
+                "src/http_build_url.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Jake A. Smith",
+                "email": "theman@jakeasmith.com"
+            }
+        ],
+        "description": "Provides functionality for http_build_url() to environments without pecl_http."
+    },
+    {
         "name": "otgs/icons",
         "version": "dev-master",
         "version_normalized": "9999999-dev",
@@ -141,12 +176,12 @@
     },
     {
         "name": "otgs/installer",
-        "version": "1.8.25",
-        "version_normalized": "1.8.25.0",
+        "version": "1.8.26",
+        "version_normalized": "1.8.26.0",
         "source": {
             "type": "git",
             "url": "ssh://git@git.onthegosystems.com:10022/installer/installer.git",
-            "reference": "612bbc5045b6cd60145fc1f3f909981fde70ec3b"
+            "reference": "e49df1b2298a1141dadaaa33e4d6af0ef753eadd"
         },
         "require": {
             "composer/installers": "~1.0",
@@ -162,7 +197,7 @@
             "otgs/unit-tests-framework": "~1.2.0",
             "sebastian/phpcpd": "^3.0"
         },
-        "time": "2018-07-13T10:51:21+00:00",
+        "time": "2018-11-05T12:20:23+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -213,13 +248,7 @@
         "source": {
             "type": "git",
             "url": "https://github.com/Roave/SecurityAdvisories.git",
-            "reference": "d3268ea60c79284f9a8db7b78eb48cc99cc5d471"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/d3268ea60c79284f9a8db7b78eb48cc99cc5d471",
-            "reference": "d3268ea60c79284f9a8db7b78eb48cc99cc5d471",
-            "shasum": ""
+            "reference": "74a42b8d8d9f9cd672be58e7d1c65094da4ae971"
         },
         "conflict": {
             "3f/pygmentize": "<1.2",
@@ -420,12 +449,12 @@
     },
     {
         "name": "toolset/toolset-common",
-        "version": "3.0.7",
-        "version_normalized": "3.0.7.0",
+        "version": "dev-develop",
+        "version_normalized": "dev-develop",
         "source": {
             "type": "git",
             "url": "ssh://git@git.onthegosystems.com:10022/toolset/toolset-common.git",
-            "reference": "860819caa4e5b24a6277f88c5e193a3aa58213cb"
+            "reference": "24f3bab8852f63576641e05d5be9163d67c188ff"
         },
         "require": {
             "php": ">=5.2.0"
@@ -437,7 +466,7 @@
             "phpunit/php-token-stream": "<2.0",
             "sebastian/phpcpd": "^3.0"
         },
-        "time": "2018-08-06T14:12:04+00:00",
+        "time": "2018-12-18T11:47:40+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -453,7 +482,6 @@
                 "inc/",
                 "toolset-forms/",
                 "toolset-blocks/",
-                "toolset-page-builder-modules/",
                 "user-editors/",
                 "utility/",
                 "bootstrap.php"

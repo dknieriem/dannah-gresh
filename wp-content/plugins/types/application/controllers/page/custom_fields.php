@@ -32,7 +32,7 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 	 * @since 2.3
 	 * @var string The name of the parameter used for "per page" screen options
 	 */
-	const SCREEN_OPTION_PER_PAGE_NAME = 'toolset_fields_per_page';
+	const SCREEN_OPTION_PER_PAGE_NAME = 'toolset_fields_groups_per_page';
 
 
 	/**
@@ -70,6 +70,10 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 	private $dialog_factory;
 
 
+	/** @var Types_Asset_Manager */
+	private $asset_manager;
+
+
 	/**
 	 * Class instance
 	 *
@@ -93,15 +97,19 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 	 * Types_Page_Custom_Fields constructor
 	 *
 	 * @since 2.3
+	 *
 	 * @param array $args List of arguments.
 	 * @param Toolset_Twig_Dialog_Box_Factory|null $dialog_factory Twig dialogs factory.
+	 * @param Types_Asset_Manager|null $asset_manager_di
 	 */
-	public function __construct( $args, Toolset_Twig_Dialog_Box_Factory $dialog_factory = null ) {
+	public function __construct(
+		$args, Toolset_Twig_Dialog_Box_Factory $dialog_factory = null, Types_Asset_Manager $asset_manager_di = null ) {
 		parent::__construct( $args );
 
 		self::$instance = $this;
 
 		$this->dialog_factory = $dialog_factory;
+		$this->asset_manager = $asset_manager_di ?: Types_Asset_Manager::get_instance();
 	}
 
 
@@ -219,8 +227,7 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 		$main_handle = 'types-page-custom-fields-main';
 
 		// Enqueuing with the wp-admin dependency because we need to override something !important.
-		$asset_manager = Types_Asset_Manager::get_instance();
-		$asset_manager->enqueue_styles(
+		$this->asset_manager->enqueue_styles(
 			array(
 				'wp-admin',
 				'common',
@@ -384,6 +391,7 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 
 		return array(
 			'jsIncludePath' => TYPES_RELPATH . '/public/page/custom_fields',
+			'typesVersion' => TYPES_VERSION,
 			'customFields' => $this->build_custom_fields(),
 			'strings' => $this->build_strings_for_js(),
 			'ajaxInfo' => array(
@@ -545,13 +553,11 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 	public function add_screen_options() {
 
 		$args = array(
-			'label' => __( 'Number of displayed fields', 'wpcf' ),
+			'label' => __( 'Number of displayed groups', 'wpcf' ),
 			'default' => self::SCREEN_OPTION_PER_PAGE_DEFAULT_VALUE,
 			'option' => self::SCREEN_OPTION_PER_PAGE_NAME,
 		);
 		add_screen_option( 'per_page', $args );
-
-		add_filter( 'set-screen-option', array( $this, 'set_screen_option' ), 10, 3 );
 	}
 
 
@@ -559,18 +565,20 @@ class Types_Page_Custom_Fields extends Types_Page_Persistent {
 	 * Update the "per page" screen option.
 	 *
 	 * @since 2.3
-	 * @param bool|int $status Screen option value. Default false to skip.
+	 *
+	 * @param bool|int $original_value Screen option value. Default false to skip.
 	 * @param string   $option The option name.
-	 * @param int      $value  The number of rows to use.
+	 * @param int      $option_value  The number of rows to use.
+	 *
 	 * @return mixed
 	 */
-	public function set_screen_option( $status, $option, $value ) {
-
+	public static function set_screen_option( $original_value, $option, $option_value ) {
 		if ( self::SCREEN_OPTION_PER_PAGE_NAME === $option ) {
-			return $value;
+			return $option_value;
 		}
 
-		return $status;
+		// not our option, return the original value (which is by default "false" = no saving)
+		return $original_value;
 	}
 
 

@@ -168,6 +168,7 @@ class Toolset_Association_Persistence {
 	 * @since 2.7
 	 */
 	private function report_inserted_association( IToolset_Association $association ) {
+		// Important, used for cache flushing.
 		$this->report_association_change( $association, 'toolset_association_created' );
 	}
 

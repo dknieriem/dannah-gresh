@@ -18,12 +18,14 @@ class Types_Field_Gateway_Wordpress_User extends Types_Field_Gateway_Abstract {
 	 * @param $id
 	 * @param $field_slug
 	 * @param bool $repeatable
-	 * @param bool $controlled If it is conrtolled by Types.
+	 * @param bool $third_party_field If it is conrtolled by Types.
 	 *
 	 * @return array|void
 	 */
-	public function get_field_user_value( $id, $field_slug, $repeatable = false, $controlled = false ) {
-		$prefix = ! $controlled ? 'wpcf-' : '';
+	public function get_field_user_value( $id, $field_slug, $repeatable = false, $third_party_field = false ) {
+		$types_prefix = defined( 'WPCF_META_PREFIX' ) ? WPCF_META_PREFIX : 'wpcf-';
+
+		$prefix = ! $third_party_field ? $types_prefix : '';
 		$user_value = get_user_meta( $id, $prefix . $field_slug );
 
 		if( $repeatable ) {

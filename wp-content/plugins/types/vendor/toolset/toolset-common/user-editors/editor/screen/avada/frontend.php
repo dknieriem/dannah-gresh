@@ -60,7 +60,7 @@ class Toolset_User_Editors_Editor_Screen_Avada_Frontend
 		$avada_builder_enabled = false;
 		if ( ! empty( $template_id ) ) {
 			$builder_selected = get_post_meta( $template_id, '_toolset_user_editors_editor_choice', true );
-			if ( $this->constants->constant( 'AVADA_SCREEN_ID' ) === $builder_selected ) {
+			if ( Toolset_User_Editors_Editor_Avada::AVADA_SCREEN_ID === $builder_selected ) {
 				$avada_builder_enabled = true;
 			}
 		}

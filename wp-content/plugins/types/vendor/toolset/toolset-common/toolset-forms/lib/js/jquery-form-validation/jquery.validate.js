@@ -381,51 +381,43 @@
                     });
                 }
                 this.settings.showErrors
-                        ? this.settings.showErrors.call(this, this.errorMap, this.errorList)
-                        : this.defaultShowErrors();
+					? this.settings.showErrors.call(this, this.errorMap, this.errorList)
+					: this.defaultShowErrors();
 
-                message = $('.wpt-form-error').data('message-single');
+				var $form = $( this.currentForm ),
+					$form_message_wrapper = $form.find( '.wpt-form-error-wrapper' );
+				
+				if ( $form_message_wrapper.length == 0 ) {
+					return true;
+				}
+				
+				var total_errors = $( '.wpt-form-error:not(.wpt-form-error-wrapper)', $form ).length;
+				var message = "";
+				
+				if ( total_errors > 0 ) {
+					if ( total_errors > 1 ) {
+						message = $form_message_wrapper.data( 'message-plural' );
+					} else {
+						message = $form_message_wrapper.data( 'message-single' );
+					}
+					message = message.replace( '%NN', total_errors );
 
-                if (typeof message !== 'undefined') {
+					if ( _form_submitted ) {
+						$form_message_wrapper
+							.html( message )
+							.show();
+					} else {
+						$form_message_wrapper.html('');
+						$form_message_wrapper.hide();
+					}
+				} else {
+					$form_message_wrapper.html('');
+					if ( _form_submitted ) {
+						$form_message_wrapper.hide();
+					}
+				}
 
-                    $('.wpt-form-error').each(function () {
-                        var $this = $(this);
-                        formId = $this.closest("form").find('input[name=_cred_cred_prefix_form_id]').val();
-                        var $wpt_form_message = $('#wpt-form-message-' + formId);
-
-                        if ( $this.css('display') == 'block'
-                            && $this.attr('id') !== 'wpt-form-message-' + formId
-                            && $this.attr('id') !== 'lbl_generic' )
-                        {
-                            total_errors += 1;
-                        }
-
-                        var message = "";
-                        if (total_errors > 0) {
-
-                            if (total_errors > 1) {
-                                message = $(this).closest("form").find('.wpt-form-error').data('message-plural');
-                            } else {
-                                message = $(this).closest("form").find('.wpt-form-error').data('message-single');
-                            }
-                            message = message.replace('%NN', total_errors);
-
-                            if (_form_submitted) {
-                                $wpt_form_message.html(message);
-                                $wpt_form_message.show();
-                            }
-                        } else {
-                            $this.hide();
-                            $wpt_form_message.html('');
-                            if (_form_submitted) {
-                                $wpt_form_message.hide();
-                            }
-                        }
-                    });
-                }
                 _form_submitted = false;
-                total_errors = 0;
-                error_list = '';
             },
             // http://docs.jquery.com/Plugins/Validation/Validator/resetForm
             resetForm: function () {
@@ -447,7 +439,7 @@
                 return count;
             },
             hideErrors: function () {
-                this.addWrapper(this.toHide).hide();
+                this.addWrapper(this.toHide).remove();
             },
             valid: function () {
                 return this.size() == 0;

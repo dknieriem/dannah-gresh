@@ -16,10 +16,22 @@ Types.page.editPostType = {};
 Types.page.editPostType.Class = function($) {
 
     var self = this;
+    let $editorInput;
+    let $showInRestControl;
+    let $showInRestInput;
+    let $showInRestDescriptionElement;
+    let showInRestOriginalValue;
 
-    
     self.init = function() {
         self.initRewriteSlugChecker();
+
+        $editorInput = $( 'input[name="ct[editor]"]' );
+        $editorInput.on( 'click', self.adjustShowInRestRelatedToEditor );
+        $showInRestControl = $( 'input[name="ct[show_in_rest_control]"]' );
+        $showInRestInput = $( 'input[name="ct[show_in_rest]"]' );
+        $showInRestDescriptionElement = $( '#attr_show_in_rest > .description' );
+        showInRestOriginalValue = $showInRestControl.is( ':checked' );
+
     };
 
 
@@ -68,7 +80,33 @@ Types.page.editPostType.Class = function($) {
         }
     };
 
-    $(document).ready(self.init);
+    /**
+     * Adjusts the "show_in_rest"
+     */
+    self.adjustShowInRestRelatedToEditor = function(){
+        let $currentSelectedOption = $( 'input[name="ct[editor]"]:checked' );
+
+        if( $currentSelectedOption.val() == 'block' ) {
+            $showInRestControl.prop( 'checked', true );
+            $showInRestControl.attr( 'disabled', 'disabled' );
+            $showInRestDescriptionElement.html( $showInRestControl.data( 'description-block' ) );
+        } else {
+            $showInRestControl.prop( 'checked', showInRestOriginalValue );
+            $showInRestControl.removeAttr( 'disabled' );
+            $showInRestDescriptionElement.html( $showInRestControl.data( 'description-classic' ) );
+        }
+    }
+
+    $( document ).ready( self.init );
+    $( document ).ready( self.adjustShowInRestRelatedToEditor );
+
+    $( document ).on( 'submit','form.wpcf-types-form',function(){
+        if( $showInRestControl.is( ':checked' ) ) {
+            $showInRestInput.val( 1 );
+        } else {
+            $showInRestInput.remove();
+        }
+    });
 };
 
 

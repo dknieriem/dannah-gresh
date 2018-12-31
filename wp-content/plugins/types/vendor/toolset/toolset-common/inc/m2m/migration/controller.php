@@ -161,7 +161,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 		}
 
 		if( ! $results->has_results() ) {
-			$results->add( true, __( 'No tables had to be dropped.', 'wpcf' ) );
+			$results->add( true, __( 'No tables had to be dropped.', 'wpv-views' ) );
 		}
 
 		return $results;
@@ -186,7 +186,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 
 		// Handle empty input (report success)
 		if( empty( $relationships ) ) {
-			$results->add( new Toolset_Result( true, __( 'No relationships to migrate.', 'wpcf' ) ) );
+			$results->add( new Toolset_Result( true, __( 'No relationships to migrate.', 'wpv-views' ) ) );
 		}
 
 		foreach( $relationships as $post_type_pair ) {
@@ -228,7 +228,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 			return new Toolset_Result(
 				true,
 				sprintf(
-					__( 'The post type "%s" has a "show only translated items" translation mode but no adjustments are made as per user\'s choice.', 'wpcf'),
+					__( 'The post type "%s" has a "show only translated items" translation mode but no adjustments are made as per user\'s choice.', 'wpv-views'),
 					sanitize_title( $post_type_slug )
 				)
 			);
@@ -239,7 +239,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 		return new Toolset_Result(
 			true,
 			sprintf(
-				__( 'Adjusted the translation mode of the post type "%s" to "display as translated".', 'wpcf' ),
+				__( 'Adjusted the translation mode of the post type "%s" to "display as translated".', 'wpv-views' ),
 				sanitize_title( $post_type_slug )
 			)
 		);
@@ -358,7 +358,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Could not create relationship definition because an error happened: %s', 'wpcf' ),
+					__( 'Could not create relationship definition because an error happened: %s', 'wpv-views' ),
 					$e->getMessage()
 				)
 			);
@@ -368,7 +368,7 @@ class Toolset_Relationship_Migration_Controller extends Toolset_Wpdb_User {
 			return new Toolset_Result(
 				true,
 				sprintf(
-					__( 'Relationship "%s" between post types "%s" and "%s" was created.', 'wpcf' ),
+					__( 'Relationship "%s" between post types "%s" and "%s" was created.', 'wpv-views' ),
 					$relationship_slug,
 					$parent_post_type,
 					$child_post_type

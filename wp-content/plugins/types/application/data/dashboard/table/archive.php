@@ -1,5 +1,23 @@
 <?php
 return array(
+	'no-archive-support-3rd-party' => array(
+		'type' => 'archive',
+
+		'priority' => 'important',
+
+		'conditions'=> array(
+			'Types_Helper_Condition_Archive_No_Support',
+			'Types_Helper_Condition_Type_Third_Party'
+		),
+
+		'description' => array(
+			array(
+				'type' => 'paragraph',
+				'content' => __( 'The archive is disabled for this post type.', 'wpcf' )
+			),
+		),
+	),
+
 	/* Post Type with has_archive = false */
 	'no-archive-support' => array(
 		'type' => 'archive',

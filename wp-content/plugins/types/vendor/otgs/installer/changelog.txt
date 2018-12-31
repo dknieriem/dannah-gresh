@@ -1,3 +1,10 @@
+= 1.8.26 =
+* Fixed fatal error in plugins page when Forms Commerce is installed
+* Added Installer version in debug information
+* Fixed error message for Types from WPML.org about registering Toolset when update is available
+* Added icons for Toolset products under WPML repository
+* Fixed wrong information and behaviour for Views Lite update
+
 = 1.8.25 =
 * Fix display notice for Lite products
 * Fix error in plugin page

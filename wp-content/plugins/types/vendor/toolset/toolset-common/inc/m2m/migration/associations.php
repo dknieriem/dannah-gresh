@@ -74,7 +74,7 @@ class Toolset_Relationship_Migration_Associations {
 			$relationship_definition = $this->definition_repository->get_definition( $relationship_slug );
 
 			if( null == $relationship_definition ) {
-				throw new RuntimeException( sprintf( __( 'Relationship definition "%s" not found.', 'wpcf' ), $relationship_slug ) );
+				throw new RuntimeException( sprintf( __( 'Relationship definition "%s" not found.', 'wpv-views' ), $relationship_slug ) );
 			}
 
 			// We specifically require individual posts (element_factory->get_post_untranslated())
@@ -118,7 +118,7 @@ class Toolset_Relationship_Migration_Associations {
 				return new Toolset_Result(
 					true,
 					sprintf(
-						__( 'Skipping the association between posts #%d (%s) and #%d (%s), because these elements are already associated. This can happen when migrating post translations.', 'wpcf' ),
+						__( 'Skipping the association between posts #%d (%s) and #%d (%s), because these elements are already associated. This can happen when migrating post translations.', 'wpv-views' ),
 						$parent_id,
 						esc_textarea( $parent->get_title() ),
 						$child_id,
@@ -152,7 +152,7 @@ class Toolset_Relationship_Migration_Associations {
 			$can_associate = $potential_association_query->check_single_element( $child, false );
 		} catch( Exception $e ) {
 			$display_message = sprintf(
-				__( 'Unable to migrate an association from post #%d to #%d to a relationship "%s"', 'wpcf'),
+				__( 'Unable to migrate an association from post #%d to #%d to a relationship "%s"', 'wpv-views'),
 				$parent_id,
 				$child_id,
 				$relationship_slug
@@ -164,7 +164,7 @@ class Toolset_Relationship_Migration_Associations {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'The association between posts #%d (%s) and #%d (%s) in the relationship "%s" is not allowed: ', 'wpcf' ),
+					__( 'The association between posts #%d (%s) and #%d (%s) in the relationship "%s" is not allowed: ', 'wpv-views' ),
 					$parent->get_id(),
 					esc_textarea( $parent->get_title() ),
 					$child->get_id(),
@@ -182,7 +182,7 @@ class Toolset_Relationship_Migration_Associations {
 		}
 
 		if( $association instanceof Toolset_Result ) {
-			$message = ( $association->has_message() ? $association->get_message() : __( 'Error while saving an association to database', 'wpcf' ) );
+			$message = ( $association->has_message() ? $association->get_message() : __( 'Error while saving an association to database', 'wpv-views' ) );
 			return new Toolset_Result(
 				false,
 				sprintf( "%s\n\tparent: #%d (%s)\n\tchild: #%d (%s)\n\trelationship: \"%s\"",
@@ -201,7 +201,7 @@ class Toolset_Relationship_Migration_Associations {
 			$results->add(
 				true,
 				sprintf(
-					__( 'Connected #%d (%s) and #%d (%s) in the relationship "%s".', 'wpcf' ),
+					__( 'Connected #%d (%s) and #%d (%s) in the relationship "%s".', 'wpv-views' ),
 					$parent->get_id(),
 					$parent->get_title(),
 					$child->get_id(),

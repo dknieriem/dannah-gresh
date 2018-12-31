@@ -45,9 +45,8 @@ const extractConfig = {
 
 module.exports = {
     entry: {
-        'view.block.editor': './blocks/view/index.js',
+	    'paragraph.block.editor': './blocks/paragraph/index.js',
         'custom.html.block.editor': './blocks/custom-html/index.js',
-		'ct.block.editor': './blocks/ct/index.js',
 		'cred.form.block.editor': './blocks/cred-form/index.js',
     },
     output: {

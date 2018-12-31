@@ -168,7 +168,7 @@ class Types_Page_Extension_M2m_Migration_Dialog {
 					'inProgressImageUrl' => WPCF_EMBEDDED_TOOLSET_RELPATH . '/toolset-common/res/images/icon-help-message.png',
 					'resultMessage' => array(
 						'warning' => __( 'The activation has finished with some warnings. This may be caused by small inconsistencies in the database and it most probably has no impact on your site. Please check technical details for more information.', 'wpcf' ),
-						'error' => __( 'An error has occured during the activation. Please contact the Toolset support forum with the copy of the technical details you will find below.', 'wpcf' ),
+						'error' => __( 'An error has occurred during the activation. Please contact the Toolset support forum with the copy of the technical details you will find below.', 'wpcf' ),
 					),
 					'previewRelationships' => array(
 						'actionName' => Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_M2M_MIGRATION_PREVIEW_RELATIONSHIPS ),

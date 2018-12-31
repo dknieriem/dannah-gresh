@@ -65,8 +65,10 @@ class Toolset_Ajax_Handler_Intermediary_Post_Cleanup extends Toolset_Ajax_Handle
 		$message = sprintf(
 			(
 				$cleanup->has_remaining_posts()
-				? __( 'Deleted %d dangling intermediary posts...', 'wpcf' )
-				: __( 'Deleted %d dangling intermediary posts. Operation completed.', 'wpcf' )
+				/* translators: Cleaning up intermediary posts: in process */
+				? __( 'Deleted %d dangling intermediary posts...', 'wpv-views' )
+				/* translators: Cleaning up intermediary posts: completed */
+				: __( 'Deleted %d dangling intermediary posts. Operation completed.', 'wpv-views' )
 			),
 			$number_of_deleted_posts
 		);

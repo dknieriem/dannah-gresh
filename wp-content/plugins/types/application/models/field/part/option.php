@@ -39,24 +39,16 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 	 */
 	const WPML_SUFFIX_GENERIC_NOT_SELECTED = 'display value not selected';
 
-	/**
-	 * @var Types_Field_Interface
-	 */
+	/** @var Types_Field_Interface */
 	private $field;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	private $id;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	private $title;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	private $store_value;
 
 	/**
@@ -71,11 +63,11 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 	 */
 	private $display_value_unchecked;
 
-	/**
-	 * Value which is stored in the database
-	 * @var string|bool
-	 */
-	private $checked;
+	/** @var bool */
+	private $is_checked;
+
+	/** @var string */
+	private $db_value;
 
 	/**
 	 * Field data
@@ -100,6 +92,7 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 		$this->set_display_value_checked( $data );
 		$this->set_display_value_unchecked( $data );
 		$this->set_checked( $data );
+		$this->set_db_value( $data );
 		$this->data = $data;
 	}
 
@@ -130,7 +123,7 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 					? $this->field->get_display_mode()
 					: ( isset( $this->data['display'] ) ? $this->data['display'] : Types_Field_Abstract::DISPLAY_MODE_DB );
 				if ( $display_mode === Types_Field_Abstract::DISPLAY_MODE_DB ) {
-					return $this->checked;
+					return $this->db_value;
 				} else {
 					$value = $this->is_active()
 						? $this->display_value_checked
@@ -167,14 +160,14 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 	 * @return string
 	 */
 	public function get_value_raw() {
-		return $this->get_translated_value( $this->checked );
+		return $this->get_translated_value( $this->db_value );
 	}
 
 	/**
 	 * @return bool
 	 */
 	public function is_active() {
-		return $this->checked ? true : false;
+		return $this->is_checked === false || $this->is_checked === null ? false : true;
 	}
 
 	/**
@@ -193,18 +186,31 @@ class Types_Field_Part_Option implements Types_Field_Part_Interface, Types_Inter
 	 */
 	private function set_checked( $data ) {
 		if ( ! isset( $data['checked'] ) ) {
-			$this->checked = false;
+			$this->is_checked = false;
 
 			return;
 		}
 
-		while ( is_array( $data['checked'] ) ) {
-			$data['checked'] = array_shift( $data['checked'] );
+		$this->is_checked = (bool) $data['checked'];
+	}
+
+	/**
+	 * @param $data
+	 */
+	private function set_db_value( $data ) {
+		if ( ! isset( $data['db_value'] ) ) {
+			$this->db_value = null;
+
+			return;
 		}
 
-		$this->checked = is_string( $data['checked'] )
-			? stripslashes( $data['checked'] )
-			: $data['checked'];
+		while ( is_array( $data['db_value'] ) ) {
+			$data['db_value'] = array_shift( $data['db_value'] );
+		}
+
+		$this->db_value = is_string( $data['db_value'] )
+			? stripslashes( $data['db_value'] )
+			: $data['db_value'];
 	}
 
 	/**

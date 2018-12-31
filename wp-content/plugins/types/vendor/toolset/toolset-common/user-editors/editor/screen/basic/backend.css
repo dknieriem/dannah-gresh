@@ -9,3 +9,8 @@
 	font-family: 'ETmodules';
 	content: '\e626';
 }
+
+.wpv-layout-template-overlay-info h3 {
+	color: inherit;
+	background: none;
+}

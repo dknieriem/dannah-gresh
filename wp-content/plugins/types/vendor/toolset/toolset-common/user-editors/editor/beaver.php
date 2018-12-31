@@ -11,8 +11,21 @@
 class Toolset_User_Editors_Editor_Beaver
 	extends Toolset_User_Editors_Editor_Abstract {
 
-	protected $id = 'beaver';
+	const BEAVER_SCREEN_ID = 'beaver';
+
+	/**
+	 * @var string
+	 */
+	protected $id = self::BEAVER_SCREEN_ID;
+
+	/**
+	 * @var string
+	 */
 	protected $name = '';
+
+	/**
+	 * @var string
+	 */
 	protected $option_name = '_toolset_user_editors_beaver_template';
 
 	protected $logo_image_svg = 'bb.svg';

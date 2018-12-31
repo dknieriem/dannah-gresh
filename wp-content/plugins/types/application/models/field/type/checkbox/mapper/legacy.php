@@ -32,11 +32,20 @@ class Types_Field_Type_Checkbox_Mapper_Legacy extends Types_Field_Mapper_Abstrac
 			&& isset( $field['data']['display_value_selected'] )
 			&& isset( $field['data']['display_value_not_selected'] )
 		) {
+
 			$controlled = $this->is_controlled_by_types( $field );
+
+			// get stored value
+			$db_value = $this->get_user_value( $id_post, $field['slug'], $field['repeatable'], $controlled );
+			if( is_array( $db_value ) && count( $db_value ) <= 1 ) {
+				$db_value = reset( $db_value );
+			}
+
 			$option = new Types_Field_Part_Option( $entity, array(
 				'id' => $field['id'],
 				'title' => $field['name'],
-				'checked' => $this->get_user_value( $id_post, $field['slug'], $field['repeatable'], $controlled ),
+				'checked' => (bool) $db_value,
+				'db_value' => $db_value,
 				'store_value' => $field['data']['set_value'],
 				'display_value_checked' => $field['data']['display_value_selected'],
 				'display_value_unchecked' => $field['data']['display_value_not_selected']

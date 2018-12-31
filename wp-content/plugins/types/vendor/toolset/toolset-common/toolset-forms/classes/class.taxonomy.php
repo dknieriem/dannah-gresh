@@ -33,6 +33,7 @@ class WPToolset_Field_Taxonomy extends WPToolset_Field_Textfield {
          *
          * Terms with all fields as they are returned from wp_get_post_terms()
          * @since 1.8.8
+		 * @access private
          *
          * @param array terms
          * @param string name field
@@ -101,7 +102,7 @@ class WPToolset_Field_Taxonomy extends WPToolset_Field_Textfield {
         $shortcode_class = array_key_exists( 'class', $attributes ) ? $attributes['class'] : "";
 
         $metaform = array();
-        
+
 		if ($this->output == 'bootstrap') {
 
 	        $metaform[] = array(
@@ -159,16 +160,16 @@ class WPToolset_Field_Taxonomy extends WPToolset_Field_Textfield {
 	        $before = "";
 	        $show = isset( $attributes['show_popular'] ) && $attributes['show_popular'] == 'true';
 
-            $show_hide_taxonomy = "<a             
+            $show_hide_taxonomy = "<a
             style='display:none;'
             data-taxonomy='" . $this->getName() . "'
-            data-after-selector='js-show-popular-after' 
-            data-show-popular-text='" . apply_filters( 'toolset_button_show_popular_text', esc_attr( $attributes['show_popular_text'] ) ) . "' 
-            data-hide-popular-text='" . apply_filters( 'toolset_button_hide_popular_text', esc_attr( $attributes['hide_popular_text'] ) ) . "' 
-            class = 'popular wpt-taxonomy-popular-show-hide js-wpt-taxonomy-popular-show-hide dashicons-before dashicons-plus-alt'  
-            data-output = '" . $this->output . "'   
-            role = 'button' 
-            name = 'sh_{$taxonomy}'                
+            data-after-selector='js-show-popular-after'
+            data-show-popular-text='" . apply_filters( 'toolset_button_show_popular_text', esc_attr( $attributes['show_popular_text'] ) ) . "'
+            data-hide-popular-text='" . apply_filters( 'toolset_button_hide_popular_text', esc_attr( $attributes['hide_popular_text'] ) ) . "'
+            class = 'popular wpt-taxonomy-popular-show-hide js-wpt-taxonomy-popular-show-hide dashicons-before dashicons-plus-alt'
+            data-output = '" . $this->output . "'
+            role = 'button'
+            name = 'sh_{$taxonomy}'
             >" . apply_filters( 'toolset_button_show_popular_text', esc_attr( $attributes['show_popular_text'] ) ) . "</a>";
 
 	        /**

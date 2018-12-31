@@ -120,7 +120,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 		if( $this->get_is_required() && !empty( $display_name ) ) {
 			$display_name .= '&#42;';
 		}
-		
+
 		// we need to get rid of auto added slashes (WP Core adds them)
 		return stripslashes( $display_name );
 	}
@@ -191,7 +191,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 
 	public function get_type() { return $this->type; }
-	
+
 
 	/**
 	 * For binary fields (like checkbox), it is possible to specify a value that will be saved to the database
@@ -224,21 +224,21 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Retrieve an array of option definitions.
-	 * 
+	 *
 	 * Allowed only for the checkboxes, radio and select field types.
-	 * 
+	 *
 	 * @throws RuntimeException when the field type is invalid
 	 * @throws InvalidArgumentException when option definitions are corrupted
 	 * @return Toolset_Field_Option_Checkboxes[] An option_id => option_data array.
 	 * @since 1.9
 	 */
 	public function get_field_options() {
-		$this->check_allowed_types( 
-			array( 
+		$this->check_allowed_types(
+			array(
 				Toolset_Field_Type_Definition_Factory::CHECKBOXES,
 				Toolset_Field_Type_Definition_Factory::RADIO,
 				Toolset_Field_Type_Definition_Factory::SELECT
-			) 
+			)
 		);
 		$options_definition = toolset_ensarr( toolset_getnest( $this->definition_array, array( 'data', 'options' ) ) );
 		$results = array();
@@ -326,7 +326,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Determine whether this field belongs to a specific group.
-	 * 
+	 *
 	 * @param Toolset_Field_Group $field_group
 	 *
 	 * @return bool
@@ -339,7 +339,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -383,9 +383,9 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 	 * @since 1.9.1
 	 */
 	protected function check_allowed_types( $allowed_field_types ) {
-		
+
 		$allowed_field_types = toolset_wraparr( $allowed_field_types );
-		
+
 		if( !in_array( $this->type->get_slug(), $allowed_field_types ) ) {
 			throw new RuntimeException(
 				sprintf(
@@ -402,7 +402,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 	 * @inheritdoc
 	 *
 	 * Adds properties: type, isRepetitive
-	 * 
+	 *
 	 * @return array
 	 * @since 2.0
 	 */
@@ -459,16 +459,16 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 		return $data;
 	}
-	
-	
+
+
 	/**
 	 * Create an export object for this field definition, including checksums and annotations.
-	 * 
+	 *
 	 * @return array
 	 * @since 2.1
 	 */
 	public function get_export_object() {
-		
+
 		$data = $this->get_definition_array();
 
 		// legacy filter
@@ -479,7 +479,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 		$data = $this->add_checksum_to_export_object( $data );
 
 		$data = $ie_controller->annotate_object( $data, $this->get_name(), $this->get_slug() );
-		
+
 		// Export WPML TM setting for this field's translation, if available.
 		$wpml_tm_settings = apply_filters( 'wpml_setting', null, 'translation-management' );
 		$custom_field_translation_setting = toolset_getnest( $wpml_tm_settings, array( 'custom_fields_translation', $this->get_meta_key() ), null );
@@ -514,7 +514,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 		if( ! $target_type instanceof Toolset_Field_Type_Definition ) {
 			throw new InvalidArgumentException( 'Not a field type definition' );
 		}
-		
+
 		if( ! Types_Field_Type_Converter::get_instance()->is_conversion_possible( $this->get_type(), $target_type ) ) {
 			return false;
 		}
@@ -534,7 +534,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Convenience method for updating field definition in database after making some changes.
-	 * 
+	 *
 	 * @return bool True on success.
 	 * @since 2.0
 	 */
@@ -547,7 +547,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Convenience method for setting a 'data' attribute to the definition array safely.
-	 * 
+	 *
 	 * @param string $key
 	 * @param mixed $value
 	 * @since 2.0
@@ -562,7 +562,7 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Set whether this field definition will be managed by Types or not.
-	 * 
+	 *
 	 * @param bool $is_managed
 	 * @return bool True if the update was successful.
 	 * @since 2.0
@@ -575,9 +575,9 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 
 	/**
 	 * Set whether this will be a repeating or single field.
-	 * 
+	 *
 	 * Note that this has serious implications for already stored values.
-	 * 
+	 *
 	 * @param bool $is_repetitive
 	 * @return bool True if the update was successful
 	 * @since 2.0
@@ -605,4 +605,70 @@ abstract class Toolset_Field_Definition extends Toolset_Field_Definition_Abstrac
 	 */
 	public abstract function instantiate( $element_id );
 
+
+	/**
+	 * Gets conditional display data needed for conditionals.js
+	 *
+	 * Returned array contains to different arrays: fields and triggers that will be associated with wptCondTriggers and wptCondFields
+	 *
+	 * @return array|null
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	public function get_conditional_display() {
+		$result = array();
+		$conditional_display = toolset_getnest( $this->definition_array, array( self::XML_KEY_DATA, self::XML_KEY_DATA_CONDITIONAL_DISPLAY ), null );
+
+		$result['fields'] = $this->get_conditional_display_fields( $conditional_display );
+		$result['triggers'] = $this->get_conditional_display_triggers( $result['fields'] );
+
+		if ( empty( $result['fields'] ) || empty( $result['triggers'] ) ) {
+			return null;
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * Gets conditional fields data needed for conditionals.js
+	 *
+	 * @param array $conditional_data Data from field conditional_display attribute
+	 * @return array
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	private function get_conditional_display_fields( $conditional_data ) {
+		if ( empty( $conditional_data ) ) {
+			return array();
+		}
+		$fields = array();
+		$id = $this->get_meta_key();
+
+		$modified_data = wptoolset_form_filter_types_field( $this->definition_array, $id );
+		$fields[ $id ] = $modified_data['conditional'];
+
+		return $fields;
+	}
+
+
+	/**
+	 * Gets conditional triggers data needed for conditionals.js
+	 *
+	 * @param array $conditional_data Data from field conditional_display attribute
+	 * @return array
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	private function get_conditional_display_triggers( $conditional_data ) {
+		$result = array();
+		foreach ( $conditional_data as $id => $conditional ) {
+			if ( isset( $conditional['conditions'] ) ) {
+				foreach ( $conditional['conditions'] as $condition ) {
+					if ( ! isset( $result[ $condition['id'] ] ) ) {
+						$result[ $condition['id'] ] = array();
+					}
+					$result[ $condition['id'] ][] = $id;
+				}
+			}
+		}
+		return $result;
+	}
 }

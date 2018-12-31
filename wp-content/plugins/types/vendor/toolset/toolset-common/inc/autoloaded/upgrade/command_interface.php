@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\Result\ResultInterface;
+
 /**
  * Interface IToolset_Upgrade_Command
  *
@@ -17,7 +19,7 @@ interface IToolset_Upgrade_Command {
 	/**
 	 * Run the command.
 	 *
-	 * @return Toolset_Result|Toolset_Result_Set
+	 * @return ResultInterface
 	 */
 	public function run();
 

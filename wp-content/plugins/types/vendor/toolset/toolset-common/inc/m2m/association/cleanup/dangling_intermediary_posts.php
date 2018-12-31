@@ -131,6 +131,12 @@ class Toolset_Association_Cleanup_Dangling_Intermediary_Posts extends Toolset_Wp
 			$query = "
 				SELECT SQL_CALC_FOUND_ROWS post.ID 
 				FROM {$this->wpdb->posts} AS post
+					# Exclude intermediary posts belonging to a relationship that isn't supposed to delete them automatically
+					JOIN {$this->table_name->relationship_table()} AS relationship
+						ON (
+							post.post_type = relationship.intermediary_type
+							AND relationship.autodelete_intermediary = 1
+						)
 					LEFT JOIN {$this->table_name->association_table()} AS association
 						ON (post.ID = association.intermediary_id)
 					LEFT JOIN {$icl_translations} AS translation
@@ -160,6 +166,12 @@ class Toolset_Association_Cleanup_Dangling_Intermediary_Posts extends Toolset_Wp
 			$query = "
 				SELECT SQL_CALC_FOUND_ROWS post.ID
 				FROM {$this->wpdb->posts} AS post
+					# Exclude intermediary posts belonging to a relationship that isn't supposed to delete them automatically
+					JOIN {$this->table_name->relationship_table()} AS relationship
+						ON (
+							post.post_type = relationship.intermediary_type
+							AND relationship.autodelete_intermediary = 1
+						)
 					LEFT JOIN {$this->table_name->association_table()} AS association
 						ON (post.ID = association.intermediary_id)
 				WHERE

@@ -17,9 +17,9 @@ class WPToolset_Field_Audio extends WPToolset_Field_File
         $validation = $this->getValidationData();
         $validation = self::addTypeValidation($validation);
         $this->setValidationData($validation);
-        return parent::metaform();        
+        return parent::metaform();
     }
-    
+
     public static function addTypeValidation($validation) {
         $validation['extension'] = array(
             'args' => array(
@@ -29,5 +29,27 @@ class WPToolset_Field_Audio extends WPToolset_Field_File
             'message' => __( 'You can add only audio.', 'wpv-views' ),
         );
         return $validation;
-    }
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when selecting a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_select_label() {
+		return __( 'Select audio', 'wpv-views' );
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when editing a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_edit_label() {
+		return __( 'Edit audio', 'wpv-views' );
+	}
 }

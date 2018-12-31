@@ -215,11 +215,7 @@ WPViews.DistanceFilterGUI = function ( $ ) {
         self.current_long = $( self.map_distance_center_lng_selector ).val();
 
         // Initial show of preview if needed
-        if ( WPViews.mapsAddressAutocomplete ) {
-	        WPViews.mapsAddressAutocomplete.init();
-        } else {
-	        self.showOrHideMapPreview( {type: 'initial'} );
-        }
+        self.showOrHideMapPreview( {type: 'initial'} );
     };
 
 	/**
@@ -243,7 +239,11 @@ WPViews.DistanceFilterGUI = function ( $ ) {
 
 		// Lazy initialize the map only when we actually need it for the 1st time.
 		if ( !self.map_in_use ) {
-			WPViews.addon_maps_editor.init();
+			if ( API_GOOGLE === views_addon_maps_i10n.api_used ) {
+				WPViews.addon_maps_editor.init();
+			} else {
+				WPViews.mapsAddressAutocomplete.init();
+            }
 
 			// We can only get this data once there is an address and the map is drawn.
 			if (map_distance_center.length) {

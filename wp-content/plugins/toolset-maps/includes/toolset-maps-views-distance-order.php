@@ -79,14 +79,24 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 	 * @return array
 	 */
 	public function orderby_as_option( array $options, array $view_settings ) {
-		if (
-			in_array( $this->get_query_type( $view_settings ), $this->supported_query_types )
-			&& $this->is_field_address( $view_settings )
-		) {
+		if ( in_array( $this->get_query_type( $view_settings ), $this->supported_query_types ) ) {
 			$options[self::ORDERBY_AS] = __( 'As a distance from', 'toolset-maps' );
 		}
 
 		return $options;
+	}
+
+	/**
+	 * Is this a post view?
+	 *
+	 * @since 1.6
+	 *
+	 * @param array $view_settings
+	 *
+	 * @return bool
+	 */
+	private function is_post_view( array $view_settings ) {
+		return ( $this->get_query_type( $view_settings ) === 'posts' );
 	}
 
 	/**
@@ -98,10 +108,18 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 	 * @return string
 	 */
 	public function add_order_options( $html, array $view_settings ) {
+		$post_view = $this->is_post_view( $view_settings );
 		$selected_source = isset( $view_settings['distance_order']['source'] )
 			? $view_settings['distance_order']['source']
 			: 'fixed';
 		$distance_center_style = ( $selected_source === 'fixed' && $this->is_orderby_as_distance( $view_settings ) )
+			? ''
+			: 'display: none';
+		$distance_center_url_style = (
+				$selected_source === 'url_parameter'
+				&& $this->is_orderby_as_distance( $view_settings )
+				&& $post_view
+			)
 			? ''
 			: 'display: none';
 		$distance_source_style = $this->is_orderby_as_distance( $view_settings ) ? '' : 'display: none';
@@ -111,7 +129,10 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 
 		$html .= $this->render_view(
 			'distance_order_options',
-			array( $selected_source, $distance_center_style, $distance_source_style, $distance_order_center )
+			array(
+				$selected_source, $distance_center_style, $distance_source_style, $distance_order_center,
+				$distance_center_url_style, $post_view
+			)
 		);
 
 		return $html;
@@ -284,6 +305,7 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 		foreach ( $items as $item ) {
 
 			$addresses = $this->get_item_meta( $item, $meta_key );
+			$distances = array();
 
 			// We can have repeatable address fields
 			foreach ( $addresses as $address ) {
@@ -298,14 +320,15 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 				// Address can also be some random string, or in any other way unresolvable to location
 				if ( ! $location ) continue;
 
-				// Calculate distance (we don't care for unit here - just relative distances to order by)
-				$item->distance = $this->calculate_distance( $center, $location );
+				// Calculate distances (we don't care for unit here - just relative distances to order by)
+				$distance = $this->calculate_distance( $center, $location );
+				$item->distance = $distance;
+				$distances[$distance] = $item;
+			}
 
-				// So, we can have multiple addresses. But, which address do we order by? The first valid
-				// one we find, and we go straight to processing the next item, to improve performance. It is on users
-				// to be smart enough not to try sorting by some field which has multiple values.
-				$items_with_distance[] = $item;
-				continue 2;
+			// If we have any distances calculated, use the item with the smallest one
+			if ( ! empty( $distances ) ) {
+				$items_with_distance[] = $distances[ min( array_keys( $distances ) ) ];
 			}
 		}
 		return $items_with_distance;
@@ -342,6 +365,10 @@ class Toolset_Maps_Views_Distance_Order extends Toolset_Maps_Views_Distance {
 			return Toolset_Maps_Location_Factory::create_from_address( $distance_order['center'] );
 		} elseif ( $distance_order['source'] === 'visitor_location' ) {
 			return Toolset_Maps_Location_Factory::create_from_cookie();
+		} elseif ( $distance_order['source'] === 'url_parameter' ) {
+			return Toolset_Maps_Location_Factory::create_from_address(
+				toolset_getget( $distance_order['url_parameter'] )
+			);
 		}
 		return null;
 	}

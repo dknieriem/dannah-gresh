@@ -14,15 +14,19 @@
 
 .wp-block-toolset-cred-form {
   .wp-block-toolset-cred-form-placeholder {
-    min-width: 180px;
+    width: 100%;
 
     span {
       display: inline-block;
       line-height: initial;
     }
 
-    p {
+    h2 {
       margin: 0.5em 0;
+    }
+
+    h2::before {
+      display: none;
     }
   }
 }
@@ -41,6 +45,8 @@
   .cred-form-information {
     .cred-form-preview-render {
       position: relative;
+      transition: min-height 0.2s ease;
+      min-height: 0;
 
       input[type="text"],
       textarea,
@@ -104,6 +110,8 @@
           border: 1px solid #f05a28;
           border-radius: 3px;
           background: rgba(255, 255, 255, 0.7);
+          max-height: 100%;
+          overflow: hidden;
         }
 
         .button {
@@ -126,6 +134,9 @@
       }
 
       &:hover {
+        min-height: 210px;
+        vertical-align: middle;
+
         .block-overlay {
           background: rgba(246, 201, 86, 0.7);
 

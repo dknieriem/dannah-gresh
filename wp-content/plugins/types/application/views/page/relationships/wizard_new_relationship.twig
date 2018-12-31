@@ -260,23 +260,41 @@
 				<input type="hidden" name="types_check_slug_conflicts_nonce" value="{{ strings.misc.slugConflictNonce }}" />
 			</div>
 			<div data-bind="visible: isIntermediarySectionVisible">
-				<div class="wizard-form-field clearfix">
-					<label for="types-wizard-create-intermediary" class="names-checks">
-						<input id="types-wizard-create-intermediary" name="intermediary" type="checkbox" data-bind="checked: onCheckCreateIntermediary, disable: isCreateIntermediaryPostDisabled"/>
-	{{ __( 'Create an intermediary post type', 'wpcf' ) }}
-						<i class="fa fa-question-circle icon-question-sign js-show-tooltip"
-							data-header="{{ __( 'Intermediary post type', 'wpcf' ) }}"
-							data-content="{{ __( 'Intermediary post type is mandatory when custom fields are added', 'wpcf' ) }}"
-							data-bind="click: showPointer($element)"></i>
+				<div class="wizard-form-field wizard-form-checkbox">
+					<label for="types-wizard-create-intermediary">
+						<input id="types-wizard-create-intermediary" name="intermediary" type="checkbox" data-bind="checked: createIntermediaryPostType, disable: isCreateIntermediaryPostDisabled"/>
+	                    {{ __( 'Create an intermediary post type', 'wpcf' ) }}
 					</label>
+
+						<i class="fa fa-question-circle icon-question-sign js-show-tooltip"
+						   data-header="{{ __( 'Intermediary post type', 'wpcf' ) }}"
+						   data-content="{{ __( 'Intermediary post type is mandatory when custom fields are added', 'wpcf' ) }}"
+						   data-bind="click: showPointer($element), visible: isCreateIntermediaryPostDisabled"></i>
+
 				</div>
-				<div class="wizard-form-field clearfix">
-					<label for="types-wizard-create-visible" class="names-checks" data-bind="visible: onCheckCreateIntermediary">
+				<div class="wizard-form-field wizard-form-checkbox" data-bind="visible: createIntermediaryPostType">
+					<label for="types-wizard-create-visible">
 						<input id="types-wizard-create-visible" name="visible" type="checkbox" data-bind="disable: ! isIntermediarySectionVisible" />
 						{{ __( 'Intermediary Post Type visible in WordPress admin menu', 'wpcf' ) }}
 					</label>
 				</div>
-			</div>
+                <div class="wizard-form-field wizard-form-checkbox" data-bind="visible: createIntermediaryPostType">
+                    <label>
+                        <input type="checkbox"
+                               data-bind="checked: isAutodeletingIntermediaryPosts"
+                        />
+                        {# translators: Setting of a Toolset relationship. Label of a checkbox. #}
+                        {{ __( 'Automatically delete intermediary posts together with connections they belong to', 'wpcf' ) }}
+                    </label>
+                    <i class="fa fa-question-circle icon-question-sign js-show-tooltip names-checks"
+                       {# translators: Header of a tooltip about a setting of a Toolset relationship. #}
+                       data-header="{{ __( 'Automatic intermediary post cleanup', 'wpcf' ) }}"
+                       {# translators: Body of a tooltip about a setting of a Toolset relationship. #}
+                       data-content='{{ __( 'By default, an intermediary post is deleted together with the connection between parent and child posts. If you, for any reason, don\'t desire this behavior, you can disable it here. However, we don\'t recommend disabling it unless there is a very good reason. Especially not if your intermediary post type is not publicly visible.', 'wpcf' ) }}'
+                       data-bind="click: showPointer($element)">
+                    </i>
+                </div>
+            </div>
 			{# Role aliases #}
 			<a href="#" class="types-wizard-roles-opener closed">{{ __( 'Change role aliases', 'wpcf' ) }}</a>
 			<div class="types-wizard-roles">

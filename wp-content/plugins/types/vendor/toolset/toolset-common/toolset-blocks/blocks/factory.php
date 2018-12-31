@@ -16,29 +16,13 @@ class Toolset_Gutenberg_Block_Factory {
 	 *
 	 * @param string $block The name of the block.
 	 *
-	 * @return bool|Toolset_Blocks_Content_Template|Toolset_Blocks_CRED_Form|Toolset_Blocks_View
+	 * @return null|Toolset_Blocks_Content_Template|Toolset_Blocks_CRED_Form|Toolset_Blocks_View|Toolset_Blocks_Custom_HTML_Extension|Toolset_Blocks_Paragraph_Extension
 	 */
 	public function get_block( $block ) {
 		$return_block = null;
-		$types_active = new Toolset_Condition_Plugin_Types_Active();
-		$views_active = new Toolset_Condition_Plugin_Views_Active();
 		$cred_active = new Toolset_Condition_Plugin_Cred_Active();
 
 		switch ( $block ) {
-			case Toolset_Blocks_View::BLOCK_NAME:
-				if ( $views_active->is_met() ) {
-					$return_block = new Toolset_Blocks_View();
-				} else {
-					$return_block = null;
-				}
-				break;
-			case Toolset_Blocks_Content_Template::BLOCK_NAME:
-				if ( $views_active->is_met() ) {
-					$return_block = new Toolset_Blocks_Content_Template();
-				} else {
-					$return_block = null;
-				}
-				break;
 			case Toolset_Blocks_CRED_Form::BLOCK_NAME:
 				if ( $cred_active->is_met() ) {
 					$return_block = new Toolset_Blocks_CRED_Form();
@@ -46,13 +30,13 @@ class Toolset_Gutenberg_Block_Factory {
 					$return_block = null;
 				}
 				break;
-			case Toolset_Blocks_Custom_HTML::BLOCK_NAME:
-				if ( $views_active->is_met() ) {
-					$return_block = new Toolset_Blocks_Custom_HTML();
-				} else {
-					$return_block = null;
-				}
+			case Toolset_Blocks_Custom_HTML_Extension::BLOCK_NAME:
+				$return_block = new Toolset_Blocks_Custom_HTML_Extension();
 				break;
+			case Toolset_Blocks_Paragraph_Extension::BLOCK_NAME:
+				$return_block = new Toolset_Blocks_Paragraph_Extension();
+				break;
+
 		}
 
 		return $return_block;
@@ -64,7 +48,7 @@ class Toolset_Gutenberg_Block_Factory {
 	 * @since 2.6.0
 	 */
 	public function register_common_block_editor_assets() {
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
+		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
 		$toolset_assets_manager->register_style(
 			'toolset-blocks-react-select-css',
 			TOOLSET_COMMON_URL . '/toolset-blocks/assets/css/third-party/react-select.css',

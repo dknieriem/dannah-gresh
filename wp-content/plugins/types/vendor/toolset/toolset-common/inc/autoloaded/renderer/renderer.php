@@ -225,4 +225,17 @@ class Toolset_Renderer {
 	}
 
 
+	/**
+	 * Shortcut to Toolset_Gui_Base::get_twig_context_base() to reduce number of injected dependencies in other classes.
+	 *
+	 * @param string $template
+	 * @param array $js_model_data
+	 *
+	 * @return array
+	 */
+	public function get_twig_context_base( $template, $js_model_data ) {
+		return $this->get_gui_base()->get_twig_context_base( $template, $js_model_data );
+	}
+
+
 }

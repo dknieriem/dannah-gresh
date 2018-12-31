@@ -1031,4 +1031,29 @@ if( typeof typesStatusBasicJsScript === 'undefined' ) {
 
     })( jQuery );
 
+    // WYSIWYG Fix for Gutenberg
+    (function( $ ){
+        $( document ).ready( function() {
+            if( typeof window.wp.blocks == 'undefined' ) {
+                // gutenberg not active
+                return;
+            }
+
+            if( typeof window.tinyMCE == 'undefined' ) {
+                // no tinyMCE (the future is now)
+                return;
+            }
+
+            window.tinyMCE.on( 'AddEditor' , function( event ) {
+                var editor = event.editor;
+
+                if( editor.id.startsWith( 'wpcf-' ) ) {
+                    editor.on( 'change', function() {
+                        // trigger editor save() which moves the tinyMCE content to the forms textarea
+                        editor.save();
+                    } );
+                };
+            } );
+        } );
+    } )( jQuery );
 }

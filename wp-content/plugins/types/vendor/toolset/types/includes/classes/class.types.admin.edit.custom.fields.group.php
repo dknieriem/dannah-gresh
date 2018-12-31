@@ -95,9 +95,7 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 	 * @since m2m
 	 */
 	protected function get_save_field_group_label() {
-		$default = parent::get_save_field_group_label();
-
-		return $this->relationship_helper->maybe_adjust_save_button( $default );
+		return parent::get_save_field_group_label();
 	}
 
 
@@ -112,6 +110,15 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 		return $this->relationship_helper->is_field_group_deletion_forbidden();
 	}
 
+	/**
+	 * Returns the relationship url
+	 * @return false|string
+	 *
+	 * @since 3.2
+	 */
+	protected function get_relationship_edit_url() {
+		return $this->relationship_helper->get_relationship_edit_url();
+	}
 
 	public function form() {
 		$this->save();
@@ -181,9 +188,14 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 			'#value' => $this->update['id'],
 		);
 
-		$field_settings_collapsed_class = $this->update['id'] !== 0 // means not a new field group
+		$view_helper = new \OTGS\Toolset\Types\Field\Group\View\Group( $this->update, get_post( $this->update['id'] ) );
+		$field_settings_collapsed_class = $view_helper->are_settings_collapsed()
 			? ' toolset-collapsible-closed'
-			: '';
+		    : '';
+
+		$settings_title = isset( $this->ct ) && isset( $this->ct['name'] )
+			? sprintf( __( 'Settings for %s', 'wpcf' ), $this->ct['name'] )
+			: __( 'Settings for the fields group', 'wpcf' );
 
 		$form['field-group-settings-box-open'] = array(
 			'#type' => 'markup',
@@ -191,7 +203,7 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 				'<div class="toolset-field-group-settings toolset-postbox%s"><div data-toolset-collapsible=".toolset-postbox" class="toolset-collapsible-handle" title="%s"><br></div><h3 data-toolset-collapsible=".toolset-postbox" class="toolset-postbox-title">%s</h3><div class="toolset-collapsible-inside">',
 				$field_settings_collapsed_class,
 				esc_attr__('Click to toggle', 'wpcf'),
-				__( 'Settings for the fields group', 'wpcf' )
+				$settings_title
 			)
 		);
 
@@ -715,11 +727,24 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 
 		// Filter Association
 		if( $this->current_user_can_edit ) {
+			$does_contain_rfg_or_prf = $this->service_field_group->group_contains_rfg_or_prf( $this->update['id'] );
 			$count = 0;
 			$count += ! empty( $this->update['post_types'] ) ? 1 : 0;
 			$count += ! empty( $this->update['taxonomies'] ) ? 1 : 0;
 			$count += ! empty( $this->update['templates'] ) ? 1 : 0;
-			$display = $count > 1 ? '' : ' style="display:none;"';
+			$display = ! $does_contain_rfg_or_prf && $count > 1 || $does_contain_rfg_or_prf && $count > 2
+				? ''
+				: ' style="display:none;"';
+
+			$conditions_options = $does_contain_rfg_or_prf
+				? array(
+					__( 'when <b>Post Type</b> and <b>ANY</b> other condition is met', 'wpcf' )   => 'any',
+					__( 'when <b>ALL</b> conditions are met', 'wpcf' ) => 'all',
+				)
+				: array(
+					__( 'when <b>ANY</b> condition is met', 'wpcf' )   => 'any',
+					__( 'when <b>ALL</b> conditions are met', 'wpcf' ) => 'all',
+				);
 
 			$form['filters_association'] = array(
 				'#title'         => '<b>' . __( 'Use Field Group:', 'wpcf' ) . '</b>',
@@ -727,10 +752,7 @@ class Types_Admin_Edit_Custom_Fields_Group extends Types_Admin_Edit_Fields {
 				'#name'          => 'wpcf[group][filters_association]',
 				'#id'            => 'wpcf-fields-form-filters-association',
 				'#options-after' => '',
-				'#options'       => array(
-					__( 'when <b>ANY</b> condition is met', 'wpcf' )   => 'any',
-					__( 'when <b>ALL</b> conditions are met', 'wpcf' ) => 'all',
-				),
+				'#options'       => $conditions_options,
 				'#default_value' => ! empty( $this->update['filters_association'] )
 					? $this->update['filters_association']
 					: 'any',
@@ -908,40 +930,71 @@ var wpcfDefaultCss = ' . json_encode( base64_encode( $admin_styles_value ) ) . '
 			 * post types
 			 */
 			case 'post-types':
+				$is_rfg_prf_active = toolset_getarr( $_REQUEST, 'rfg_prf_count', false );
+				$is_rfg_prf_active = (bool) $is_rfg_prf_active;
+				$assigned_post_types = toolset_getarr( $_REQUEST, 'assigned_post_types', array() );
+
+				if( $is_rfg_prf_active && count( $assigned_post_types ) == 1 ) {
+					// rfg or prf included
+
+					$assigned_post_type = reset( $assigned_post_types );
+					// show the registered post type and explain user that he cannot change the post type
+					$form['post-types-description-with-rfg-prf'] = array(
+						'#type'   => 'markup',
+						'#markup' => '<p class="description js-wpcf-description">'
+						             . __( 'The Post Type of this Field Group cannot be changed as long as a Repeatable Group or a Post Reference field is used.', 'wpcf' )
+						             . '</p>'
+					);
+
+					$form[ 'option_' . $assigned_post_type ] = array(
+						'#name'          => esc_attr( $assigned_post_type ),
+						'#type'          => 'checkbox',
+						'#value'         => 1,
+						'#default_value' => esc_attr( $assigned_post_type ),
+						'#inline'        => true,
+						'#attributes'    => array(
+							'data-wpcf-value'  => esc_attr( $assigned_post_type ),
+							'data-wpcf-prefix' => 'post-type-',
+							'style' => 'display: none;'
+						),
+					);
+
+					break;
+				}
+
 				$form['post-types-description'] = array(
 					'#type'   => 'markup',
 					'#markup' => '<p class="description js-wpcf-description">' . __( 'Select specific Post Types that you want to use with this Field Group:', 'wpcf' ) . '</p>'
 				);
+
 				$form['post-types-ul-open']     = array(
 					'#type'   => 'markup',
 					'#markup' => '<ul>',
 				);
-
 				$currently_supported = wpcf_admin_get_post_types_by_group( sanitize_text_field( $_REQUEST['id'] ) );
-
 				$post_types = get_post_types( array('show_ui' => true), 'objects' );
 				ksort( $post_types );
-				foreach( $post_types as $post_type_slug => $post_type ) {
-					if( in_array( $post_type_slug, $wpcf->excluded_post_types ) ) {
+				foreach( $post_types as $assigned_post_type => $post_type ) {
+					if( in_array( $assigned_post_type, $wpcf->excluded_post_types ) ) {
 						continue;
 					}
 
-					$post_type_helper = new Types_Post_Type_Helper( $post_type_slug );
+					$post_type_helper = new Types_Post_Type_Helper( $assigned_post_type );
 					if( $post_type_helper->has_special_purpose() ) {
 						continue;
 					}
 
-					$form[ 'option_' . $post_type_slug ] = array(
-						'#name'          => esc_attr( $post_type_slug ),
+					$form[ 'option_' . $assigned_post_type ] = array(
+						'#name'          => esc_attr( $assigned_post_type ),
 						'#type'          => 'checkbox',
 						'#value'         => 1,
-						'#default_value' => $this->ajax_filter_default_value( $post_type_slug, $currently_supported, 'post-type' ),
+						'#default_value' => $this->ajax_filter_default_value( $assigned_post_type, $currently_supported, 'post-type' ),
 						'#inline'        => true,
 						'#before'        => '<li>',
 						'#after'         => '</li>',
 						'#title'         => $post_type->label,
 						'#attributes'    => array(
-							'data-wpcf-value'  => esc_attr( $post_type_slug ),
+							'data-wpcf-value'  => esc_attr( $assigned_post_type ),
 							'data-wpcf-prefix' => 'post-type-'
 						),
 					);
@@ -1122,7 +1175,7 @@ var wpcfDefaultCss = ' . json_encode( base64_encode( $admin_styles_value ) ) . '
 		$form = array(
 			$slug . '-begin' => array(
 				'#type'   => 'markup',
-				'#markup' => sprintf( '<div class="postbox"><div class="handlediv" title="%s"><br></div><h3 class=""><span>%s</span></h3><div class="inside"><ul>', esc_attr__( 'Click to toggle', 'wpcf' ), $title )
+				'#markup' => sprintf( '<div class="postbox toolset-postbox"><div data-toolset-collapsible=".toolset-postbox" class="toolset-collapsible-handle handlediv" title="%s"><br></div><h3 class=""><span>%s</span></h3><div class=" toolset-collapsible-inside inside" style="padding:0 12px 12px"><ul>', esc_attr__( 'Click to toggle', 'wpcf' ), $title )
 			)
 		);
 		$form += $data;
@@ -1256,10 +1309,7 @@ var wpcfDefaultCss = ' . json_encode( base64_encode( $admin_styles_value ) ) . '
 		if( isset( $_GET['ref'] ) )
 			$args['ref'] = $_GET['ref'];
 
-		$default_redirect_url = add_query_arg( $args, admin_url( 'admin.php' ) );
-
-		// Maybe we'll redirect to a Edit Relationship page instead.
-		$redirect_url = $this->relationship_helper->maybe_adjust_redirection_after_save( $default_redirect_url );
+		$redirect_url = add_query_arg( $args, admin_url( 'admin.php' ) );
 
 		// Executed after hooks for setting the proper post type.
 		$this->relationship_helper->create_intermediary_group_if_needed( $group_id );

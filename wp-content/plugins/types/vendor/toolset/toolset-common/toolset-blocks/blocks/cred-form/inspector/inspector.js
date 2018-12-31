@@ -18,6 +18,7 @@ import Select2 from '../../common/select2';
  */
 const {
 	__,
+	sprintf,
 } = wp.i18n;
 
 const {
@@ -47,6 +48,11 @@ export default class Inspector extends Component {
 			onChangeAnotherPostToEdit,
 			onChangeUserToEdit,
 			onChangeAnotherUserToEdit,
+			onChangeRelationshipFormType,
+			onChangeRelationshipParentItem,
+			onChangeRelationshipChildItem,
+			onChangeRelationshipParentItemSpecific,
+			onChangeRelationshipChildItemSpecific,
 		} = this.props;
 
 		const {
@@ -61,7 +67,45 @@ export default class Inspector extends Component {
 			editPostForms,
 			newUserForms,
 			editUserForms,
+			newRelationshipForms,
+			relationshipFormType,
+			relationshipParentItem,
+			relationshipChildItem,
+			relationshipParentItemSpecific,
+			relationshipChildItemSpecific,
+			relationshipData,
 		} = attributes;
+
+		let relationshipCreateLabel = '';
+		let relationshipCreateChildLabel = '';
+		let relationshipCreateChildSubLabel = '';
+		let relationshipCreateChildOptionCurrent = '';
+		let relationshipCreateChildOptionSpecific = '';
+		let relationshipCreateParentLabel = '';
+		let relationshipCreateParentSubLabel = '';
+		let relationshipCreateParentOptionCurrent = '';
+		let relationshipCreateParentOptionSpecific = '';
+
+		if ( Object.keys( relationshipData ).length ) {
+			// translators: %1 is the name of a post type name (i.e. Flight) - %2 is also a post type name but with an indefinite article (i.e. a Airport) - %3 is the name of the relationship with a indefinite article (i.e. a Departure)
+			relationshipCreateLabel = sprintf( __( 'Connect between any %s and %s as %s' ), relationshipData.parent.labelSingular, relationshipData.child.labelSingularPrefixed, relationshipData.labelSingularPrefixed );
+			// translators: %1 is the name of a post type name with an indefinite article (i.e. Airport) - %2 is also a post type name but without an indefinite article (i.e. a Flight) - %3 is the name of the relationship with a indefinite article (i.e. a Departure)
+			relationshipCreateChildLabel = sprintf( __( 'Connect %s to a given %s as %s' ), relationshipData.child.labelSingularPrefixed, relationshipData.parent.labelSingular, relationshipData.labelSingularPrefixed );
+			// translators: %1 and %2 are post type name (i.e. Airport or Flight)
+			relationshipCreateChildSubLabel = sprintf( __( '%s to add %s to' ), relationshipData.parent.labelSingular, relationshipData.child.labelSingular );
+			// translators: %1 is post type name (i.e. Airport)
+			relationshipCreateChildOptionCurrent = sprintf( __( 'Use the current %s' ), relationshipData.parent.labelSingular );
+			// translators: %1 is post type name (i.e. Airport)
+			relationshipCreateChildOptionSpecific = sprintf( __( 'Use a specific %s' ), relationshipData.parent.labelSingular );
+			// translators: %1 is the name of a post type name with an indefinite article (i.e. Airport) - %2 is also a post type name but without an indefinite article (i.e. a Flight) - %3 is the name of the relationship with a indefinite article (i.e. a Departure)
+			relationshipCreateParentLabel = sprintf( __( 'Connect %s to a given %s as %s' ), relationshipData.parent.labelSingularPrefixed, relationshipData.child.labelSingular, relationshipData.labelSingularPrefixed );
+			// translators: %1 and %2 are post type name (i.e. Airport or Flight)
+			relationshipCreateParentSubLabel = sprintf( __( '%s to add %s to' ), relationshipData.child.labelSingular, relationshipData.parent.labelSingular );
+			// translators: %1 is post type name (i.e. Airport)
+			relationshipCreateParentOptionCurrent = sprintf( __( 'Use the current %s' ), relationshipData.child.labelSingular );
+			// translators: %1 is post type name (i.e. Airport)
+			relationshipCreateParentOptionSpecific = sprintf( __( 'Use a specific %s' ), relationshipData.child.labelSingular );
+		}
 
 		return (
 			<InspectorControls>
@@ -75,6 +119,7 @@ export default class Inspector extends Component {
 										editPostForms: editPostForms,
 										newUserForms: newUserForms,
 										editUserForms: editUserForms,
+										newRelationshipForms: newRelationshipForms,
 										form: form,
 									}
 								}
@@ -155,6 +200,84 @@ export default class Inspector extends Component {
 												value={ anotherUserToEdit }
 											/>
 										</BaseControl> :
+										null,
+								] :
+								null
+						}
+						{
+							'relationship' === formType ?
+								[
+									<RadioControl
+										key="relationshipFormType"
+										// translators: The form can be used to create a new relationship or edit or ...
+										label={ __( 'What should the form do?' ) }
+										selected={ relationshipFormType }
+										onChange={ onChangeRelationshipFormType }
+										options={
+											[
+												{ value: 'create', label: relationshipCreateLabel },
+												{ value: 'createChild', label: relationshipCreateChildLabel },
+												{ value: 'createParent', label: relationshipCreateParentLabel },
+											]
+										}
+									/>,
+									'createChild' === relationshipFormType ?
+										<RadioControl
+											key="relationshipChildItem"
+											label={ relationshipCreateChildSubLabel }
+											selected={ relationshipParentItem }
+											onChange={ onChangeRelationshipParentItem }
+											options={
+												[
+													{ value: '$current', label: relationshipCreateChildOptionCurrent },
+													{ value: 'specific', label: relationshipCreateChildOptionSpecific },
+												]
+											}
+										/> :
+										null,
+									'createChild' === relationshipFormType && 'specific' === relationshipParentItem ?
+										<Select2
+											onChange={ onChangeRelationshipParentItemSpecific }
+											restInfo={
+												{
+													base: '/toolset/v2/search-posts',
+													args: {
+														search: '%s',
+														post_type: relationshipData.parent.type,
+													},
+												}
+											}
+											value={ relationshipParentItemSpecific }
+										/> :
+										null,
+									'createParent' === relationshipFormType ?
+										<RadioControl
+											key="relationshipParentItem"
+											label={ relationshipCreateParentSubLabel }
+											selected={ relationshipChildItem }
+											onChange={ onChangeRelationshipChildItem }
+											options={
+												[
+													{ value: '$current', label: relationshipCreateParentOptionCurrent },
+													{ value: 'specific', label: relationshipCreateParentOptionSpecific },
+												]
+											}
+										/> :
+										null,
+									'createParent' === relationshipFormType && 'specific' === relationshipChildItem ?
+										<Select2
+											onChange={ onChangeRelationshipChildItemSpecific }
+											restInfo={
+												{
+													base: '/toolset/v2/search-posts',
+													args: {
+														search: '%s',
+														post_type: relationshipData.child.type,
+													},
+												}
+											}
+											value={ relationshipChildItemSpecific }
+										/> :
 										null,
 								] :
 								null

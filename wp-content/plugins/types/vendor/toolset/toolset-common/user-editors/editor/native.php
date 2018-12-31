@@ -11,8 +11,21 @@
 class Toolset_User_Editors_Editor_Native
 	extends Toolset_User_Editors_Editor_Abstract {
 
-	protected $id = 'native';
+	const NATIVE_SCREEN_ID = 'native';
+
+	/**
+	 * @var string
+	 */
+	protected $id = self::NATIVE_SCREEN_ID;
+
+	/**
+	 * @var string
+	 */
 	protected $name = 'Native editor';
+
+	/**
+	 * @var string
+	 */
 	protected $option_name = '_toolset_user_editors_native';
 
 	public function initialize() {

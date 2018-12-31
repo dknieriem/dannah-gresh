@@ -2,9 +2,9 @@
 
 /**
  * The script and style asset manager for Types implemented in a standard Toolset way.
- * 
+ *
  * Keeping this separate from Types_Assets also for performance reasons (this is not needed at all times).
- * 
+ *
  * @since 2.0
  * @refactoring because inheriting from Toolset_Assets_Manager causes double asset registration. We should _use_
  * that class, not extend it.
@@ -18,11 +18,14 @@ class Types_Asset_Manager extends Toolset_Assets_Manager {
 	const SCRIPT_ADJUST_MENU_LINK = 'types-adjust-menu-link';
 	const SCRIPT_SLUG_CONFLICT_CHECKER = 'types-slug-conflict-checker';
 	const SCRIPT_POINTER = 'types-pointer';
-
 	const SCRIPT_PAGE_EDIT_POST_TYPE = 'types-page-edit-post-type';
 	const SCRIPT_PAGE_EDIT_TAXONOMY = 'types-page-edit-taxonomy';
-
 	const SCRIPT_M2M_ACTIVATION_DIALOG = 'types-dialog-m2m-activation';
+	const SCRIPT_SUBMIT_ANYWAY = 'types-submit-anyway';
+	const SCRIPT_POST_ADD_OR_EDIT = 'types-post-add-or-edit';
+	const SCRIPT_POST_ADD_OR_EDIT_NO_COMPONENTS = 'types-post-add-or-edit-no-components';
+
+	const STYLE_POST_ADD_OR_EDIT = 'types-post-add-or-edit';
 
 	// Registered in legacy Types
 
@@ -45,8 +48,8 @@ class Types_Asset_Manager extends Toolset_Assets_Manager {
 
 		return self::$types_instance;
 	}
-	
-	
+
+
 	protected function initialize_styles() {
 
 		$this->register_style(
@@ -56,6 +59,12 @@ class Types_Asset_Manager extends Toolset_Assets_Manager {
 			TYPES_VERSION
 		);
 
+		$this->register_style(
+			self::STYLE_POST_ADD_OR_EDIT,
+			TYPES_RELPATH . '/public/css/post/bundle.add_or_edit.css',
+			array(),
+			TYPES_VERSION
+		);
 	}
 
 
@@ -114,7 +123,30 @@ class Types_Asset_Manager extends Toolset_Assets_Manager {
 		$this->register_script(
 			self::SCRIPT_M2M_ACTIVATION_DIALOG,
 			TYPES_RELPATH . '/public/page/extension/m2m-migration-dialog.js',
-			array( 'jquery', 'underscore', Toolset_Assets_Manager::SCRIPT_HEADJS, self::SCRIPT_KNOCKOUT, self::SCRIPT_UTILS )
+			array( 'jquery', 'underscore', Toolset_Assets_Manager::SCRIPT_HEADJS, self::SCRIPT_KNOCKOUT, self::SCRIPT_UTILS ),
+			TYPES_VERSION
+		);
+
+
+		$this->register_script(
+			self::SCRIPT_SUBMIT_ANYWAY,
+			TYPES_RELPATH . '/public/js/submitanyway.js',
+			array( 'jquery' ),
+			TYPES_VERSION
+		);
+
+		$this->register_script(
+			self::SCRIPT_POST_ADD_OR_EDIT,
+			TYPES_RELPATH . '/public/js/post/bundle.add_or_edit.js',
+			array( 'wp-components', Toolset_Assets_Manager::SCRIPT_UTILS ),
+			TYPES_VERSION
+		);
+
+		$this->register_script(
+			self::SCRIPT_POST_ADD_OR_EDIT_NO_COMPONENTS,
+			TYPES_RELPATH . '/public/js/post/bundle.add_or_edit_no_components.js',
+			array( self::SCRIPT_SUBMIT_ANYWAY ),
+			TYPES_VERSION
 		);
 
 		return parent::initialize_scripts();

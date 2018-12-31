@@ -45,6 +45,7 @@ export default class Select2 extends Component {
 		// the search.
 		const restPath = this.props.restInfo.base + stringify( this.props.restInfo.args, true ).replace( '%25s', '%s' );
 
+		// @deprecated use wp.apiFetch instead
 		this.suggestionsRequest = wp.apiRequest( {
 			path: sprintf( restPath, this.sanitizeInput( input ) ),
 		} );

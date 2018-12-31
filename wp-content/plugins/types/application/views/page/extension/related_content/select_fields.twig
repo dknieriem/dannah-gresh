@@ -44,6 +44,18 @@
 			</div>
 		{% endif %}
 
+        {% if intermediary %}
+			<h3>{{ __( 'Intermediary', 'wpcf' ) }}</h3>
+			<div class="types-container-select-fields-form">
+				<span>
+					<input type="checkbox" name="field-relationship[]"
+						   value="intermediary-title" id="select-all-intermediary-title"
+						   data-bind="click: handleAllSelected, checked: isFieldVisible( 'relationship', 'intermediary-title')" />
+					<label for="select-all-intermediary-title" > {{ __('Title', 'wpcf' ) }}</label>
+				</span>
+			</div>
+        {% endif %}
+
 		{% if fields.relationship|length > 0 %}
 			<h3>{{ __( 'Fields from relationship', 'wpcf' ) }}</h3>
 			<div class="types-container-select-fields-form">

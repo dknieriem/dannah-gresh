@@ -49,7 +49,7 @@ ToolsetCommon.UserEditor.BeaverBuilderBackendLayoutTemplate = function( $ ) {
 		if ( attributes.builder == 'beaver' ) {
 			item.addClass( 'js-wpv-ct-listing-user-editor-inited' );
 			item.find( '.js-wpv-layout-template-overlay' ).remove();
-			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-beaver)' ).prop( 'disabled', false );
+			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-beaver)' ).prop( 'disabled', false ).attr( 'disabled', false );
             item.prepend( self.overlayContainer( self.i18n_data ) );
 			item.find( '.CodeMirror' ).css( { 'height' : '0px'} );
 			self.updateBeaverCTEditorLinkTarget( item );
@@ -108,7 +108,13 @@ ToolsetCommon.UserEditor.BeaverBuilderBackendLayoutTemplate = function( $ ) {
 		ctEditorLink.attr( 'href', ctEditorLinkTarget );
 		return self;
 	};
-	
+
+	// It is triggered when the WPA Loop selection is saved.
+	$( document ).on( 'js_event_wpv_wpa_loop_selection_saved', '.js-wpv-loop-selection-update', function() {
+		self.reloadBeaverEditorsLinkTarget();
+	});
+
+	// It is triggered when the View Content Selection is saved.
 	$( document ).on( 'js_event_wpv_query_type_options_saved', '.js-wpv-query-type-update', function( event, queryType ) {
 		self.reloadBeaverEditorsLinkTarget();
 	});

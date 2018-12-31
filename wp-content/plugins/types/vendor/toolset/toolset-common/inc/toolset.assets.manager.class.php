@@ -1,7 +1,7 @@
 <?php
 
 if ( defined( 'WPT_ASSETS_MANAGER' ) ) {
-    return; 
+    return;
 }
 
 define( 'WPT_ASSETS_MANAGER', true );
@@ -158,8 +158,10 @@ class Toolset_Assets_Manager {
 	const SCRIPT_CODEMIRROR = 'toolset-codemirror-script';
 	const SCRIPT_CODEMIRROR_CSS = 'toolset-meta-html-codemirror-css-script';
 	const SCRIPT_CODEMIRROR_XML = 'toolset-meta-html-codemirror-xml-script';
+	const SCRIPT_CODEMIRROR_PHP = 'toolset-meta-html-codemirror-php-script';
 	const SCRIPT_CODEMIRROR_HTMLMIXED = 'toolset-meta-html-codemirror-htmlmixed-script';
 	const SCRIPT_CODEMIRROR_JS = 'toolset-meta-html-codemirror-js-script';
+	const SCRIPT_CODEMIRROR_C_LIKE = 'toolset-meta-html-codemirror-c-like';
 	const SCRIPT_CODEMIRROR_OVERLAY = 'toolset-meta-html-codemirror-overlay-script';
 	const SCRIPT_CODEMIRROR_UTILS_SEARCH = 'toolset-meta-html-codemirror-utils-search';
 	const SCRIPT_CODEMIRROR_UTILS_SEARCH_CURSOR = 'toolset-meta-html-codemirror-utils-search-cursor';
@@ -172,8 +174,11 @@ class Toolset_Assets_Manager {
 
 	const SCRIPT_ICL_EDITOR = 'icl_editor-script';
 	const SCRIPT_ICL_MEDIA_MANAGER = 'icl_media-manager-js';
-	
+
 	const SCRIPT_TOOLSET_MEDIA_MANAGER = 'toolset-media-manager-js';
+
+	const SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE = 'toolset-media-field-prototype';
+	const SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE_I18N = 'toolset_media_field_i18n';
 
 	const SCRIPT_KNOCKOUT = 'knockout';
 	const SCRIPT_KNOCKOUT_MAPPING = 'knockout-mapping';
@@ -198,13 +203,19 @@ class Toolset_Assets_Manager {
 	// parsley lib for field validation
 	const SCRIPT_PARSLEY = 'toolset-parsley';
 
+	// React
+	const SCRIPT_REACT = 'react';
+	const SCRIPT_REACT_DOM = 'react-dom';
+
+	// Lodash
+	const SCRIPT_LODASH = 'lodash';
 
 	/**
 	 * For compatibility with ACF Plugin that's not using the right handle for this module (wp-event-manager)
 	 * we are using ACF handle to prevent unwanted overrides of window.wp.hooks namespace (******!)
 	 */
 	const SCRIPT_WP_EVENT_MANAGER = 'acf-input';
-	
+
 	const SCRIPT_TOOLSET_SHORTCODE = 'toolset-shortcode';
 
 	// Styles
@@ -252,10 +263,11 @@ class Toolset_Assets_Manager {
 
 	const STYLE_ONTHEGOSYSTEMS_ICONS = 'onthegosystems-icons';
 
+	const SCRIPT_TIPPY = 'tippy';
+	const STYLE_TIPPY_CSS = 'tippy-css';
+
 
 	/**
-	 * assets_url
-	 *
 	 * Base URL for the Toolset Common instance.
 	 *
 	 * @note Does not have a trailing slash due to untrailingslashit, add it when registering each asset.
@@ -397,7 +409,6 @@ class Toolset_Assets_Manager {
 			}
 		}
 	}
-
 
 	protected function initialize_styles() {
 
@@ -573,6 +584,13 @@ class Toolset_Assets_Manager {
 			TOOLSET_COMMON_VERSION
 		);
 
+		$this->register_style(
+			self::STYLE_TIPPY_CSS,
+			$this->assets_url . '/res/lib/tippy/tippy.css',
+			array(),
+			'3.0.6'
+		);
+
 		return apply_filters( 'toolset_add_registered_styles', $this->styles );
 	}
 
@@ -728,6 +746,29 @@ class Toolset_Assets_Manager {
 		);
 
 		$this->register_script(
+			self::SCRIPT_CODEMIRROR_C_LIKE,
+			$this->assets_url . '/visual-editor/res/js/codemirror/mode/clike/clike.js',
+			array( self::SCRIPT_CODEMIRROR_OVERLAY ),
+			"5.5.0"
+		);
+
+		$this->register_script(
+			self::SCRIPT_CODEMIRROR_PHP,
+			$this->assets_url . '/visual-editor/res/js/codemirror/mode/php/php.js',
+			array(
+				self::SCRIPT_CODEMIRROR_OVERLAY,
+				self::SCRIPT_CODEMIRROR_XML,
+				self::SCRIPT_CODEMIRROR_JS,
+				self::SCRIPT_CODEMIRROR_CSS,
+				self::SCRIPT_CODEMIRROR_HTMLMIXED,
+				self::SCRIPT_CODEMIRROR_C_LIKE,
+			),
+			"5.5.0"
+		);
+
+
+
+		$this->register_script(
 			self::SCRIPT_CODEMIRROR_CSS,
 			$this->assets_url . '/visual-editor/res/js/codemirror/mode/css/css.js',
 			array( self::SCRIPT_CODEMIRROR_OVERLAY ),
@@ -808,12 +849,34 @@ class Toolset_Assets_Manager {
 			array( self::SCRIPT_ICL_EDITOR ),
 			TOOLSET_COMMON_VERSION
 		);
-		
+
 		$this->register_script(
 			self::SCRIPT_TOOLSET_MEDIA_MANAGER,
 			$this->assets_url . "/res/js/toolset-media-manager.js",
 			array( self::SCRIPT_ICL_EDITOR, self::SCRIPT_TOOLSET_EVENT_MANAGER ),
 			TOOLSET_COMMON_VERSION
+		);
+
+		$this->register_script(
+			self::SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE,
+			$this->assets_url . '/res/js/toolset-media-field.prototype.js',
+			array(
+				'jquery',
+				'underscore',
+			),
+			TOOLSET_COMMON_VERSION
+		);
+
+		$this->localize_script(
+			self::SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE,
+			self::SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE_I18N,
+			array(
+				'dialog' => array(
+					'title' => __( 'Select a file for this field', 'wpv-views' ),
+					'button' => __( 'Use this as field value', 'wpv-views' ),
+					'nonce' => wp_create_nonce( 'toolset_media_field_' . get_current_user_id() ),
+				),
+			)
 		);
 
 		$this->register_script(
@@ -864,6 +927,41 @@ class Toolset_Assets_Manager {
 			true
 		);
 
+		$this->register_script(
+			self::SCRIPT_TIPPY,
+			$this->assets_url . '/res/lib/tippy/tippy.min.js',
+			array(),
+			'3.0.6'
+		);
+
+		if ( ! wp_script_is( self::SCRIPT_REACT, 'registered' ) ) {
+			$this->register_script(
+				self::SCRIPT_REACT,
+				$this->assets_url . '/res/lib/react/' . $this->choose_script_version( 'react.production.min.js', 'react.development.js' ),
+				array(),
+				'16.6.3'
+			);
+		}
+
+		if ( ! wp_script_is( self::SCRIPT_REACT_DOM, 'registered' ) ) {
+			$this->register_script(
+				self::SCRIPT_REACT_DOM,
+				$this->assets_url . '/res/lib/react/' . $this->choose_script_version( 'react-dom.production.min.js', 'react-dom.development.js' ),
+				array( self::SCRIPT_REACT ),
+				'16.6.3'
+			);
+		}
+
+		if ( ! wp_script_is( self::SCRIPT_LODASH, 'registered' ) ) {
+			$this->register_script(
+				self::SCRIPT_LODASH,
+				$this->assets_url . '/res/lib/lodash/lodash.min.js',
+				array(),
+				'4.17.11'
+			);
+			wp_add_inline_script( self::SCRIPT_LODASH, 'window.lodash = _.noConflict();' );
+		}
+
 		$this->localize_script(
 			self::SCRIPT_UTILS,
 			'toolset_utils_texts',
@@ -905,18 +1003,18 @@ class Toolset_Assets_Manager {
 				'toolset_theme_loads_own_bs' => __( 'This theme loads its own version of Bootstrap. You should select this option to avoid loading Bootstrap twice and causing display problems on the site\'s front-end', 'wpv-views' )
 			)
 		);
-		
+
 		$this->register_script(
 			self::SCRIPT_TOOLSET_SHORTCODE,
 			$this->assets_url . "/res/js/toolset-shortcode.js",
-			array( 
-				'jquery', 'jquery-ui-dialog', 'jquery-ui-tabs', 'suggest', 'shortcode', 'underscore', 'wp-util', 'wp-pointer', 
-				self::SCRIPT_SELECT2, self::SCRIPT_ICL_EDITOR, self::SCRIPT_UTILS, self::SCRIPT_TOOLSET_EVENT_MANAGER 
+			array(
+				'jquery', 'jquery-ui-dialog', 'jquery-ui-tabs', 'suggest', 'shortcode', 'underscore', 'wp-util', 'wp-pointer',
+				self::SCRIPT_SELECT2, self::SCRIPT_ICL_EDITOR, self::SCRIPT_UTILS, self::SCRIPT_TOOLSET_EVENT_MANAGER
 			),
 			TOOLSET_COMMON_VERSION,
 			true
 		);
-		
+
 		global $pagenow;
 		$toolset_shortcode_i18n = array(
 			'action' => array(
@@ -937,14 +1035,15 @@ class Toolset_Assets_Manager {
 				'number'     => __( 'Please enter a valid number', 'wpv-views' ),
 				'numberlist' => __( 'Please enter a valid comma separated number list', 'wpv-views' ),
 				'url'        => __( 'Please enter a valid URL', 'wpv-views' ),
-				
+
 			),
+			'integrated_inputs' => array(),
 			'ajaxurl' => admin_url( 'admin-ajax.php', ( is_ssl() ? 'https' : 'http' )  ),
 			'pagenow' => $pagenow
 		);
-		
+
 		$toolset_shortcode_i18n = apply_filters( 'toolset_filter_shortcode_script_i18n', $toolset_shortcode_i18n );
-		
+
 		$this->localize_script(
 			self::SCRIPT_TOOLSET_SHORTCODE,
 			'toolset_shortcode_i18n',
@@ -1077,5 +1176,4 @@ class Toolset_Assets_Manager {
 	private function choose_script_version( $production_version, $debugging_version ) {
 		return ( $this->is_script_debug_mode_on() ? $debugging_version : $production_version );
 	}
-
 }

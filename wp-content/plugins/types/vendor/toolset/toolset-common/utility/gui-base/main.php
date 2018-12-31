@@ -42,6 +42,25 @@
  */
 class Toolset_Gui_Base {
 
+
+	// Names of registered assets.
+	//
+	//
+	const SCRIPT_GUI_ABSTRACT_PAGE_CONTROLLER = 'toolset-gui-abstract-page-controller';
+	const SCRIPT_GUI_LISTING_PAGE_CONTROLLER = 'toolset-gui-listing-page-controller';
+	const SCRIPT_GUI_LISTING_VIEWMODEL = 'toolset-gui-listing-viewmodel';
+	const SCRIPT_GUI_ITEM_VIEWMODEL = 'toolset-gui-item-viewmodel';
+	const SCRIPT_GUI_JQUERY_COLLAPSIBLE = 'toolset-gui-jquery-collapsible';
+	const SCRIPT_GUI_MIXIN_CREATE_DIALOG = 'toolset-gui-mixin-create-dialog';
+	const SCRIPT_GUI_MIXIN_KNOCKOUT_EXTENSIONS = 'toolset-gui-mixin-knockout-extensions';
+	const SCRIPT_GUI_MIXIN_BATCH_PROCESS_DIALOG = 'toolset-gui-mixin-batch-process-dialog';
+	const SCRIPT_GUI_MIXIN_ADVANCED_ITEM_VIEWMODEL = 'toolset-gui-mixin-advanced-item-viewmodel';
+	const SCRIPT_GUI_MIXIN_CODEMIRROR = 'toolset-gui-mixin-codemirror';
+
+	const STYLE_GUI_BASE = 'toolset-gui-base';
+	const STYLE_GUI_MIXIN_BATCH_PROCESS_DIALOG = 'toolset-gui-mixin-batch-process-dialog';
+
+
 	private static $instance;
 
 	public static function get_instance() {
@@ -246,15 +265,15 @@ class Toolset_Gui_Base {
 				$listing_context = array(
 					'strings' => array(
 						'misc' => array(
-							'searchPlaceholder' => __( 'Search', 'wpcf' ),
-							'noItemsFound' => __( 'No items found.', 'wpcf' ),
-							'applyBulkAction' => __( 'Apply', 'wpcf' ),
-							'items' => __( 'items', 'wpcf' ),
-							'of' => __( 'of', 'wpcf' ),
+							'searchPlaceholder' => __( 'Search', 'wpv-views' ),
+							'noItemsFound' => __( 'No items found.', 'wpv-views' ),
+							'applyBulkAction' => __( 'Apply', 'wpv-views' ),
+							'items' => __( 'items', 'wpv-views' ),
+							'of' => __( 'of', 'wpv-views' ),
 						)
 					),
 					'bulkAction' => array(
-						'select' => __( 'Bulk action', 'wpcf' )
+						'select' => __( 'Bulk action', 'wpv-views' )
 					)
 				);
 
@@ -299,18 +318,6 @@ class Toolset_Gui_Base {
 	}
 
 
-	// Names of registered assets.
-	const SCRIPT_GUI_ABSTRACT_PAGE_CONTROLLER = 'toolset-gui-abstract-page-controller';
-	const SCRIPT_GUI_LISTING_PAGE_CONTROLLER = 'toolset-gui-listing-page-controller';
-	const SCRIPT_GUI_LISTING_VIEWMODEL = 'toolset-gui-listing-viewmodel';
-	const SCRIPT_GUI_ITEM_VIEWMODEL = 'toolset-gui-item-viewmodel';
-	const SCRIPT_GUI_JQUERY_COLLAPSIBLE = 'toolset-gui-jquery-collapsible';
-	const SCRIPT_GUI_MIXIN_CREATE_DIALOG = 'toolset-gui-mixin-create-dialog';
-	const SCRIPT_GUI_MIXIN_KNOCKOUT_EXTENSIONS = 'toolset-gui-mixin-knockout-extensions';
-
-	const STYLE_GUI_BASE = 'toolset-gui-base';
-
-
 	/**
 	 * Register Toolset GUI base assets via the Toolset_Assets_Manager.
 	 *
@@ -339,6 +346,37 @@ class Toolset_Gui_Base {
 			self::get_gui_base_url( '/js/mixins/KnockoutExtensions.js' ),
 			array(
 				'knockout', 'jquery'
+			),
+			TOOLSET_VERSION
+		);
+
+		$asset_manager->register_script(
+			self::SCRIPT_GUI_MIXIN_BATCH_PROCESS_DIALOG,
+			self::get_gui_base_url( '/js/mixins/BatchProcessDialog.js' ),
+			array(
+				'knockout', 'jquery', self::SCRIPT_GUI_MIXIN_CREATE_DIALOG
+			),
+			TOOLSET_VERSION
+		);
+
+		$asset_manager->register_script(
+			self::SCRIPT_GUI_MIXIN_ADVANCED_ITEM_VIEWMODEL,
+			self::get_gui_base_url( '/js/mixins/AdvancedItemViewModel.js' ),
+			array(
+				'knockout', 'jquery', 'underscore', self::SCRIPT_GUI_MIXIN_KNOCKOUT_EXTENSIONS
+			),
+			TOOLSET_VERSION
+		);
+
+		$asset_manager->register_script(
+			self::SCRIPT_GUI_MIXIN_CODEMIRROR,
+			self::get_gui_base_url( '/js/mixins/CodeMirror.js' ),
+			array(
+				'jquery', 'underscore', Toolset_Assets_Manager::SCRIPT_ICL_EDITOR,
+				Toolset_Assets_Manager::SCRIPT_CODEMIRROR_UTILS_PANEL,
+				Toolset_Assets_Manager::SCRIPT_CODEMIRROR_UTILS_SEARCH,
+				Toolset_Assets_Manager::SCRIPT_CODEMIRROR_UTILS_SEARCH_CURSOR,
+				Toolset_Assets_Manager::SCRIPT_CODEMIRROR_OVERLAY
 			),
 			TOOLSET_VERSION
 		);
@@ -392,6 +430,7 @@ class Toolset_Gui_Base {
 			TOOLSET_VERSION
 		);
 
+
 		$asset_manager->register_script(
 			self::SCRIPT_GUI_JQUERY_COLLAPSIBLE,
 			$this->get_gui_base_url( '/js/jquery/collapsible.js' ),
@@ -400,14 +439,22 @@ class Toolset_Gui_Base {
 			),
 			TOOLSET_VERSION
 		);
+
 		
 		$asset_manager->register_style(
 			self::STYLE_GUI_BASE,
-			$this->get_gui_base_url( '/toolset-gui-base.css' ),
+			$this->get_gui_base_url( '/css/toolset-gui-base.css' ),
 			array(),
 			TOOLSET_VERSION
 		);
 
+
+		$asset_manager->register_style(
+			self::STYLE_GUI_MIXIN_BATCH_PROCESS_DIALOG,
+			$this->get_gui_base_url( '/css/batch_process_dialog.css' ),
+			array( self::STYLE_GUI_BASE ),
+			TOOLSET_VERSION
+		);
 
 	}
 

@@ -9,14 +9,10 @@
 require_once WPCF_EMBEDDED_INC_ABSPATH . '/custom-types.php';
 
 /**
- * Post Types Class
+ * Add new columns with selected custom fields to the post listing (of a CPT, presumably).
  *
  * @since Types 1.2
- * @package Types
- * @subpackage Classes
- * @version 0.1
- * @category Post Type
- * @author srdjan <srdjan@icanlocalize.com>
+ * @refactoring This is a little mess, it should use the same field preview renderers as term fields do.
  */
 class WPCF_Post_Types
 {
@@ -186,7 +182,37 @@ class WPCF_Post_Types
                 }
                 $key = $field_key;
                 $data = $field_data;
+
+                // field found, no need to continue the loop
+                break;
             }
+
+            if( $key ) {
+	            $groups = wpcf_admin_fields_get_groups_by_field( $key );
+
+	            if( empty( $groups ) ) {
+	            	// ABORT, as field is not applied to any group
+		            continue;
+	            }
+
+	            $is_applied_to_active_group = false;
+
+	            foreach( $groups as $group ) {
+	            	if( isset( $group['is_active'] ) && $group['is_active'] ) {
+	            		// field is applied to active group
+			            $is_applied_to_active_group = true;
+
+			            // enough to know it's applied to one group
+	            		break;
+		            }
+	            }
+
+	            if( ! $is_applied_to_active_group ) {
+					// ABORT, as field is not applied to an active group
+	            	continue;
+	            }
+            }
+
 
             if ( !isset($data['meta_key']) ) {
                 continue;
@@ -233,67 +259,77 @@ class WPCF_Post_Types
         return $this->manage_posts_columns_common($columns, 'normal');
     }
 
-    /**
-     * Show value of custom field.
-     *
-     * Show value of custom field.
-     *
-     * @since 1.6.6
-     *
-     * @param string $column Column name,
-     * @param int $var Current post ID.
-     */
-    public function manage_custom_columns($column, $post_id)
-    {
-        $value = get_post_meta($post_id, $column, true);
-        if ( empty($value) ) {
-            return;
-        }
-        $field = wpcf_admin_fields_get_field_by_meta_key($column);
-        if ( isset( $field['type'] ) ) {
-            switch( $field['type'] ) {
-            case 'image':
-                $default_width = '100px';
-                /**
-                 * Width of image.
-                 *
-                 * Filter allow to change default image size displayed on
-                 * admin etry list for custom field type image. Default is
-                 * 100px - you can change it to any proper CSS width
-                 * definition.
-                 *
-                 * @since 1.7
-                 *
-                 * @param string $var Default width "100px".
-                 */
-                $width = apply_filters('wpcf_field_image_max_width', $default_width);
-                if (empty($width)) {
-                    $width = $default_width;
-                }
-                $value = sprintf(
-                    '<img src="%s" style="max-width:%s" alt="" />',
-                    esc_attr($value),
-                    esc_attr($width)
-                );
-                break;
-            case 'skype':
-                $value = isset($value['skypename'])? $value['skypename']:'';
-                break;
-            case 'date':
-                require_once WPTOOLSET_FORMS_ABSPATH . '/classes/class.date.php';
-                $value = WPToolset_Field_Date::timetodate($value);
-                break;
-            default:
-                require_once WPCF_EMBEDDED_ABSPATH . '/frontend.php';
-                $value = types_render_field( $field['id'] );
-            }
-        }
-        if ( is_string($value ) ) {
-            echo $value;
-        }
-    }
+	/**
+	 * Show value of custom field.
+	 *
+	 * @since 1.6.6
+	 *
+	 * @param string $column Column name,
+	 * @param int $post_id Current post ID.
+	 */
+	public function manage_custom_columns( $column, $post_id ) {
+		$value = get_post_meta( $post_id, $column, true );
+		if ( empty( $value ) ) {
+			return;
+		}
+		$field = wpcf_admin_fields_get_field_by_meta_key( $column );
+		if ( isset( $field['type'] ) ) {
+			switch ( $field['type'] ) {
+				case 'image':
+					$default_width = '100px';
+					/**
+					 * Width of image.
+					 *
+					 * Filter allow to change default image size displayed on
+					 * admin etry list for custom field type image. Default is
+					 * 100px - you can change it to any proper CSS width
+					 * definition.
+					 *
+					 * @since 1.7
+					 *
+					 * @param string $var Default width "100px".
+					 */
+					$width = apply_filters( 'wpcf_field_image_max_width', $default_width );
+					if ( empty( $width ) ) {
+						$width = $default_width;
+					}
+					$value = sprintf(
+						'<img src="%s" style="max-width:%s" alt="" />',
+						esc_attr( $value ),
+						esc_attr( $width )
+					);
+					break;
+				case 'skype':
+					if ( is_array( $value ) ) {
+						$value = isset( $value['skypename'] ) ? $value['skypename'] : '';
+					} elseif ( ! is_string( $value ) ) {
+						$value = '';
+					}
+					$value = sanitize_text_field( $value );
+					break;
+				case 'date':
+					require_once WPTOOLSET_FORMS_ABSPATH . '/classes/class.date.php';
 
-    /**
+					// get format from wp settings
+					$format = get_option( 'date_format' );
+					if ( isset( $field['data'] ) && isset( $field['data']['date_and_time'] )
+						&& $field['data']['date_and_time'] == 'and_time' ) {
+						// date field is with time, apply time format from wp settings
+						$format .= ' ' . get_option( 'time_format' );
+					}
+					$value = WPToolset_Field_Date::timetodate( $value, $format );
+					break;
+				default:
+					require_once WPCF_EMBEDDED_ABSPATH . '/frontend.php';
+					$value = types_render_field( $field['id'] );
+			}
+		}
+		if ( is_string( $value ) ) {
+			echo $value;
+		}
+	}
+
+	/**
      * Assign menu item the appropriate url
      * @param  object $menu_item
      * @return object $menu_item

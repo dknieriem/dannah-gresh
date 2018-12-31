@@ -105,6 +105,7 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 		$this->toolset_common_bootstrap->initialize_m2m();
 
 		$this->add_metabox_support();
+		/** @noinspection PhpUnhandledExceptionInspection */
 		$this->prepare_dialogs();
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'on_admin_enqueue_scripts' ) );
@@ -235,6 +236,8 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 				Toolset_Assets_Manager::SCRIPT_TOOLSET_EVENT_MANAGER,
 				Toolset_Gui_Base::SCRIPT_GUI_LISTING_PAGE_CONTROLLER,
 				Toolset_Gui_Base::SCRIPT_GUI_JQUERY_COLLAPSIBLE,
+				Toolset_Gui_Base::SCRIPT_GUI_MIXIN_BATCH_PROCESS_DIALOG,
+				Toolset_Gui_Base::SCRIPT_GUI_MIXIN_ADVANCED_ITEM_VIEWMODEL,
 				Types_Asset_Manager::SCRIPT_SLUG_CONFLICT_CHECKER,
 			),
 			$types_version
@@ -248,6 +251,7 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 				// For field type icons
 				Toolset_Assets_Manager::STYLE_FONT_AWESOME,
 				Types_Asset_Manager::STYLE_BASIC_CSS,
+				Toolset_Gui_Base::STYLE_GUI_MIXIN_BATCH_PROCESS_DIALOG
 			),
 			$types_version
 		);
@@ -369,6 +373,14 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 			'@relationships/dialogs/confirm_cardinality_change.twig'
 		);
 
+
+		$this->_dialog_box_factory->create(
+			'types-merge-relationships',
+			$this->get_twig(),
+			array(),
+			'@relationships/dialogs/merge_relationships.twig'
+		);
+
 	}
 
 
@@ -395,10 +407,12 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 	 */
 	public function render_page() {
 
+		/** @noinspection PhpUnhandledExceptionInspection */
 		$twig = $this->get_twig();
 
 		$context = $this->build_page_context();
 
+		/** @noinspection PhpUnhandledExceptionInspection */
 		echo $twig->render( '@relationships/main.twig', $context );
 	}
 
@@ -426,6 +440,8 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 
 	private function build_strings_for_twig() {
 		$external_icon = '<span class="dashicons dashicons-external"></span>';
+
+		/** @noinspection HtmlUnknownTarget */
 		return array(
 			'misc' => array(
 				'pageTitle' => _x( 'Relationships', 'relationship page title', 'wpcf' ),
@@ -460,19 +476,22 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 
 	private function build_js_data() {
 
-		$action_name = Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_RELATIONSHIPS_ACTION );
+		$relationship_action_name = Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_RELATIONSHIPS_ACTION );
 		$delete_intermediary_post_type_action_name = Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_DELETE_INTERMEDIARY_POST_TYPE_ACTION );
+		$merge_relationships_action_name = Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_MERGE_RELATIONSHIPS );
 
 		$page_url = admin_url() . 'admin.php?page=' . Types_Admin_Menu::PAGE_NAME_RELATIONSHIPS;
 
+		/** @noinspection HtmlUnknownTarget */
 		return array(
 			'jsIncludePath' => TYPES_RELPATH . '/public/page/relationships',
+			'typesVersion' => TYPES_VERSION,
 			'itemsPerPage' => 10, // todo.
 			'relationships' => $this->build_relationship_data(),
 			'postTypes' => $this->build_post_type_map(),
 			'potentialIntermediaryPostTypes' => $this->build_potential_intermediary_post_type_map(),
 			'fieldTypeIcons' => $this->build_field_type_icon_map(),
-			'nonce' => wp_create_nonce( $action_name ),
+			'nonce' => wp_create_nonce( $relationship_action_name ),
 			'delete_intermediary_post_type_nonce' => wp_create_nonce( $delete_intermediary_post_type_action_name ),
 			'delete_intermediary_post_type_action' => $delete_intermediary_post_type_action_name,
 			'templates' => $this->build_templates(),
@@ -489,6 +508,10 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 					// translators: The name of a relationship.
 					'edit' => _x( 'Edit %s', 'Edit a relationship', 'wpcf' ),
 					'add' => _x( 'Add new', 'Add new page title', 'wpcf' ),
+				),
+				'bulkAction' => array(
+					'select' => __( 'Select', 'wpcf' ),
+					'merge' => __( 'Merge', 'wpcf' )
 				),
 				'noPostTypesPlaceholder' => _x( 'posts', 'generic name when there are no post types selected', 'wpcf' ),
 				'or' => _x( 'or', 'in the enumeration of post types', 'wpcf' ),
@@ -521,8 +544,27 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 				),
 				'changeCardinalityDialog' => array(
 					'title' => __( 'Clean up many to many data ', 'wpcf' ),
-					'apply_and_save' => _x( 'Apply&Save', 'change cardinality', 'wpcf' ),
+					'apply_and_save' => _x( 'Apply & Save', 'change cardinality', 'wpcf' ),
 					'cancel' => __( 'Cancel', 'wpcf' ),
+				),
+				'mergeRelationshipsDialog' => array(
+					'title' => __( 'Merge relationships', 'wpcf' ),
+					'cancel' => __( 'Cancel', 'wpcf' ),
+					'close' => __( 'Done', 'wpcf' ),
+					'merge' => __( 'Merge', 'wpcf' ),
+					'newRelationship' => __( 'new-relationship', 'wpcf' ),
+					'actionName' => $merge_relationships_action_name,
+					'nonce' => wp_create_nonce( Types_Ajax::CALLBACK_MERGE_RELATIONSHIPS ),
+					'phaseLabels' => array(
+						Types_Ajax_Handler_Merge_Relationships::PHASE_SETUP => __( 'Configuring the new many-to-many relationship.', 'wpcf' ),
+						Types_Ajax_Handler_Merge_Relationships::PHASE_MERGE_ASSOCIATIONS => __( 'Transforming associations.', 'wpcf' ),
+						Types_Ajax_Handler_Merge_Relationships::PHASE_CLEANUP => __( 'Removing previous relationships and performing clean-up.', 'wpcf' )
+					),
+					'resultMessage' => array(
+						'warning' => __( 'The relationship merging has finished with some warnings. Please check technical details for more information.', 'wpcf' ),
+						'error' => __( 'An error has occurred during the relationship merging. Please contact the Toolset support forum with the copy of the technical details you will find below.', 'wpcf' ),
+						'success' => __( 'Relationships have been successfully merged.', 'wpcf' )
+					)
 				),
 				// translators: post type name.
 				'disabledPostTypesSingular' => __( '<strong>%s</strong> post type does not exist or is currently inactive', 'wpcf' ),
@@ -574,7 +616,7 @@ class Types_Page_Relationships extends Types_Page_Persistent {
 					'plural' => $post_type->get_label( Toolset_Post_Type_Labels::NAME ),
 					'singular' => $post_type->get_label( Toolset_Post_Type_Labels::SINGULAR_NAME ),
 					'can_be_used_in_relationship' => $this->format_can_be_used( $post_type->can_be_used_in_relationship()->to_array() ),
-					'isTranslatable' => Toolset_Wpml_Utils::is_post_type_translatable( $post_type->get_slug() ),
+					'isTranslatable' => Toolset_WPML_Compatibility::get_instance()->is_post_type_translatable( $post_type->get_slug() ),
 				);
 			}
 

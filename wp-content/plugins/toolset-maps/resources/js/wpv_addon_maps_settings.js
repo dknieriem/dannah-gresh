@@ -463,9 +463,7 @@ WPViews.ViewAddonMapsSettings = function( $ ) {
 	 * @param {string} apiUsed
 	 */
 	self.showAppropriateSettingsSections = function( apiUsed ) {
-		let $shownForGoogle = $(
-			'div#toolset-maps-api-key, div#toolset-maps-markers, div#toolset-style-files, div#toolset-maps-legacy'
-		);
+		let $shownForGoogle = $( 'div#toolset-maps-api-key, div#toolset-style-files, div#toolset-maps-legacy' );
 		let $shownForAzure = $( 'div#toolset-maps-azure-key' );
 
 		if ( apiUsed === API_GOOGLE ) {

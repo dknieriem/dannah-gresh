@@ -25,7 +25,6 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 			self::$instance = new self();
 			add_filter( 'toolset_filter_register_menu_pages', array( Types_Page_Dashboard::$instance, 'register_page_dashboard_in_menu' ), 1000 );
 			add_action( 'load-toplevel_page_toolset-dashboard', array( Types_Page_Dashboard::$instance, 'on_load_page' ) );
-			add_filter( 'set-screen-option', array( Types_Page_Dashboard::$instance, 'screen_settings_save') , 11, 3);
 		}
 		return self::$instance;
 	}
@@ -105,7 +104,7 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 		return null;
 	}
 
-	
+
 	public function on_admin_enqueue_scripts() {
 		$main_handle = 'types-page-dashboard-main';
 
@@ -122,7 +121,7 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 		wp_enqueue_style(
 			$main_handle,
 			TYPES_RELPATH . '/public/css/information.css',
-			array( 'wp-jquery-ui-dialog', 'wp-pointer' ),
+			array( 'wp-jquery-ui-dialog', 'wp-pointer', Toolset_Assets_Manager::STYLE_FONT_AWESOME ),
 			TYPES_VERSION
 		);
 
@@ -146,7 +145,7 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 
 	/**
 	 * @inheritdoc
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	public function render_page() {
@@ -175,8 +174,8 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 				'create_type' => __( 'Add new post type', 'wpcf' ),
 				'msg_no_custom_post_types' =>
 					__( 'To get started, create your first custom type. Then, you will be able to add fields and taxonomy and design how it displays.', 'wpcf' )
-			)
-
+			),
+			'editor_mode_update_nonce' => wp_create_nonce( Types_Ajax::get_instance()->get_action_js_name( Types_Ajax::CALLBACK_SET_EDITOR_MODE ) ),
 		);
 
 		return $context;
@@ -302,8 +301,9 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 	}
 
 	private function get_post_types_filtered_by_screen_options( $cpts = false ) {
-		if( $cpts === false )
+		if( $cpts === false ) {
 			$cpts = array_merge( $this->get_types_by_toolset(), $this->get_types_by_wordpress(), $this->get_types_by_3rd() );
+		}
 
 		$cpts_filtered = array();
 
@@ -411,7 +411,7 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 		$return .= get_submit_button( __( 'Apply' ), 'button button-primary', 'screen-options-apply', false );
 		return $return;
 	}
-	
+
 	private function screen_settings_fieldset( $cpts, $cpts_filtered, $legend ) {
 		$string = '
         <fieldset>
@@ -434,7 +434,7 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 		return $string;
 	}
 
-	public function screen_settings_save($status, $option, $value) {
+	public function screen_settings_save($original_value, $option, $option_value) {
 		if ( 'toolset_dashboard_screen_post_types' == $option ) {
 			if ( is_array( $_POST['toolset_dashboard_screen_post_types'] ) ) {
 				$toolset_dashboard_screen_post_types = array();
@@ -446,9 +446,12 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 			} else {
 				$toolset_dashboard_screen_post_types = sanitize_text_field( $_POST['toolset_dashboard_screen_post_types'] );
 			}
-			$value = $toolset_dashboard_screen_post_types;
+			$option_value = $toolset_dashboard_screen_post_types;
+			return $option_value;
 		}
-		return $value;
+
+		// not our option, return the original value (which is by default "false" = no saving)
+		return $original_value;
 	}
 
 
@@ -510,6 +513,9 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 				$this->load_data_to_table( $message_file, $info_post_type );
 			}
 
+			$is_gutenberg_available = new Toolset_Condition_Plugin_Gutenberg_Active();
+			$is_gutenberg_available = $is_gutenberg_available->is_met();
+
 			$row = $this->get_twig()->render(
 				'/page/dashboard/table/tbody-row.twig',
 				array(
@@ -522,7 +528,8 @@ final class Types_Page_Dashboard extends Types_Page_Abstract {
 					'admin_url' => admin_url(),
 					'post_type' => $post_type,
 					'table'     => $info_post_type,
-					'post_type_edit_link' => $post_type_edit_link
+					'post_type_edit_link' => $post_type_edit_link,
+					'is_block_editor_available' => $is_gutenberg_available,
 				)
 			);
 

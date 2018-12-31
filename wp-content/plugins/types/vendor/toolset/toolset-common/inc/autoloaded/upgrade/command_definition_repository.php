@@ -21,6 +21,10 @@ class Toolset_Upgrade_Command_Definition_Repository {
 			$this->definition(
 				'Toolset_Upgrade_Command_M2M_V2_Database_Structure_Upgrade',
 				3 ),
+			$this->definition(
+				'\OTGS\Toolset\Common\Upgrade\Command\AddRelationshipTableColumnAutodeleteIntermediaryPosts',
+				4
+			),
 		);
 
 		return $upgrade_commands;
@@ -34,6 +38,7 @@ class Toolset_Upgrade_Command_Definition_Repository {
 	 * @return Toolset_Upgrade_Command_Definition
 	 */
 	private function definition( $command_class_name, $upgrade_version ) {
+		// TODO consider using DIC.
 		return new Toolset_Upgrade_Command_Definition(
 			$command_class_name, $upgrade_version
 		);

@@ -16,10 +16,9 @@ namespace OTGS\Toolset\Common\M2M\Association;
  * It can also be (ab)used as a container of Assocation/Relationship_Query and Roles
  * (to make sure you can still do very specific requests, without the need of additional injection).
  * Always consider to extend this Repository class instead of abusing it as a container.
- *
- * @package OTGS\Toolset\Types\Relationship\Association
  */
 class Repository {
+
 	/** @var \Toolset_Relationship_Role_Parent */
 	private $role_parent;
 

@@ -112,6 +112,20 @@ class WPToolset_Field_Select extends FieldFactory {
 		}
 		//##############################################################################################
 
+		$select_name = $this->getName();
+		
+		// If the select field has a readonly attribute, disable it
+		// and include a hidden field with the same value, so it can be posted.
+		if ( 'readonly' == toolset_getarr( $attributes, 'readonly' ) ) {
+			$attributes['disabled'] = 'disabled';
+			$select_name .= '_disabled';
+			$form[] = array(
+				'#type' => 'hidden',
+				'#name' => $this->getName(),
+				'#value' => $default_value
+			);
+		}
+		
 		/**
 		 * metaform
 		 */
@@ -119,7 +133,7 @@ class WPToolset_Field_Select extends FieldFactory {
 			'#type' => 'select',
 			'#title' => $this->getTitle(),
 			'#description' => $this->getDescription(),
-			'#name' => $this->getName(),
+			'#name' => $select_name,
 			'#options' => $options,
 			'#default_value' => $default_value,
 			'#multiple' => $is_multiselect,

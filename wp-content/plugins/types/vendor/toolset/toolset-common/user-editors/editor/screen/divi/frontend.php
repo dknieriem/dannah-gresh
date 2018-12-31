@@ -102,7 +102,7 @@ class Toolset_User_Editors_Editor_Screen_Divi_Frontend
 		$divi_builder_enabled = false;
 		if ( ! empty( $template_id ) ) {
 			$builder_selected = get_post_meta( $template_id, '_toolset_user_editors_editor_choice', true );
-			if ( $this->constants->constant( 'DIVI_SCREEN_ID' ) === $builder_selected ) {
+			if ( Toolset_User_Editors_Editor_Divi::DIVI_SCREEN_ID === $builder_selected ) {
 				$divi_builder_enabled = true;
 			}
 		}

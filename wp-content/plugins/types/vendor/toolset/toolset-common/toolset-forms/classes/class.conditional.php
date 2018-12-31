@@ -53,7 +53,12 @@
 if ( !class_exists('WPToolset_Forms_Conditional') ){  
 class WPToolset_Forms_Conditional {
 
-    protected $__formID;
+	/** @var array */
+	protected $form_selectors;
+
+	/** @var string */
+	private $post_type;
+
     protected $_collected = array(), $_triggers = array(), $_fields = array(), $_custom_triggers = array(), $_custom_fields = array();
 
 	/**
@@ -65,17 +70,15 @@ class WPToolset_Forms_Conditional {
     /**
      * Register and enqueue scripts and actions.
      *
-     * @param type $formID
+     * @param string $form_selector
      */
-    public function __construct($formID) {
-        $this->__formID = trim($formID, '#');
+    public function __construct( $form_selector ) {
+		$this->set_form_selectors( $form_selector );
 
         self::load_scripts();
 
         wp_enqueue_script('wptoolset-parser');
-        $js_data = array(
-            'ajaxurl' => admin_url('admin-ajax.php', null),
-        );
+
         // Render settings
         add_action('admin_print_footer_scripts', array($this, 'renderJsonData'), 30);
         add_action('wp_footer', array($this, 'renderJsonData'), 30);
@@ -94,6 +97,79 @@ class WPToolset_Forms_Conditional {
 	     */
         add_filter('toolset_field_additional_classes', array($this, 'actionFieldClass'), 10, 2);
     }
+
+	/**
+	 * Required for a Toolset_Condition_Post_Type_Editor_Is_Block check
+	 * for the case it's called when $current_screen is not set (ajax / to early called)
+	 *
+	 * @param $post_type
+	 */
+	public function set_post_type( $post_type ) {
+		if ( ! is_string( $post_type ) || empty( $post_type ) ) {
+			throw new InvalidArgumentException( '$post_type must be a non-empty string.' );
+		}
+
+		$this->post_type = $post_type;
+	}
+
+	/**
+	 * Set Form Selectors depending on given $form_selector and if the block editor is active.
+	 *
+	 * @param $form_selector
+	 */
+	protected function set_form_selectors( $form_selector ) {
+		$this->form_selectors = $this->get_block_editor_form_selectors();
+		if ( ! $this->form_selectors && is_string( $form_selector ) ) {
+			// gutenberg not active and given form_selector is a string
+			if ( ! preg_match( '#^[\.\#]{1}#', $form_selector ) ) {
+				// if it has neither a . or a # as starting character we need to add # as in the past this only
+				// worked with id attribute, BUT it was possible to pass the selector with out the starting #
+				$form_selector = '#' . $form_selector;
+			}
+
+			// convert to array
+			$this->form_selectors = array( $form_selector );
+		}
+
+		if ( ! $this->form_selectors ) {
+			// neither a string given nor gutenberg active
+			throw new RuntimeException( '$form_selector must be a string.' );
+		}
+	}
+
+	/**
+	 * With block editor active we need to rewrite the form selector, which will later be used on javascript to apply
+	 * field conditions and triggers.
+	 *
+	 * As the tree is very weird including Enlimbo forms and the fact that the entry points could be anywhere (at least
+	 * they are on Types and Forms) we're manipulating it directly here instead of passing it through the whole tree.
+	 *
+	 * @return false|array
+	 */
+	private function get_block_editor_form_selectors() {
+		$post_type_using_block_editor = new Toolset_Condition_Post_Type_Editor_Is_Block();
+
+		if ( $this->post_type ) {
+			$post_type_using_block_editor->set_post_type( $this->post_type );
+		}
+
+		try {
+			if ( ! $post_type_using_block_editor->is_met() ) {
+				// block editor not active for this post type
+				return false;
+			}
+		} catch ( RuntimeException $e ) {
+			// happens on ajax call for rendering RFGs, because RFGs requires to run legacy field rendering
+			// but cannot use the field validation of it. Problem, the legacy field rendering is hard coupled
+			// with field validation (also when it's not wanted/used). For that case we simply treat the validation
+			// build as for classic editor (could also be treated as block or 'anything').
+			// Important here is that we don't exit caused by an uncaught exception.
+			return false;
+		}
+
+		// possible location for our fields on gutenberg editor
+		return array( '.metabox-location-normal', '.metabox-location-advanced' );
+	}
 
 	/**
 	 * Loads the conditional script and makes sure that it's only initiated once.
@@ -182,23 +258,39 @@ class WPToolset_Forms_Conditional {
      */
     public function renderJsonData() {
         $this->_parseData();
-        if (!empty($this->_triggers)) {
-            echo '<script type="text/javascript">wptCondTriggers["#'
-            . $this->__formID . '"] = ' . json_encode($this->_triggers) . ';</script>';
-        }
-        if (!empty($this->_fields)) {
-            echo '<script type="text/javascript">wptCondFields["#'
-            . $this->__formID . '"] = ' . json_encode($this->_fields) . ';</script>';
-        }
-        if (!empty($this->_custom_triggers)) {
-            echo '<script type="text/javascript">wptCondCustomTriggers["#'
-            . $this->__formID . '"] = ' . json_encode($this->_custom_triggers) . ';</script>';
-        }
-        if (!empty($this->_custom_fields)) {
-            echo '<script type="text/javascript">wptCondCustomFields["#'
-            . $this->__formID . '"] = ' . json_encode($this->_custom_fields) . ';</script>';
-        }
-    }
+
+        $cond_triggers
+			= $this->jsArrayToEachFormSelectorByNameAndValue( 'wptCondTriggers', $this->_triggers )
+			. $this->jsArrayToEachFormSelectorByNameAndValue( 'wptCondFields', $this->_fields )
+			. $this->jsArrayToEachFormSelectorByNameAndValue( 'wptCondCustomTriggers', $this->_custom_triggers )
+			. $this->jsArrayToEachFormSelectorByNameAndValue( 'wptCondCustomFields', $this->_custom_fields );
+
+		if ( ! empty( $cond_triggers ) ) {
+			echo '<script type="text/javascript">' . $cond_triggers . '</script>';
+		}
+	}
+
+	/**
+	 * Helper function to build condition and triggers data for each form selector
+	 *
+	 * @param $name
+	 * @param $value will run through json_encode
+	 *
+	 * @return string
+	 */
+	private function jsArrayToEachFormSelectorByNameAndValue( $name, $value ) {
+		if ( empty( $value ) ) {
+			return '';
+		}
+		$output      = '';
+		$json_values = json_encode( $value );
+
+		foreach ( $this->form_selectors as $form_selector ) {
+			$output .= $name . "['" . $form_selector . "'] = " . $json_values . ";";
+		}
+
+		return $output;
+	}
 
     /**
      * Compares values.

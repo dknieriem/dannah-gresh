@@ -33,12 +33,37 @@ const {
 	RawHTML,
 } = wp.element;
 
-const name = window.toolset_cred_form_block_strings.block_name;
+const {
+	toolset_cred_form_block_strings: i18n,
+} = window;
+
+const name = i18n.blockName;
+
+/**
+ * Forms are grouped by Form type (Post, User and Relationship), and each of them by Editing or Adding.
+ * This funcion search a form by its `post_name`
+ *
+ * @param {Object} forms An object containing the forms: `i18n.publishedForms`
+ * @param {String} formName The name of the form: `post_name`
+ * @return {Object} An object containing form data
+ */
+const getFormByFormName = ( forms, formName ) => {
+	if ( forms instanceof Array ) {
+		const selectedItem = forms.filter( formItem => formItem.post_name === formName );
+		return selectedItem.length ? selectedItem[ 0 ] : null;
+	}
+	let result = null;
+	Object.keys( forms ).forEach( key => {
+		result = result || getFormByFormName( forms[ key ], formName );
+		return result;
+	} );
+	return result;
+};
 
 const settings = {
-	title: __( 'Toolset Form' ),
+	title: __( 'Form' ),
 	description: __( 'Add a Toolset Form to the editor.' ),
-	category: 'widgets',
+	category: i18n.blockCategory,
 	icon: icon.blockIcon,
 	keywords: [
 		__( 'Toolset' ),
@@ -73,6 +98,26 @@ const settings = {
 			props.setAttributes( { anotherUserToEdit: value } );
 		};
 
+		const onChangeRelationshipFormType = ( value ) => {
+			props.setAttributes( { relationshipFormType: value } );
+		};
+
+		const onChangeRelationshipParentItem = ( value ) => {
+			props.setAttributes( { relationshipParentItem: value } );
+		};
+
+		const onChangeRelationshipChildItem = ( value ) => {
+			props.setAttributes( { relationshipChildItem: value } );
+		};
+
+		const onChangeRelationshipParentItemSpecific = ( option ) => {
+			props.setAttributes( { relationshipParentItemSpecific: option } );
+		};
+
+		const onChangeRelationshipChildItemSpecific = ( option ) => {
+			props.setAttributes( { relationshipChildItemSpecific: option } );
+		};
+
 		const assignFormTypeAndAction = ( forms, type, action ) => {
 			forms.map( ( item ) => {
 				item.formType = type;
@@ -83,10 +128,24 @@ const settings = {
 			return forms;
 		};
 
-		const newPostForms = assignFormTypeAndAction( window.toolset_cred_form_block_strings.published_forms.postForms.new, 'post', 'new' );
-		const editPostForms = assignFormTypeAndAction( window.toolset_cred_form_block_strings.published_forms.postForms.edit, 'post', 'edit' );
-		const newUserForms = assignFormTypeAndAction( window.toolset_cred_form_block_strings.published_forms.userForms.new, 'user', 'new' );
-		const editUserForms = assignFormTypeAndAction( window.toolset_cred_form_block_strings.published_forms.userForms.edit, 'user', 'edit' );
+		/**
+		 * When selecting a relationship, extra data must be fetched and added for using in the Inspector
+		 *
+		 * @param {object} data Extra data.
+		 */
+		const onUpdateRelationshipData = data => {
+			props.setAttributes( { relationshipData: data } );
+		};
+
+		const newPostForms = assignFormTypeAndAction( i18n.publishedForms.postForms.new, 'post', 'new' );
+		const editPostForms = assignFormTypeAndAction( i18n.publishedForms.postForms.edit, 'post', 'edit' );
+		const newUserForms = assignFormTypeAndAction( i18n.publishedForms.userForms.new, 'user', 'new' );
+		const editUserForms = assignFormTypeAndAction( i18n.publishedForms.userForms.edit, 'user', 'edit' );
+		const newRelationshipForms = assignFormTypeAndAction( i18n.publishedForms.relationshipForms.new, 'relationship', 'new' );
+		const relationshipData = !! props.attributes.relationshipData ? props.attributes.relationshipData.relationship : {};
+		// props.attributes.form has not the same value that the select option, so it needs to get it again.
+		const formData = !! props.attributes.form ? JSON.parse( props.attributes.form ) : {};
+		const formValue = JSON.stringify( getFormByFormName( i18n.publishedForms, formData.post_name || '' ) );
 
 		return [
 			!! (
@@ -102,13 +161,20 @@ const settings = {
 							editPostForms: editPostForms,
 							newUserForms: newUserForms,
 							editUserForms: editUserForms,
-							form: props.attributes.form,
+							newRelationshipForms: newRelationshipForms,
+							form: formValue,
 							formType: props.attributes.formType,
 							formAction: props.attributes.formAction,
 							postToEdit: props.attributes.postToEdit,
 							anotherPostToEdit: props.attributes.anotherPostToEdit,
 							userToEdit: props.attributes.userToEdit,
 							anotherUserToEdit: props.attributes.anotherUserToEdit,
+							relationshipFormType: props.attributes.relationshipFormType,
+							relationshipParentItem: props.attributes.relationshipParentItem,
+							relationshipChildItem: props.attributes.relationshipChildItem,
+							relationshipParentItemSpecific: props.attributes.relationshipParentItemSpecific,
+							relationshipChildItemSpecific: props.attributes.relationshipChildItemSpecific,
+							relationshipData: relationshipData,
 						}
 					}
 					onChangeCredForm={ onChangeCredForm }
@@ -116,33 +182,37 @@ const settings = {
 					onChangeUserToEdit={ onChangeUserToEdit }
 					onChangeAnotherPostToEdit={ onChangeAnotherPostToEdit }
 					onChangeAnotherUserToEdit={ onChangeAnotherUserToEdit }
+					onChangeRelationshipFormType={ onChangeRelationshipFormType }
+					onChangeRelationshipParentItem={ onChangeRelationshipParentItem }
+					onChangeRelationshipChildItem={ onChangeRelationshipChildItem }
+					onChangeRelationshipParentItemSpecific={ onChangeRelationshipParentItemSpecific }
+					onChangeRelationshipChildItemSpecific={ onChangeRelationshipChildItemSpecific }
 				/>
 			),
 			(
-				'' === props.attributes.form ?
+				! props.attributes.form ?
 					<Placeholder
 						key="cred-form-block-placeholder"
 						className={ classnames( 'wp-block-toolset-cred-form' ) }
 					>
 						<div className="wp-block-toolset-cred-form-placeholder">
 							{ icon.blockPlaceholder }
-							<p>
-								<strong>{ __( 'Toolset Form' ) }</strong>
-							</p>
-						</div>
-						<CREDFormSelect
-							attributes={
-								{
-									newPostForms: newPostForms,
-									editPostForms: editPostForms,
-									newUserForms: newUserForms,
-									editUserForms: editUserForms,
-									form: props.attributes.form,
+							<h2>{ __( 'Toolset Form' ) }</h2>
+							<CREDFormSelect
+								attributes={
+									{
+										newPostForms: newPostForms,
+										editPostForms: editPostForms,
+										newUserForms: newUserForms,
+										editUserForms: editUserForms,
+										newRelationshipForms: newRelationshipForms,
+										form: '',
+									}
 								}
-							}
-							className={ classnames( 'components-select-control__input' ) }
-							onChangeCredForm={ onChangeCredForm }
-						/>
+								className={ classnames( 'components-select-control__input' ) }
+								onChangeCredForm={ onChangeCredForm }
+							/>
+						</div>
 					</Placeholder> :
 					<CREDFormPreview
 						key="toolset-cred-form-gutenberg-block-preview"
@@ -152,6 +222,7 @@ const settings = {
 								form: JSON.parse( props.attributes.form ),
 							}
 						}
+						onUpdateRelationshipData={ onUpdateRelationshipData }
 					/>
 			),
 		];
@@ -160,6 +231,7 @@ const settings = {
 		let form = props.attributes.form || '';
 		let post = '',
 			user = '',
+			relationship = '',
 			shortcodeStart = '[cred-form';
 
 		const shortcodeEnd = ']';
@@ -167,6 +239,7 @@ const settings = {
 		if ( ! form.length ) {
 			return null;
 		}
+		form = JSON.parse( form );
 
 		if (
 			'post' === props.attributes.formType &&
@@ -174,8 +247,7 @@ const settings = {
 			'another' === props.attributes.postToEdit &&
 			props.attributes.anotherPostToEdit
 		) {
-			post = 'post="' + props.attributes.anotherPostToEdit.value + '" ';
-			user = '';
+			post = `post="${ props.attributes.anotherPostToEdit.value }" `;
 		}
 
 		if ( 'user' === props.attributes.formType ) {
@@ -183,22 +255,32 @@ const settings = {
 			if (
 				'edit' === props.attributes.formAction &&
 				'another' === props.attributes.userToEdit &&
-				_.has( props.attributes.anotherUserToEdit, 'value' ) &&
-				_.propertyOf( props.attributes.anotherUserToEdit )( 'value' )
+				!! props.attributes.anotherUserToEdit &&
+				!! props.attributes.anotherUserToEdit.value
 			) {
-				user = 'user="' + props.attributes.anotherUserToEdit.value + '" ';
-				post = '';
+				user = `user="${ props.attributes.anotherUserToEdit.value }" `;
 			}
 		}
 
-		form = JSON.parse( form );
+		if ( 'relationship' === props.attributes.formType ) {
+			shortcodeStart = '[cred-relationship-form';
+
+			if ( 'createParent' === props.attributes.relationshipFormType ) {
+				const parentItem = 'specific' === props.attributes.relationshipChildItem ? props.attributes.relationshipChildItemSpecific.value : props.attributes.relationshipChildItem;
+				relationship += `child_item="${ parentItem }" `;
+			} else if ( 'createChild' === props.attributes.relationshipFormType ) {
+				const parentItem = 'specific' === props.attributes.relationshipParentItem ? props.attributes.relationshipParentItemSpecific.value : props.attributes.relationshipParentItem;
+				relationship += `parent_item="${ parentItem }" `;
+			}
+			post = '';
+		}
 
 		form = ' form="' + form.post_name + '" ';
 
-		return <RawHTML>{ shortcodeStart + form + post + user + shortcodeEnd }</RawHTML>;
+		return <RawHTML>{ shortcodeStart + form + post + user + relationship + shortcodeEnd }</RawHTML>;
 	},
 };
 
-if ( 'undefined' !== typeof CRED ) {
+if ( i18n.isCREDActive ) {
 	registerBlockType( name, settings );
 }

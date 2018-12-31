@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\PostStatus;
+
 /**
  * Condition to query associations by a status of an element in a particular role.
  *
@@ -36,6 +38,9 @@ class Toolset_Association_Query_Condition_Element_Status extends Toolset_Associa
 	private $element_selector_provider;
 
 
+	private $post_status;
+
+
 	/**
 	 * Toolset_Association_Query_Condition_Element_Status constructor.
 	 *
@@ -43,14 +48,14 @@ class Toolset_Association_Query_Condition_Element_Status extends Toolset_Associa
 	 * @param IToolset_Relationship_Role $for_role
 	 * @param Toolset_Association_Query_Table_Join_Manager $join_manager
 	 * @param Toolset_Association_Query_Element_Selector_Provider $element_selector_provider
-	 *
-	 * @throws InvalidArgumentException
+	 * @param PostStatus $post_status
 	 */
 	public function __construct(
 		$statuses,
 		IToolset_Relationship_Role $for_role,
 		Toolset_Association_Query_Table_Join_Manager $join_manager,
-		Toolset_Association_Query_Element_Selector_Provider $element_selector_provider
+		Toolset_Association_Query_Element_Selector_Provider $element_selector_provider,
+		PostStatus $post_status
 	) {
 		if ( ( ! is_string( $statuses ) && ! is_array( $statuses ) ) || empty( $statuses ) ) {
 			throw new InvalidArgumentException();
@@ -60,6 +65,7 @@ class Toolset_Association_Query_Condition_Element_Status extends Toolset_Associa
 		$this->for_role = $for_role;
 		$this->join_manager = $join_manager;
 		$this->element_selector_provider = $element_selector_provider;
+		$this->post_status = $post_status;
 	}
 
 
@@ -91,12 +97,8 @@ class Toolset_Association_Query_Condition_Element_Status extends Toolset_Associa
 					$accepted_statuses = array( 'publish' );
 					break;
 				case self::STATUS_AVAILABLE:
-					$accepted_statuses = array(
-						'publish',
-						'draft',
-						'pending'
-					);
 					// FIXME make the logic complete (involving WP_Query business logic and Access)
+					$accepted_statuses = $this->post_status->get_available_post_statuses();
 					if ( current_user_can( 'read_private_posts' ) ) {
 						$accepted_statuses[] = 'private';
 					}

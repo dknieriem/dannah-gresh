@@ -82,11 +82,12 @@ class Toolset_Relationship_Definition_Persistence {
 	}
 
 
-
 	/**
 	 * Update a single relationship definition.
 	 *
 	 * @param Toolset_Relationship_Definition $relationship_definition
+	 *
+	 * @return Toolset_Result
 	 */
 	public function persist_definition( Toolset_Relationship_Definition $relationship_definition ) {
 		$this->register_definition_strings( $relationship_definition );
@@ -94,13 +95,19 @@ class Toolset_Relationship_Definition_Persistence {
 
 		$row = $this->definition_translator->to_database_row( $relationship_definition );
 		$row = $this->update_definition_type_sets( $relationship_definition, $row );
-		$this->wpdb->update(
+		$result = $this->wpdb->update(
 			$this->table_name->relationship_table(),
 			$row,
 			array( 'id' => $relationship_definition->get_row_id() ),
 			$this->definition_translator->get_database_row_formats(),
 			'%s'
 		);
+
+		if( false === $result ) {
+			return new Toolset_Result( false, 'Error when persisting a relationship definition: ' . $this->wpdb->last_error );
+		}
+
+		return new Toolset_Result( true );
 	}
 
 

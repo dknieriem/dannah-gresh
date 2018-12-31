@@ -115,6 +115,45 @@ Toolset.Gui.ItemViewModel = function(model, itemActions) {
 
 
     /**
+     * Handle the status of the bulk action checkbox.
+     *
+     * We need to act as if the checkbox is not selected if the bulk action is not allowed, and also properly
+     * update the isSelectedForBulkAction property which is used by the listing viewmodel when querying items
+     * to perform the bulk action.
+     *
+     * @since 3.0.5
+     */
+    self.isCheckedForBulkAction = ko.computed({
+        read: function() {
+            var isSelected = self.isSelectedForBulkAction();
+            if(isSelected && ! self.isBulkActionAllowed()) {
+                self.isSelectedForBulkAction(false);
+                return false;
+            }
+            return  isSelected;
+        },
+        write: function(val) {
+            if(self.isBulkActionAllowed()) {
+                self.isSelectedForBulkAction(val);
+            } else {
+                self.isSelectedForBulkAction(false);
+            }
+        }
+    });
+
+
+    /**
+     * Check whether a currently selected bulk action can be performed on this item
+     *
+     * @since 3.0
+     */
+    self.isBulkActionAllowed = ko.computed(function() {
+        return true;
+    });
+
+
+
+    /**
      * This will be updated by the main ViewModel.
      *
      * @since 2.2
@@ -128,7 +167,7 @@ Toolset.Gui.ItemViewModel = function(model, itemActions) {
      * @since 2.2
      */
     self.isBeingDisplayed.subscribe(function(newValue) {
-        if(false == newValue) {
+        if(false === newValue) {
             self.isSelectedForBulkAction(false);
         }
     });
@@ -151,8 +190,8 @@ Toolset.Gui.ItemViewModel = function(model, itemActions) {
      * @since 2.3
      */
     self.onDisplayNameClick = function() {
-        if (!_.isUndefined(model.editLink)) {
-            document.location = model.editLink;
+        if (!_.isUndefined(model['editLink'])) {
+            document.location = model['editLink'];
         }
     }
 };

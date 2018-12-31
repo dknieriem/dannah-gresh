@@ -24,21 +24,24 @@ class WPToolset_Field_File extends WPToolset_Field_Textfield {
 
 	public static function file_enqueue_scripts() {
 		wp_register_script(
-			'wptoolset-field-file', WPTOOLSET_FORMS_RELPATH . '/js/file-wp35.js', array(
-			'jquery',
-			'jquery-masonry',
-		), WPTOOLSET_FORMS_VERSION, true
+			'wptoolset-field-file',
+			WPTOOLSET_FORMS_RELPATH . '/js/file-wp35.js',
+			array(
+				Toolset_Assets_Manager::SCRIPT_TOOLSET_MEDIA_FIELD_PROTOTYPE,
+			),
+			WPTOOLSET_FORMS_VERSION,
+			true
 		);
 
 		if ( ! wp_script_is( 'wptoolset-field-file', 'enqueued' ) ) {
 			wp_enqueue_script( 'wptoolset-field-file' );
 		}
 
-		// Note: we check whether the current_screen action has been fired because sometimes 
+		// Note: we check whether the current_screen action has been fired because sometimes
 		// some plugins might perform somethign that loads this field before get_current_screen() is defined.
 		// This happens with an image widget module of Jetpack, for example.
-		if ( 
-			Toolset_Utils::is_real_admin() 
+		if (
+			Toolset_Utils::is_real_admin()
 			&& did_action( 'current_screen' ) > 0
 		) {
 			$screen = get_current_screen();
@@ -67,7 +70,6 @@ class WPToolset_Field_File extends WPToolset_Field_Textfield {
 	public function metaform() {
 		$value = $this->getValue();
 		$type = $this->getType();
-		$translated_type = '';
 		$form = array();
 		$preview = '';
 		$wpml_action = $this->getWPMLAction();
@@ -114,22 +116,6 @@ class WPToolset_Field_File extends WPToolset_Field_Textfield {
 			}
 		}
 
-		// Set button
-		switch ( $type ) {
-			case 'audio':
-				$translated_type = __( 'audio', 'wpv-views' );
-				break;
-			case 'image':
-				$translated_type = __( 'image', 'wpv-views' );
-				break;
-			case 'video':
-				$translated_type = __( 'video', 'wpv-views' );
-				break;
-			default:
-				$translated_type = __( 'file', 'wpv-views' );
-				break;
-		}
-
 		$wpcf_wpml_condition = defined( 'WPML_TM_VERSION' ) &&
 			intval( $wpml_action ) === 1 &&
 			function_exists( 'wpcf_wpml_post_is_original' ) &&
@@ -145,8 +131,21 @@ class WPToolset_Field_File extends WPToolset_Field_Textfield {
 			$button_status = ' disabled="disabled"';
 		}
 
+		$meta_data = array(
+			'metakey' => $this->getName(),
+			'type' => $type,
+			'multiple' => $this->isRepetitive(),
+			'preview' => '',
+			'select_label' => $this->get_select_label(),
+			'edit_label' => $this->get_edit_label(),
+		);
+
 		$button = sprintf(
-			'<button class="js-wpt-file-upload button button-secondary" data-wpt-type="%s"%s>%s</button>', $type, $button_status, sprintf( __( 'Select %s', 'wpv-views' ), $translated_type )
+			'<button class="js-wpt-file-upload js-toolset-media-field-trigger button button-secondary" data-meta=\'%s\' data-wpt-type="%s"%s>%s</button>',
+			wp_json_encode( $meta_data ),
+			$type,
+			$button_status,
+			( empty( $value ) ? $this->get_select_label() : $this->get_edit_label() )
 		);
 
 		// Set form
@@ -169,6 +168,28 @@ class WPToolset_Field_File extends WPToolset_Field_Textfield {
 		);
 
 		return $form;
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when selecting a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_select_label() {
+		return __( 'Select file', 'wpv-views' );
+	}
+
+	/**
+	 * Get the default label for the Media Manager button when editing a value.
+	 *
+	 * @return string
+	 *
+	 * @since 3.3
+	 */
+	protected function get_edit_label() {
+		return __( 'Edit file', 'wpv-views' );
 	}
 
 }

@@ -5,7 +5,7 @@
  *
  * @since 2.6.0
  */
-class Toolset_Blocks_CRED_Form implements Toolset_Gutenberg_Block_Interface {
+class Toolset_Blocks_CRED_Form extends Toolset_Gutenberg_Block {
 
 	const BLOCK_NAME = 'toolset/cred-form';
 
@@ -24,35 +24,44 @@ class Toolset_Blocks_CRED_Form implements Toolset_Gutenberg_Block_Interface {
 	 * @since 2.6.0
 	 */
 	public function register_block_editor_assets() {
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
-
-		$toolset_assets_manager->register_script(
+		$this->toolset_assets_manager->register_script(
 			'toolset-cred-form-block-js',
-			TOOLSET_COMMON_URL . '/toolset-blocks/assets/js/cred.form.block.editor.js',
-			array( 'wp-blocks', 'wp-element' ),
-			TOOLSET_COMMON_VERSION
+			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . '/toolset-blocks/assets/js/cred.form.block.editor.js',
+			array( 'wp-editor' ),
+			$this->constants->constant( 'TOOLSET_COMMON_VERSION' )
 		);
 
-		$toolset_ajax_controller = Toolset_Ajax::get_instance();
+		$cred_forms_posts_domain = class_exists( 'CRED_Form_Domain' ) ? CRED_Form_Domain::POSTS : 'posts';
+		$cred_forms_users_domain = class_exists( 'CRED_Form_Domain' ) ? CRED_Form_Domain::USERS : 'users';
+		$cred_forms_relationships_domain = class_exists( 'CRED_Form_Domain' ) ? CRED_Form_Domain::ASSOCIATIONS : 'relationships';
 		wp_localize_script(
 			'toolset-cred-form-block-js',
 			'toolset_cred_form_block_strings',
 			array(
-				'block_name' => self::BLOCK_NAME,
-				'published_forms' => array(
-					'postForms' => apply_filters( 'cred_get_available_forms', array(), CRED_Form_Domain::POSTS ),
-					'userForms' => apply_filters( 'cred_get_available_forms', array(), CRED_Form_Domain::USERS ),
+				'isCREDActive' => $this->cred_active->is_met(),
+				'blockCategory' => Toolset_Blocks::TOOLSET_GUTENBERG_BLOCKS_CATEGORY_SLUG,
+				'blockName' => self::BLOCK_NAME,
+				'publishedForms' => array(
+					'postForms' => apply_filters( 'cred_get_available_forms', array(), $cred_forms_posts_domain ),
+					'userForms' => apply_filters( 'cred_get_available_forms', array(), $cred_forms_users_domain ),
+					'relationshipForms' => array(
+						'new' => apply_filters( 'cred_get_available_forms', array(), $cred_forms_relationships_domain ),
+					),
 				),
 				'wpnonce' => wp_create_nonce( Toolset_Ajax::CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW ),
-				'actionName' => $toolset_ajax_controller->get_action_js_name( Toolset_Ajax::CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW ),
+				'association' => array(
+					'action' => 'cred_' . $this->constants->constant( 'CRED_Ajax::CALLBACK_GET_ASSOCIATION_FORM_DATA' ),
+					'wpnonce' => wp_create_nonce( $this->constants->constant( 'CRED_Ajax::CALLBACK_GET_ASSOCIATION_FORM_DATA' ) ),
+				),
+				'actionName' => $this->toolset_ajax_manager->get_action_js_name( Toolset_Ajax::CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW ),
 			)
 		);
 
-		$toolset_assets_manager->register_style(
+		$this->toolset_assets_manager->register_style(
 			'toolset-cred-form-block-editor-css',
-			TOOLSET_COMMON_URL . '/toolset-blocks/assets/css/cred.form.block.editor.css',
+			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . '/toolset-blocks/assets/css/cred.form.block.editor.css',
 			array(),
-			TOOLSET_COMMON_VERSION
+			$this->constants->constant( 'TOOLSET_COMMON_VERSION' )
 		);
 	}
 
@@ -96,9 +105,29 @@ class Toolset_Blocks_CRED_Form implements Toolset_Gutenberg_Block_Interface {
 						'type' => 'object',
 						'default' => '',
 					),
+					'relationshipFormType' => array(
+						'type' => 'string',
+						'default' => 'create',
+					),
+					'relationshipParentItem' => array(
+						'type' => 'string',
+						'default' => '$current',
+					),
+					'relationshipChildItem' => array(
+						'type' => 'string',
+						'default' => '$current',
+					),
+					'relationshipParentItemSpecific' => array(
+						'type' => 'object',
+						'default' => '',
+					),
+					'relationshipChildItemSpecific' => array(
+						'type' => 'object',
+						'default' => '',
+					),
 				),
 				'editor_script' => 'toolset-cred-form-block-js', // Editor script.
-		        'editor_style' => 'toolset-cred-form-block-editor-css', // Editor style.
+				'editor_style' => 'toolset-cred-form-block-editor-css', // Editor style.
 			)
 		);
 	}

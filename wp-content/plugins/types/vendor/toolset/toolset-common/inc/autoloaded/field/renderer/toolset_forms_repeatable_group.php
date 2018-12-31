@@ -45,9 +45,9 @@ class Toolset_Field_Renderer_Toolset_Forms_Repeatable_Group extends Toolset_Fiel
 		// tree factory
 		$this->tree_factory = $tree_factory;
 		if( $this->tree_factory === null ) {
-			global $wpdb;
+			$field_group_factory = Toolset_Field_Group_Post_Factory::get_instance();
 			$this->tree_factory = new \OTGS\Toolset\Types\Field\Group\Repeatable\TreeFactory(
-				$wpdb,
+				$field_group_factory,
 				new Types_Field_Group_Repeatable_Service()
 			);
 		}

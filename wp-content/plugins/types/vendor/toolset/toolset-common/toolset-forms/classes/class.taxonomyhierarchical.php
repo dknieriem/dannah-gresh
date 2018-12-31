@@ -24,6 +24,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 			 * Terms with all fields as they are returned from wp_get_post_terms()
 			 *
 			 * @since 1.8.8
+			 * @access private
 			 *
 			 * @param array terms
 			 * @param string name field
@@ -45,6 +46,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 		 * array of current values of taxonomy hierarichical field
 		 *
 		 * @since 1.8.8
+		 * @access private
 		 *
 		 * @param array values
 		 * @param string name field
@@ -57,6 +59,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 		 * Array object of build terms with html and styling of taxonomy hierarichical field
 		 *
 		 * @since 1.8.8
+		 * @access private
 		 *
 		 * @param array buildTerms
 		 * @param string name field
@@ -79,6 +82,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 		 * Array object of children elements of taxonomy hierarichical field
 		 *
 		 * @since 1.8.8
+		 * @access private
 		 *
 		 * @param array children term
 		 * @param string name field
@@ -91,6 +95,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 		 * Array object of elements name of taxonomy hierarichical field
 		 *
 		 * @since 1.8.8
+		 * @access private
 		 *
 		 * @param array names
 		 * @param string name field
@@ -236,13 +241,13 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 			$bootstrap_button = "<a
 			style='display:none;'
             data-taxonomy='{$taxonomy_name}'
-            data-after-selector='js-wpt-hierarchical-taxonomy-add-new-{$taxonomy_name}' 
-            data-open='" . $add_new_text_button_value . "' 
-            data-close='" . $cancel_button_value . "' 
-            data-output='" . $this->output . "'     
-            class = '{$class}'  
-            role = 'button' 
-            name = 'btn_{$taxonomy_name}' 
+            data-after-selector='js-wpt-hierarchical-taxonomy-add-new-{$taxonomy_name}'
+            data-open='" . $add_new_text_button_value . "'
+            data-close='" . $cancel_button_value . "'
+            data-output='" . $this->output . "'
+            class = '{$class}'
+            role = 'button'
+            name = 'btn_{$taxonomy_name}'
             >{$add_new_text_button_value}</a>";
 
 			$metaform[] = array(
@@ -343,6 +348,7 @@ class WPToolset_Field_Taxonomyhierarchical extends WPToolset_Field_Textfield {
 		 * Toolset Cancel button
 		 *
 		 * @since 1.8.8
+		 * @access private
 		 *
 		 * @param array metaform
 		 * @param string name_field

@@ -67,6 +67,16 @@ class Toolset_Association_Cleanup_Association extends Toolset_Wpdb_User {
 
 		$is_success = ( false !== $rows_updated || 1 === $rows_updated );
 
+		/**
+		 * toolset_association_deleted
+		 *
+		 * Announce that an association no longer exists.
+		 * Important, used for cache flushing.
+		 *
+		 * @since Types 3.1.3
+		 */
+		do_action( 'toolset_association_deleted', $association->get_uid() );
+
 		return new Toolset_Result( $is_success );
 	}
 

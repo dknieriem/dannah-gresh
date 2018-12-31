@@ -49,9 +49,22 @@ class Types_Field_Type_Checkboxes_Mapper_Legacy extends Types_Field_Mapper_Abstr
 
 		foreach( $options as $option_id => $option_data ) {
 			$option_data['id'] = $option_id;
-			$option_data['checked'] = isset( $values[$option_id] )
-				? $values[$option_id]
-				: false;
+			$option_data['checked'] = false;
+
+			if(
+				isset( $values[ $option_id ] ) // there is a value stored
+			    && ! ( // and the value is not ...
+			    	$values[ $option_id ] == 0 // ... 0 ...
+				    && $field['data']['save_empty'] == 'yes' // ... while "save 0" is active.
+				)
+			) {
+				// it's checked
+				$option_data['checked'] = true;
+			}
+
+			$option_data['db_value'] = isset( $values[ $option_id ] )
+				? $values[ $option_id ]
+				: null;
 
 			if( isset( $option_data['set_value'] ) ) {
 				$option_data['store_value'] = $option_data['set_value'];

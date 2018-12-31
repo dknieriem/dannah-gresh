@@ -6,35 +6,55 @@
             <tr>
                 <td class="align-left"><strong>{{ forms.label( __( 'Intermediary post type:', 'wpcf' ), false ) }}</strong></td>
                 <td>
-                    <strong data-bind="text: display.intermediaryPostType.plural"></strong><i class="fa fa-trash types-trash-ipt" aria-hidden="true" data-bind="click: display.intermediaryPostType.onDeletePostType,
-                               visible: display.intermediaryPostType.exists"></i>
+                    <p>
+                        <strong data-bind="text: display.intermediaryPostType.plural"></strong>
+                        <i class="fa fa-trash types-trash-ipt"
+                           aria-hidden="true"
+                           data-bind="click: display.intermediaryPostType.onDeletePostType, visible: display.intermediaryPostType.exists"
+                        ></i>
 
-                    <span data-bind="visible: display.advancedMode.isEnabled() && ! display.intermediaryPostType.exists()">
-                        {{ forms.button(
-                            'click: function() { display.intermediaryPostType.isSelectingExistingPostType(true) },
-                            visible: (
-                                display.intermediaryPostType.allowSelectingExistingIntermediaryPostType()
-                                && ! display.intermediaryPostType.isSelectingExistingPostType()
-                            )',
-                            __( 'Use existing post type', 'wpcf' )
-                        ) }}
-
-                        <span data-bind="visible: display.intermediaryPostType.isSelectingExistingPostType">
-                            <select data-bind="
-                                        value: display.intermediaryPostType.selectedExistingPostType,
-                                        options: display.intermediaryPostType.potentialIntermediaryPostTypes,
-                                        optionsText: 'label',
-                                        optionsValue: 'slug'
-                                    "
-                                    title="{{ __( 'Post type to use as intermediary', 'wpcf') }}"
-                            ></select>
+                        <span data-bind="visible: display.advancedMode.isEnabled() && ! display.intermediaryPostType.exists()">
                             {{ forms.button(
-                                'click: display.intermediaryPostType.selectExistingPostType',
-                                __( 'Select', 'wpcf' )
+                                'click: function() { display.intermediaryPostType.isSelectingExistingPostType(true) },
+                                visible: (
+                                    display.intermediaryPostType.allowSelectingExistingIntermediaryPostType()
+                                    && ! display.intermediaryPostType.isSelectingExistingPostType()
+                                )',
+                                __( 'Use existing post type', 'wpcf' )
                             ) }}
-                        </span>
-                    </span>
 
+                            <span data-bind="visible: display.intermediaryPostType.isSelectingExistingPostType">
+                                <select data-bind="
+                                            value: display.intermediaryPostType.selectedExistingPostType,
+                                            options: display.intermediaryPostType.potentialIntermediaryPostTypes,
+                                            optionsText: 'label',
+                                            optionsValue: 'slug'
+                                        "
+                                        title="{{ __( 'Post type to use as intermediary', 'wpcf') }}"
+                                ></select>
+                                {{ forms.button(
+                                    'click: display.intermediaryPostType.selectExistingPostType',
+                                    __( 'Select', 'wpcf' )
+                                ) }}
+                            </span>
+                        </span>
+                    </p>
+                    <p data-bind="visible: display.intermediaryPostType.exists">
+                        <label>
+                            <input type="checkbox"
+                                   data-bind="checked: isAutodeletingIntermediaryPosts"
+                            />
+                            {# translators: Setting of a Toolset relationship. Label of a checkbox. #}
+                            {{ __( 'Automatically delete intermediary posts together with connections they belong to.', 'wpcf' ) }}
+                        </label>
+                        <i class="fa fa-question-circle icon-question-sign js-show-tooltip"
+                           {# translators: Header of a tooltip about a setting of a Toolset relationship. #}
+                           data-header="{{ __( 'Automatic intermediary post cleanup', 'wpcf' ) }}"
+                           {# translators: Body of a tooltip about a setting of a Toolset relationship. #}
+                           data-content='{{ __( 'By default, an intermediary post is deleted together with the connection between parent and child posts. If you, for any reason, don\'t desire this behavior, you can disable it here. However, we don\'t recommend disabling it unless there is a very good reason. Especially not if your intermediary post type is not publicly visible.', 'wpcf' ) }}'
+                           data-bind="click: display.showPointer($element)">
+                        </i>
+                    </p>
                 </td>
             </tr>
             <tr><td colspan="2" class="pad-top-24"><hr></td></tr>

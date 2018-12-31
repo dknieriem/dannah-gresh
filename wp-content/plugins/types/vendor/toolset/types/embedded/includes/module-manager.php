@@ -206,6 +206,8 @@ if ( defined( 'MODMAN_PLUGIN_NAME' ) ) {
             'wpcf_modman_items_check_groups', 10, 2 );
     add_filter( 'wpmodules_items_check_' . _TAX_MODULE_MANAGER_KEY_,
             'wpcf_modman_items_check_taxonomies', 10, 2 );
+	add_filter( 'wpmodules_items_check_' . _RELATIONSHIPS_MODULE_MANAGER_KEY_,
+		'wpcf_modman_items_check_relationships', 10, 2 );
 
 		// Filter modules result.
 		add_filter( 'wpmodules_saved_items', 'wpcf_modman_wpmodules_saved_items' );
@@ -619,6 +621,7 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
 	    if ( $_type === 'all' ) {
 		    do_action( 'toolset_do_m2m_full_init' );
 		    $relationship_repository = Toolset_Relationship_Definition_Repository::get_instance();
+		    $relationship_repository->load_definitions();
 		    $relationships = $relationship_repository->get_definitions();
 
 		    if( ! empty( $relationships ) ) {
@@ -649,6 +652,7 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
 	    else if ( 'relationships' === $_type ) {
 		    do_action( 'toolset_do_m2m_full_init' );
 		    $relationship_repository = Toolset_Relationship_Definition_Repository::get_instance();
+		    $relationship_repository->load_definitions();
 
 		    $relationship_definition_translator = new Toolset_Relationship_Definition_Translator();
 		    foreach ( $items as $relationship_slug ) {
@@ -671,6 +675,7 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
 				    }
 				    $relationship_array['__types_id'] = $relationship->get_slug();
 				    $relationship_array['__types_title'] = $relationship->get_display_name();
+				    $relationship_array['hash'] = $relationship_array['checksum'] = $wpcf->export->generate_checksum( 'relationship', $relationship->get_slug() );
 				    $data['m2m_relationships'][$relationship->get_slug()] = $relationship_array;
 			    }
 		    }
@@ -681,6 +686,7 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
 				    $_item = array();
 				    $_item['id'] = $relationship_data['__types_id'];
 				    $_item['title'] = $relationship_data['__types_title'];
+				    $_item['hash'] = $_item['checksum'] = $relationship_data['hash'];
 				    $items[$relationship_data['__types_id']] = $_item;
 			    }
 			    return array(
@@ -744,7 +750,8 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
                             array(
                                 '_wp_types_group_showfor',
                                 '_wp_types_group_fields',
-                                '_wp_types_group_admin_styles'
+                                '_wp_types_group_admin_styles',
+								Toolset_Field_Group::POSTMETA_GROUP_PURPOSE,
                             )
                         )
                         ) {
@@ -845,8 +852,15 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
             );
             $groups = get_posts( $args );
         }
+
         if ( !empty( $groups ) ) {
         	$rfg_service = new Types_Field_Group_Repeatable_Service();
+
+        	// collect all nested rfgs first.
+        	foreach( $groups as $key => $post ) {
+        	    $groups = apply_rfgs_by_group( $groups, $post->ID, $rfg_service );
+	        }
+
             $data['groups'] = array('__key' => 'group');
             foreach ( $groups as $key => $post ) {
                 $post = (array) $post;
@@ -872,7 +886,8 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
                                 '_wpcf_conditional_display',
                                 '_wp_types_group_filters_association',
                                 '_wp_types_group_admin_styles',
-	                            '_types_repeatable_field_group_post_type'
+	                            '_types_repeatable_field_group_post_type',
+								Toolset_Field_Group::POSTMETA_GROUP_PURPOSE,
                             )
                         )
                         ) {
@@ -1202,6 +1217,29 @@ function wpcf_admin_export_selected_data ( array $items, $_type = 'all', $return
 }
 
 /**
+ * This function is needed to get nested rfgs
+ * The id of each rfg will be added to $groups
+ *
+ * @param array $groups
+ * @param int $group_post_id
+ * @param Types_Field_Group_Repeatable_Service $rfg_service
+ *
+ * @return array
+ */
+function apply_rfgs_by_group( $groups, $group_post_id, $rfg_service ) {
+	$meta_fields = get_post_meta( $group_post_id, '_wp_types_group_fields', true );
+
+	if( $rfgs = $rfg_service->get_rfgs_by_fields_string( $meta_fields ) ) {
+		foreach( $rfgs as $rfg ) {
+			$groups[] = $rfg->get_wp_post();
+			$groups = apply_rfgs_by_group( $groups, $rfg->get_id(), $rfg_service );
+		}
+	}
+
+	return $groups;
+}
+
+/**
  * Custom Import function for Module Manager.
  *
  * Import selected items given by xmlstring.
@@ -1333,7 +1371,7 @@ function wpcf_admin_import_data_from_xmlstring( $data = '', $_type = 'types',
                 // Update meta
                 if ( !empty( $group['meta'] ) ) {
                     foreach ( $group['meta'] as $meta_key => $meta_value ) {
-                        if ( ! is_array( $meta_value ) && preg_match( '/(' . Types_Field_Group_Repeatable::PREFIX . '[a-z0-9_]+)/', $meta_value, $m ) ) {
+                        if ( ! is_array( $meta_value ) && preg_match( '/(' . Types_Field_Group_Repeatable::PREFIX . '[a-z0-9_-]+)/', $meta_value, $m ) ) {
                             if ( ! isset( $groups_with_rfgs[ $m[1] ] ) ) {
                                 $groups_with_rfgs[ $m[1] ] = array();
                             }
@@ -1417,18 +1455,30 @@ function wpcf_admin_import_data_from_xmlstring( $data = '', $_type = 'types',
             }
 
             // RFGs.
-            foreach ( $rfgs as $rfg ) {
+	        $field_group_factory = Toolset_Field_Group_Post_Factory::get_instance();
+	        $all_rfgs = $field_group_factory->query_groups(
+		        array(
+			        'purpose' => '*',
+			        'post_status' => 'hidden'
+		        )
+	        );
+
+	        $all_rfgs_slug_id = array();
+
+	        foreach( $all_rfgs as $rfg ) {
+				$all_rfgs_slug_id[$rfg->get_slug()] = $rfg->get_id();
+	        }
+
+	        foreach ( $rfgs as $rfg ) {
                 $relationship_slug = str_replace( Types_Field_Group_Repeatable::PREFIX, '', $rfg );
-                // add new post for field group.
-                $post_id = wp_insert_post(
-                    array(
-                      'post_type'   => Toolset_Field_Group_Post::POST_TYPE,
-                      'post_status' => 'hidden', // important.
-                      'post_title'   => $relationship_slug,
-                      'post_name'   => $relationship_slug,
-                    )
-                );
-                if ( isset( $groups_with_rfgs[ $rfg ] ) ) {
+
+                if( ! isset( $all_rfgs_slug_id[ $relationship_slug ] ) ) {
+                	// rfg could not be found
+                	continue;
+                }
+
+                $post_id = $all_rfgs_slug_id[ $relationship_slug ];
+	            if ( isset( $groups_with_rfgs[ $rfg ] ) ) {
                     foreach ( $groups_with_rfgs[ $rfg ] as $group_id ) {
                         $fields_meta = get_post_meta( $group_id, Types_Field_Group_Service::OPTION_FIELDS, true );
                         $fields_meta = str_replace( $rfg, Types_Field_Group_Repeatable::PREFIX . $post_id, $fields_meta );
@@ -1755,6 +1805,49 @@ function wpcf_modman_items_check_taxonomies( $items ) {
 
     return $items;
 }
+
+/**
+ * Check if relationships already exists
+ *
+ * @param $relationships
+ *
+ * @return mixed
+ *
+ * @since 3.1
+ */
+function wpcf_modman_items_check_relationships( $relationships ) {
+	if( ! is_array( $relationships ) ) {
+		// invalid input
+		return $relationships;
+	}
+
+	global $wpcf;
+
+	foreach ( $relationships as $slug => $relationship ) {
+		if( ! is_array( $relationship ) || ! isset( $relationship['id'] ) ) {
+			// invalid entry
+			continue;
+		}
+
+		// check if the relationship already exists
+		$relationship['exists'] = $wpcf->import->item_exists( 'relationship', $relationship['id'] );
+
+		// if relationship exists, proof if it's the same as in the import file
+		if ( $relationship['exists'] && isset( $relationship['hash'] ) ) {
+			$relationship['is_different'] =
+				$wpcf->import->checksum( 'relationship', $relationship['id'], $relationship['hash'] )
+					? false
+					: true;
+		}
+
+		// store updated relationship data
+		$relationships[$slug] = $relationship;
+	}
+
+	// return updated data array
+	return $relationships;
+}
+
 
 /**
  * Extracts ID.

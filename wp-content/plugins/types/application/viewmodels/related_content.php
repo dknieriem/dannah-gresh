@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Types\Page\Extension\RelatedContent\DirectEditStatusFactory;
+
 /**
  * Related Content. Elements related to a specific element.
  *
@@ -47,15 +49,24 @@ abstract class Types_Viewmodel_Related_Content {
 	protected $query_factory;
 
 
+	/** @var DirectEditStatusFactory */
+	protected $direct_edit_status_factory;
+
+
 	/**
 	 * Constructor
 	 *
-	 * @param string|Toolset_Relationship_Role   $role Relationship role.
-	 * @param Toolset_Relationship_Definition    $relationship Relationship type.
-	 * @param Toolset_Constants|null             $constants Constants handler.
+	 * @param string|Toolset_Relationship_Role $role Relationship role.
+	 * @param Toolset_Relationship_Definition $relationship Relationship type.
+	 * @param Toolset_Constants|null $constants Constants handler.
 	 * @param Toolset_Relationship_Query_Factory $query_factory_di For testing purposes.
+	 * @param DirectEditStatusFactory|null $direct_edit_status_factory
 	 */
-	public function __construct( $role, $relationship, Toolset_Constants $constants = null, Toolset_Relationship_Query_Factory $query_factory_di = null ) {
+	public function __construct(
+		$role, $relationship, Toolset_Constants $constants = null,
+		Toolset_Relationship_Query_Factory $query_factory_di = null,
+		DirectEditStatusFactory $direct_edit_status_factory = null
+	) {
 		$this->role = Toolset_Relationship_Role::PARENT === $role
 			? new Toolset_Relationship_Role_Parent()
 			: new Toolset_Relationship_Role_Child();
@@ -64,6 +75,7 @@ abstract class Types_Viewmodel_Related_Content {
 
 		$this->related_element_role = Toolset_Relationship_Role::other( $this->role );
 		$this->query_factory = $query_factory_di ? $query_factory_di : new Toolset_Relationship_Query_Factory();
+		$this->direct_edit_status_factory = $direct_edit_status_factory ?: new DirectEditStatusFactory();
 	}
 
 

@@ -55,7 +55,7 @@ class RelationshipDefinitionTranslationPackage extends TranslationPackage {
 	 * @return string
 	 */
 	public function get_package_kind() {
-		return __( 'Toolset Types', 'wpcf' );
+		return __( 'Toolset Types', 'wpv-views' );
 	}
 
 
@@ -75,7 +75,7 @@ class RelationshipDefinitionTranslationPackage extends TranslationPackage {
 	 * @return string
 	 */
 	public function get_package_title() {
-		return sprintf( __( 'Relationship %s', 'wpcf' ), $this->definition->get_display_name( false ) );
+		return sprintf( __( 'Relationship %s', 'wpv-views' ), $this->definition->get_display_name( false ) );
 	}
 
 

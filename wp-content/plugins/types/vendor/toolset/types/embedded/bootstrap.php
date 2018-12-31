@@ -29,8 +29,7 @@ if ( !defined( 'WPCF_VERSION' ) ) {
  * Forced priority
  */
 if ( !defined( 'TYPES_INIT_PRIORITY' ) ) {
-    // Early start ( some plugins use 'init' with priority 0 ).
-    define( 'TYPES_INIT_PRIORITY', -1 );
+    define( 'TYPES_INIT_PRIORITY', 1 );
 }
 
 /**
@@ -113,6 +112,8 @@ wpcf_embedded_after_setup_theme_hook();
  */
 $GLOBALS['wpcf'] = new stdClass();
 
+// load fields functions (required to be loaded pre init as Elementor Pro demands on it)
+require_once WPCF_EMBEDDED_INC_ABSPATH . '/fields.php';
 
 /**
  * Main init hook.

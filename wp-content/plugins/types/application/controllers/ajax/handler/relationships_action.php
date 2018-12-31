@@ -244,13 +244,17 @@ class Types_Ajax_Handler_Relationships_Action extends Toolset_Ajax_Handler_Abstr
 
 			/** @var Toolset_Relationship_Definition $definition */
 			$definition = $repository->create_definition( $relationship_model['slug'], $parent_type, $child_type );
+
 			$definition->set_display_name( $relationship_model['displayName'] );
 			$definition->set_display_name_singular( $relationship_model['displayNameSingular'] );
 
 			$cardinality = new Toolset_Relationship_Cardinality( $relationship_model['cardinality'] );
 			$definition->set_cardinality( $cardinality );
+
 			$definition->is_distinct( true );
 			$definition->set_legacy_support_requirement( false );
+			$definition->is_autodeleting_intermediary_posts( 'true' === $relationship_model['isAutodeletingIntermediaryPosts'] );
+
 			if ( isset( $relationship_model['intermediary'] ) && 'true' === $relationship_model['intermediary'] ) {
 				$is_visible = isset( $relationship_model['visible'] ) && 'true' === $relationship_model['visible'];
 				$definition->get_driver()->create_intermediary_post_type( $relationship_model['slug'], $is_visible );

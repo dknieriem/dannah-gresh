@@ -2,6 +2,8 @@
 
 namespace OTGS\Toolset\Types\Utils\CodeScanner;
 
+use OTGS\Toolset\Common\Utils\PhpIteratorFactory;
+
 
 /**
  * Scan currently activated theme's PHP files for a provided set of patterns.

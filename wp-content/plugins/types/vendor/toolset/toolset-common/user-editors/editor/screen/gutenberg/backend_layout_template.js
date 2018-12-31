@@ -49,7 +49,7 @@ ToolsetCommon.UserEditor.GutenbergEditorBackendLayoutTemplate = function( $ ) {
 		if ( attributes.builder == 'gutenberg' ) {
 			item.addClass( 'js-wpv-ct-listing-user-editor-inited' );
 			item.find( '.js-wpv-layout-template-overlay' ).remove();
-			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-gutenberg)' ).prop( 'disabled', false );
+			item.find( '.js-wpv-ct-apply-user-editor:not(.js-wpv-ct-apply-user-editor-gutenberg)' ).prop( 'disabled', false ).attr( 'disabled', false );
 			item.prepend( self.overlayContainer( self.i18n_data ) );
 			item.find( '.CodeMirror' ).css( { 'height' : '0px'} );
 			self.updateGutenbergCTEditorLinkTarget( item );
@@ -109,6 +109,12 @@ ToolsetCommon.UserEditor.GutenbergEditorBackendLayoutTemplate = function( $ ) {
 		return self;
 	};
 
+	// It is triggered when the WPA Loop selection is saved.
+	$( document ).on( 'js_event_wpv_wpa_loop_selection_saved', '.js-wpv-loop-selection-update', function() {
+		self.reloadGutenbergEditorsLinkTarget();
+	});
+
+	// It is triggered when the View Content Selection is saved.
 	$( document ).on( 'js_event_wpv_query_type_options_saved', '.js-wpv-query-type-update', function( event, queryType ) {
 		self.reloadGutenbergEditorsLinkTarget();
 	});

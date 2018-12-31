@@ -313,3 +313,19 @@ div.toolset-dashboard .types-information-paragraph.toolset-dashboard-post-type {
 .types-information-td-inner a[href=""] {
     display: none;
 }
+
+.toolset-dashboard__editor-mode-label,
+.toolset-dashboard__editor-mode-selection {
+    margin-top: 5px;
+}
+.toolset-dashboard__editor-mode-label a {
+    cursor: pointer;
+}
+.toolset-dashboard__editor-mode-selection {
+    display: none;
+}
+.toolset-dashboard__editor-mode-selection select {
+    width: -webkit-calc(100% - 45px);
+    width: calc(100% - 45px);
+    min-width: 80px;
+}

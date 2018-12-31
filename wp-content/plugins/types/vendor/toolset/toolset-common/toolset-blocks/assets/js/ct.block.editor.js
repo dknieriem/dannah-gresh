@@ -1826,6 +1826,8 @@ $export($export.S, 'Object', { create: __webpack_require__(40) });
 var __ = wp.i18n.__;
 var Component = wp.element.Component;
 var BaseControl = wp.components.BaseControl;
+var _window = window,
+    i18n = _window.toolset_ct_block_strings;
 
 var CTSelect = function (_Component) {
 	__WEBPACK_IMPORTED_MODULE_5_babel_runtime_helpers_inherits___default()(CTSelect, _Component);
@@ -1846,7 +1848,7 @@ var CTSelect = function (_Component) {
 			var ct = attributes.ct;
 
 
-			var cts = __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_values___default()(window.toolset_ct_block_strings.published_cts);
+			var cts = __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_values___default()(i18n.publishedCTs);
 
 			return 'undefined' !== typeof cts && cts.length > 0 ? wp.element.createElement(
 				BaseControl,
@@ -1951,14 +1953,16 @@ var __ = wp.i18n.__;
 var registerBlockType = wp.blocks.registerBlockType;
 var Placeholder = wp.components.Placeholder;
 var RawHTML = wp.element.RawHTML;
+var _window = window,
+    i18n = _window.toolset_ct_block_strings;
 
 
-var name = window.toolset_ct_block_strings.block_name;
+var name = i18n.blockName;
 
 var settings = {
 	title: __('Content Template'),
 	description: __('Add a Content Template to the editor.'),
-	category: 'widgets',
+	category: i18n.blockCategory,
 	icon: __WEBPACK_IMPORTED_MODULE_0__icon__["a" /* default */].blockIcon,
 	keywords: [__('Toolset'), __('Content Template'), __('Shortcode')],
 
@@ -1984,22 +1988,18 @@ var settings = {
 				{ className: 'wp-block-toolset-ct-placeholder' },
 				__WEBPACK_IMPORTED_MODULE_0__icon__["a" /* default */].blockPlaceholder,
 				wp.element.createElement(
-					'p',
+					'h2',
 					null,
-					wp.element.createElement(
-						'strong',
-						null,
-						__('Toolset Content Template')
-					)
-				)
-			),
-			wp.element.createElement(__WEBPACK_IMPORTED_MODULE_3__inspector_ct_select__["a" /* default */], {
-				attributes: {
-					ct: props.attributes.ct
-				},
-				className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()('components-select-control__input'),
-				onChangeCT: onChangeCT
-			})
+					__('Toolset Content Template')
+				),
+				wp.element.createElement(__WEBPACK_IMPORTED_MODULE_3__inspector_ct_select__["a" /* default */], {
+					attributes: {
+						ct: props.attributes.ct
+					},
+					className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()('components-select-control__input'),
+					onChangeCT: onChangeCT
+				})
+			)
 		) : wp.element.createElement(__WEBPACK_IMPORTED_MODULE_4__ct_preview__["a" /* default */], {
 			key: 'toolset-ct-gutenberg-block-preview',
 			className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()(props.className, 'wp-block-toolset-ct-preview'),
@@ -2029,7 +2029,7 @@ var settings = {
 	}
 };
 
-if ('undefined' !== typeof WPViews) {
+if (i18n.isViewsActive) {
 	registerBlockType(name, settings);
 }
 
@@ -2051,7 +2051,11 @@ if ('undefined' !== typeof WPViews) {
 
 
 
-var blockIcon = wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-image', 'toolset-ct-gutenberg-block', 'dashicon') });
+var blockIcon = wp.element.createElement(
+  'span',
+  null,
+  wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-image', 'toolset-ct-gutenberg-block', 'dashicon') })
+);
 
 var blockPlaceholder = wp.element.createElement('span', { className: __WEBPACK_IMPORTED_MODULE_0_classnames___default()('toolset-gutenberg-block-placeholder', 'toolset-ct-gutenberg-block', 'dashicon') });
 
@@ -2237,6 +2241,8 @@ module.exports = function (isEntries) {
 var __ = wp.i18n.__;
 var Component = wp.element.Component;
 var Spinner = wp.components.Spinner;
+var _window = window,
+    i18n = _window.toolset_ct_block_strings;
 
 var CTPreview = function (_Component) {
 	__WEBPACK_IMPORTED_MODULE_4_babel_runtime_helpers_inherits___default()(CTPreview, _Component);
@@ -2302,26 +2308,20 @@ var CTPreview = function (_Component) {
 			);
 		}
 	}, {
-		key: 'componentWillMount',
-		value: function componentWillMount() {
-			if (this.props.attributes.ct) {
-				// If the CT is already there, we're loading a saved block, so we need to render
-				// a different thing, which is why this doesn't use 'fetching', as that
-				// is for when the user is putting in a new url on the placeholder form
-				this.setState({ fetching: true });
-				this.getCTInfo();
-			}
+		key: 'componentDidMount',
+		value: function componentDidMount() {
+			this.getCTInfo();
 		}
 	}, {
-		key: 'componentWillReceiveProps',
-		value: function componentWillReceiveProps(nextProps) {
-			if (this.props.attributes.ct.post_name !== nextProps.attributes.ct.post_name) {
+		key: 'componentDidUpdate',
+		value: function componentDidUpdate(prevProps) {
+			if (prevProps.attributes.ct.post_name !== this.props.attributes.ct.post_name) {
 				this.setState({
 					fetching: true,
 					error: false,
 					errorMessage: ''
 				});
-				this.getCTInfo(nextProps.attributes.ct.post_name);
+				this.getCTInfo(this.props.attributes.ct.post_name);
 			}
 		}
 	}, {
@@ -2330,8 +2330,8 @@ var CTPreview = function (_Component) {
 			var _this2 = this;
 
 			var data = new window.FormData();
-			data.append('action', window.toolset_ct_block_strings.actionName);
-			data.append('wpnonce', window.toolset_ct_block_strings.wpnonce);
+			data.append('action', i18n.actionName);
+			data.append('wpnonce', i18n.wpnonce);
 			data.append('ct_post_name', 'undefined' === typeof ctPostName ? this.props.attributes.ct.post_name : ctPostName);
 
 			window.fetch(window.ajaxurl, {
@@ -2364,6 +2364,18 @@ var CTPreview = function (_Component) {
 
 				_this2.setState(newState);
 			});
+		}
+	}], [{
+		key: 'getDerivedStateFromProps',
+		value: function getDerivedStateFromProps(nextProps, prevState) {
+			if (nextProps.attributes.ct && 'undefined' === typeof prevState.ctPostContent && prevState.fetching === false) {
+				// If the View is already there, we're loading a saved block, so we need to render
+				// a different thing, which is why this doesn't use 'fetching', as that
+				// is for when the user is putting in a new url on the placeholder form
+				prevState.fetching = true;
+			}
+
+			return prevState;
 		}
 	}]);
 

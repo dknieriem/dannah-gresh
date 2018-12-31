@@ -2,7 +2,7 @@
 /**
  * Template File
  * This file is used to create the overlay displayed above the Template editor on the Content Template edit page, when
- * the Gutenberg Editor is selected.
+ * Gutenberg is selected.
  *
  * @since 2.5.0
  */
@@ -20,7 +20,7 @@ $medium_allowed_frontend_templates = $this->medium->get_frontend_templates();
     <p>
 		<?php
 		echo sprintf(
-			__( 'This Content Template is used in %1$s, and was created using Gutenberg Editor.', 'wpv-views' ),
+			__( 'This Content Template is used in %1$s, and was created using Gutenberg.', 'wpv-views' ),
 			'<strong>' . $template['form-option-label'] . '</strong>'
 		);
 		?>
@@ -29,14 +29,14 @@ $medium_allowed_frontend_templates = $this->medium->get_frontend_templates();
     } else {
     ?>
     <p>
-		<?php _e( 'You created this template using Gutenberg Editor.', 'wpv-views' ); ?>
+		<?php _e( 'You created this template using Gutenberg.', 'wpv-views' ); ?>
     </p>
     <?php
     }
     ?>
     <div>
         <a href="<?php echo admin_url( 'post.php?post=' . $ct_id . '&action=edit' ); ?>" class="button button-primary button-large">
-            <?php _e( 'Edit with Gutenberg Editor', 'wpv-views' ); ?>
+            <?php _e( 'Edit with Gutenberg', 'wpv-views' ); ?>
         </a>
     </div>
 </div>

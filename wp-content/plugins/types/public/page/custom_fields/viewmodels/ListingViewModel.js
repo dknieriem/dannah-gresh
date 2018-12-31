@@ -175,7 +175,7 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
             // Changes the page url
             history.pushState(domain, null, Types.page.customFields.tabs[domain].url);
         }
-    }
+    };
 
 
     /**
@@ -201,7 +201,7 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
         return _.map(fieldGroups, function (fieldGroup) {
             return _.pick(fieldGroup, 'groupId');
         })
-    }
+    };
 
 
     /**
@@ -241,7 +241,7 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
             handler: function (fieldGroups) {
                 self.itemActions.deactivateFieldGroup(fieldGroups);
             }
-        },
+        }
     ]);
 
 
@@ -261,9 +261,9 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
                 // Find the definition by it's slug
                 var fieldGroups = _.find(sourceGroups, function (fieldGroup) {
                     // Comparing also by metaKey because the slug can change under some circumstances.
-                    return (fieldGroup.slug() == fieldModel.slug);
+                    return (fieldGroup.slug() === fieldModel.slug);
                 });
-                if (typeof(fieldGroups) != 'undefined') {
+                if (typeof(fieldGroups) !== 'undefined') {
                     fieldGroups.updateModelObject(fieldModel);
                 } else {
                     // todo report error
@@ -371,8 +371,8 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
                 // onFailure
             },
             {}
-        ),
-    }
+        )
+    };
 
 
     /**
@@ -381,17 +381,17 @@ Types.page.customFields.viewmodels.ListingViewModel = function(customFieldsModel
      * @param {Object[]} elements List of elements returned from the Ajax action
      * @since m2m
      */
-    toggleActiveStatusInModel = function (elements) {
+    var toggleActiveStatusInModel = function (elements) {
         var activations = [];
         _.each(elements, function (item) {
             activations[item.id] = item.isActive;
-        })
+        });
         _.each(customFieldsModels.data[self.currentDomain()], function (item, key) {
             if (activations[item.id]) {
                 customFieldsModels.data[self.currentDomain()][key].isActive = activations[item.id];
             }
         });
-    }
+    };
 
 
     /**

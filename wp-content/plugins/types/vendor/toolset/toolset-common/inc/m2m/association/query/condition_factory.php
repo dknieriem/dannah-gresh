@@ -1,5 +1,8 @@
 <?php
 
+use OTGS\Toolset\Common\M2M\Association\Query\Condition\HasAutodeletableIntermediaryPost;
+use OTGS\Toolset\Common\PostStatus;
+
 /**
  * A factory for IToolset_Association_Query_Condition implementations.
  *
@@ -168,15 +171,18 @@ class Toolset_Association_Query_Condition_Factory {
 	 * @param Toolset_Association_Query_Table_Join_Manager $join_manager
 	 * @param Toolset_Association_Query_Element_Selector_Provider $element_selector_provider
 	 *
+	 * @param PostStatus $post_status
+	 *
 	 * @return IToolset_Association_Query_Condition
 	 */
 	public function element_status(
 		$status, IToolset_Relationship_Role $for_role,
 		Toolset_Association_Query_Table_Join_Manager $join_manager,
-		Toolset_Association_Query_Element_Selector_Provider $element_selector_provider
+		Toolset_Association_Query_Element_Selector_Provider $element_selector_provider,
+		PostStatus $post_status
 	) {
 		return new Toolset_Association_Query_Condition_Element_Status(
-			$status, $for_role, $join_manager, $element_selector_provider
+			$status, $for_role, $join_manager, $element_selector_provider, $post_status
 		);
 	}
 
@@ -387,5 +393,18 @@ class Toolset_Association_Query_Condition_Factory {
 		return new Toolset_Association_Query_Condition_Multiple_Elements(
 			$element_ids, $domain, $for_role, $element_selector_provider, $query_original_element, $translate_provided_ids
 		);
+	}
+
+
+	/**
+	 * Instantiate HasAutodeletableIntermediaryPost.
+	 *
+	 * @param bool $expected_value Value of the condition.
+	 * @param Toolset_Association_Query_Table_Join_Manager $join_manager The join manager object from the association query.
+	 *
+	 * @return HasAutodeletableIntermediaryPost
+	 */
+	public function has_autodeletable_intermediary_post( $expected_value, Toolset_Association_Query_Table_Join_Manager $join_manager ) {
+		return new HasAutodeletableIntermediaryPost( $expected_value, $join_manager );
 	}
 }

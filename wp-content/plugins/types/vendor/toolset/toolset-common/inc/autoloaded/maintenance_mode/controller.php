@@ -69,22 +69,22 @@ class Controller {
 	 */
 	public function enable( $allow_backend = true, $allow_ajax = false, $for_infinity = false ) {
 		if( $this->maintenance_file_exists() ) {
-			return new \Toolset_Result( false, __( 'Maintenance mode is already active (.maintenance file present).', 'wpcf' ) );
+			return new \Toolset_Result( false, __( 'Maintenance mode is already active (.maintenance file present).', 'wpv-views' ) );
 		}
 
 		$content = $this->build_maintenance_file( $allow_backend, $allow_ajax, $for_infinity );
 
 		if( false === $content ) {
-			return new \Toolset_Result( false, __( 'Unable to process the template for the ".maintenance" file.', 'wpcf' ) );
+			return new \Toolset_Result( false, __( 'Unable to process the template for the ".maintenance" file.', 'wpv-views' ) );
 		}
 
 		$result = file_put_contents( $this->get_maintenance_file_path(), $content );
 
 		if( false === $result ) {
-			return new \Toolset_Result( false, __( 'Couldn\'t write to the ".maintenance" file.', 'wpcf' ) );
+			return new \Toolset_Result( false, __( 'Couldn\'t write to the ".maintenance" file.', 'wpv-views' ) );
 		}
 
-		return new \Toolset_Result( true, __( 'Maintenance mode enabled.', 'wpcf' ) );
+		return new \Toolset_Result( true, __( 'Maintenance mode enabled.', 'wpv-views' ) );
 	}
 
 
@@ -97,16 +97,16 @@ class Controller {
 	 */
 	public function disable() {
 		if( ! $this->maintenance_file_exists() ) {
-			return new \Toolset_Result( false, __( 'Maintenance mode is already disabled.', 'wpcf' ) );
+			return new \Toolset_Result( false, __( 'Maintenance mode is already disabled.', 'wpv-views' ) );
 		}
 
 		$result = unlink( $this->get_maintenance_file_path() );
 
 		if( false === $result ) {
-			return new \Toolset_Result( false, __( 'Unable to delete the ".maintenance" file.', 'wpcf' ) );
+			return new \Toolset_Result( false, __( 'Unable to delete the ".maintenance" file.', 'wpv-views' ) );
 		}
 
-		return new \Toolset_Result( true, __( 'Maintenance mode disabled.', 'wpcf' ) );
+		return new \Toolset_Result( true, __( 'Maintenance mode disabled.', 'wpv-views' ) );
 	}
 
 }

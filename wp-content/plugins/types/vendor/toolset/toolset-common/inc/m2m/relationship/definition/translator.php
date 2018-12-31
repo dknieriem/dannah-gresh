@@ -62,6 +62,7 @@ class Toolset_Relationship_Definition_Translator {
 			'role_label_child_plural' => $definition->get_role_label_plural( Toolset_Relationship_Role::CHILD, false ),
 			'needs_legacy_support' => ( $definition->needs_legacy_support() ? 1 : 0 ),
 			'is_active' => ( $definition->is_active() ? 1 : 0 ),
+			'autodelete_intermediary' => ( $definition->is_autodeleting_intermediary_posts() ? 1 : 0 ),
 		);
 
 		return $row;
@@ -124,6 +125,7 @@ class Toolset_Relationship_Definition_Translator {
 			),
 			Toolset_Relationship_Definition::DA_NEEDS_LEGACY_SUPPORT => (bool) $row->needs_legacy_support,
 			Toolset_Relationship_Definition::DA_IS_ACTIVE => (bool) $row->is_active,
+			Toolset_Relationship_Definition::DA_AUTODELETE_INTERMEDIARY => (bool) $row->autodelete_intermediary,
 			Toolset_Relationship_Definition::DA_ORIGIN => maybe_unserialize( $row->origin ),
 		);
 
@@ -179,6 +181,7 @@ class Toolset_Relationship_Definition_Translator {
 			'%s', // role_name_child_plural
 			'%d', // needs_legacy_support
 			'%d', // is_active
+			'%d', // autodelete_intermediary
 		);
 	}
 

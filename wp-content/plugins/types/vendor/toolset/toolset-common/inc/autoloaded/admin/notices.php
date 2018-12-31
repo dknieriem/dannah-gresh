@@ -403,7 +403,7 @@ class Toolset_Controller_Admin_Notices {
 		$notice = new Toolset_Admin_Notice_Required_Action(
 				'toolset-wpml-version-doesnt-support-m2m',
 				sprintf(
-					__( 'Post relationships in Toolset require WPML %s or newer to work properly with post translations. Please upgrade WPML.', 'wpcf' ),
+					__( 'Post relationships in Toolset require WPML %s or newer to work properly with post translations. Please upgrade WPML.', 'wpv-views' ),
 					sanitize_text_field( Toolset_Relationship_Controller::MINIMAL_WPML_VERSION )
 				)
 		);

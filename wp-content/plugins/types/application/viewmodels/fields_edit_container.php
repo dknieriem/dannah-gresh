@@ -58,7 +58,7 @@ class Types_Viewmodel_Fields_Edit_Container {
 	 *
 	 * @param Toolset_Field_Definition[]  $fields Array of fields.
 	 * @param Twig_Environment            $twig Twig environment.
-	 * @param string                      $context Initial Twig context.
+	 * @param array                      $context Initial Twig context.
 	 * @param string                      $template_name Template path.
 	 * @param Types_Viewmodel_Field_Input $viewmodel Viewmodel for getting formatted data.
 	 */

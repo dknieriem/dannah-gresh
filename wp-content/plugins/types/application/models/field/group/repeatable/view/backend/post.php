@@ -62,14 +62,26 @@ class Types_Field_Group_Repeatable_View_Backend_Post {
 		);
 
 		// rfg js
+		$script_dependencies = array(
+			'jquery',
+			Types_Asset_Manager::SCRIPT_KNOCKOUT_MAPPING,
+			Types_Asset_Manager::SCRIPT_UTILS,
+		);
+
+		/* todo DELETE WITHOUT REPLACEMENT WHEN https://core.trac.wordpress.org/ticket/45289 is fixed */
+		$dic = toolset_dic();
+		/** @var \OTGS\Toolset\Types\Controller\Compatibility\Gutenberg $gutenberg */
+		$gutenberg = $dic->make( '\OTGS\Toolset\Types\Controller\Compatibility\Gutenberg' );
+
+		if ( $gutenberg->is_active_for_current_post_type() ) {
+			array_push( $script_dependencies, 'wp-editor' );
+		}
+		/* END DELETE */
+
 		wp_enqueue_script(
 			$main_handle,
 			TYPES_RELPATH . '/public/page/edit_post/rfg.js',
-			array(
-				'jquery',
-				Types_Asset_Manager::SCRIPT_KNOCKOUT_MAPPING,
-				Types_Asset_Manager::SCRIPT_UTILS
-			),
+			$script_dependencies,
 			TYPES_VERSION
 		);
 
@@ -170,7 +182,8 @@ class Types_Field_Group_Repeatable_View_Backend_Post {
 			'action'  => array(
 				'name'  => $types_settings_action,
 				'nonce' => wp_create_nonce( $types_settings_action )
-			)
+			),
+			'yoastActive' => TOOLSET_TYPES_YOAST
 		);
 	}
 

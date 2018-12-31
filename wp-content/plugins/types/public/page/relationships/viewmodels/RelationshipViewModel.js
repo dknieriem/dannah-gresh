@@ -1,5 +1,5 @@
 
-Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource, fieldActions) {
+Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource, fieldActions, listingViewModel) {
     var self = this;
 
     var model = modelSource;
@@ -7,6 +7,10 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
     // Apply the ItemViewModel constructor on this object.
     Toolset.Gui.ItemViewModel.call(self, model, fieldActions);
 
+    Toolset.Gui.Mixins.AdvancedItemViewModel.call(self);
+    // Prevent a refactoring:
+    var createModelProperty = self.createModelProperty;
+    var updateViewModelFromModel = self.updateViewModelFromModel;
 
     // Helper methods
     //
@@ -64,132 +68,6 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
     };
 
 
-    var modelPropertyToSubscribableMap = [];
-
-
-    /**
-     * Accepts a complex object and a path made from property names. Returns the object that holds
-     * the last property and the property name.
-     *
-     * Used for updating the model with changes in viewmodel. Since the model may not be flat,
-     * we need to determine the actual object on which the property will be assigned.
-     *
-     * @param {*} model
-     * @param {[string]|string} propertyNames Array of consecutive property names that make the path
-     *     from the model object to the actual value.
-     * @returns {{lastModelPart: *, lastPropertyName: string}}
-     * @since m2m
-     */
-    var getModelSubObject = function(model, propertyNames) {
-        // Accept a single property name as well.
-        if(!_.isArray(propertyNames)) {
-            propertyNames = [propertyNames];
-        }
-
-        if( propertyNames.length === 1) {
-            // Same if we have an array with a single property name.
-            return {
-                lastModelPart: model,
-                lastPropertyName: _.first(propertyNames)
-            };
-        } else {
-            // For more than one nesting level, we'll traverse down to the last object.
-            return {
-                lastModelPart: _.reduce(_.initial(propertyNames), function(modelPart, propertyName) {
-                    return modelPart[propertyName]
-                }, model),
-                lastPropertyName: _.last(propertyNames)
-            };
-        }
-    };
-
-
-    /**
-     * Create a Knockout subscribable from a model's property, and setup a subscription so that
-     * all changes are reflected back to the model.
-     *
-     * Also, bind to the self.hasChanged() property to indicate that this relationship definition needs an update.
-     *
-     * @param subscribableConstructor A ko.subscribable constructor, that means either ko.observable or
-     *     ko.observableArray, ko.computed, ko.pureComputed, ...
-     * @param {*} model Model to update on change.
-     * @param {string|[string]} propertyNames Name of the model's property to update. If the property is in a nested
-     *     object, this should be an array of property names that make the path to it.
-     * @returns {*} The newly created subscribable
-     *
-     * @since m2m
-     */
-    var createModelProperty = function(subscribableConstructor, model, propertyNames) {
-        var modelSubObject = getModelSubObject(model, propertyNames);
-
-        // Actually create the subscribable (observable).
-        var currentValue = modelSubObject.lastModelPart[modelSubObject.lastPropertyName];
-
-        // Beware: Sometimes, we may be passing arrays around. We need to make sure that
-        // the value in subscribable and subscribable._lastPersistedValue are actually
-        // two different objects. That's why JSON.parse(JSON.stringify(currentValue)).
-        //
-        // Details: https://stackoverflow.com/questions/597588/how-do-you-clone-an-array-of-objects-in-javascript
-        var subscribable = subscribableConstructor(JSON.parse(JSON.stringify(currentValue)));
-
-        // Make sure the subscribable will be synchronized with the model.
-        Toolset.ko.synchronize(subscribable, modelSubObject.lastModelPart, modelSubObject.lastPropertyName);
-
-        // Attach another subscribable of the same type to it, which will hold the last
-        // value that was persisted to the databse.
-        subscribable._lastPersistedValue = subscribableConstructor(JSON.parse(JSON.stringify(currentValue)));
-
-        // When the subscribable changes (and only if it actually changes), update the array of changed properties
-        // on this viewmodel. That will allow for sending only relevant changes to be persisted.
-        subscribable.subscribe(function(newValue) {
-            // We can't just use === because the value may be an array.
-            if(!_.isEqual(subscribable._lastPersistedValue(), newValue)) {
-                if(!_.contains(self.changedProperties(), propertyNames)) {
-                    self.changedProperties.push(propertyNames);
-                }
-            } else {
-                // If the value *became* equal again, we also need to indicate there's no need for saving anymore.
-                self.changedProperties.remove(propertyNames);
-            }
-        });
-
-        // When the last persisted value changes, we mirror the change in GUI (this allows the PHP part
-        // to further change the stored data, e.g. generate an unique slug, etc.)
-        subscribable._lastPersistedValue.subscribe(function(newPersistedValue) {
-            subscribable(JSON.parse(JSON.stringify(newPersistedValue)));
-            self.changedProperties.remove(propertyNames);
-        });
-
-        // This will be needed for applying the changes after persisting.
-        modelPropertyToSubscribableMap.push({
-            path: propertyNames,
-            subscribable: subscribable
-        });
-
-        return subscribable;
-    };
-
-
-    var updateViewModelFromModel = function(updatedModel) {
-
-        // The self.slug observable is bound to model.newSlug, which we never get from the server.
-        updatedModel.newSlug = updatedModel.slug;
-
-        // model.slug is never updated otherwise.
-        model.slug = updatedModel.slug;
-
-        _.each(modelPropertyToSubscribableMap, function(propertyToSubscribable) {
-
-            var modelSubObject = getModelSubObject(updatedModel, propertyToSubscribable.path),
-                lastPersistedValueSubscribable = propertyToSubscribable.subscribable._lastPersistedValue,
-                newPersistedValue = modelSubObject.lastModelPart[modelSubObject.lastPropertyName];
-
-            // This will also update the actual "parent" subscribable because of
-            // the binding set up in createModelProperty
-            lastPersistedValueSubscribable(newPersistedValue);
-        })
-    };
-
 
     var getTheOtherRole = function(role) {
         return (role === 'parent' ? 'child' : 'parent');
@@ -214,6 +92,13 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
     self.displayNameSingular = createModelProperty(ko.observable, model, 'displayNameSingular');
 
     self.isActive = createModelProperty(ko.observable, model, 'isActive');
+
+	/**
+	 * Autodeleting of intermediary posts together with the associations they belong to.
+	 *
+	 * @since 3.2
+	 */
+	self.isAutodeletingIntermediaryPosts = createModelProperty( ko.observable, model, 'isAutodeletingIntermediaryPosts' );
 
     self.cardinality = {
         parent: {
@@ -256,12 +141,6 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
     // Display properties
     //
     //
-
-    self.changedProperties = ko.observableArray();
-
-    self.hasChanged = ko.pureComputed(function() {
-        return (self.changedProperties().length > 0);
-    });
 
     self.isActiveDisplay = ko.pureComputed(function() {
         return (self.isActive()
@@ -337,10 +216,10 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
                 if ( ! self.display ) {
                     return;
                 }
-                var cardinality = self.cardinalityClass();
                 if ( self.display && self.display.cardinalityClassString() === 'one-to-one' ) {
                     intRange.min = 1;
                 }
+                // noinspection JSCheckFunctionSignatures
                 var current = Number(target()),
                     newValueAsNum = isNaN( newValue ) ? 0 : parseInt( +newValue, 10 ),
                     valueToWrite = newValueAsNum;
@@ -375,27 +254,19 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
         return result;
     };
 
-    /**
-     * Aliases checkboxes need to get initial value from isEnabledAliases, but this one also needs the checkboxes value, so cheking checkboxes initialization is required.
-     */
-    var checkboxHasBeenInitialized = false;
-
 
     /**
      * @bool
      */
     self.previousRelationshipTypeWasManyToMany = isManyToMany();
 
+
     /**
      * Aliases checkboxes need to get initial value from isEnabledAliases, but this one also needs the checkboxes value, so cheking checkboxes initialization is required.
      */
     var checkboxHasBeenInitialized = false;
 
 
-    /**
-     * Aliases checkboxes need to get initial value from isEnabledAliases, but this one also needs the checkboxes value, so cheking checkboxes initialization is required.
-     */
-    var checkboxHasBeenInitialized = false;
     //noinspection JSUnusedGlobalSymbols
     self.display = {
 
@@ -935,7 +806,7 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
             }
             return self.display.minimumLimit().parent < 2;
         }, this );
-    },
+    };
 
 
     isManyToMany.subscribe(function(newValue) {
@@ -1265,32 +1136,132 @@ Types.page.relationships.viewmodels.RelationshipViewModel = function(modelSource
 
             handleSuccess = function (response, responseData) {
 
-            // We expect exactly one updated definition.
-            if(
-                !_.has(responseData, 'updated_definitions')
-                || !_.isArray(responseData['updated_definitions'] )
-                || 1 !== responseData['updated_definitions'].length
-            ) {
-                handleFailure(response);
-                return;
-            }
-            // If the slug has change it has to access the new page.
-            var newSlug = responseData.updated_definitions[0].slug;
-            if( previousSlug !== newSlug) {
-                history.pushState({screen: 'editing'}, null, document.location.href.replace(/slug=[\w\d-_]+/, 'slug='+newSlug) );
-            }
-            Types.page.relationships.main.viewModel.displayMessagesFromAjax(responseData, 'info', 'Relationship has been saved.');
-            updateViewModelFromModel(_.first(responseData['updated_definitions']));
-            // Reset changedProperties.
-            self.changedProperties([]);
-            finalize();
-            if(typeof(successCallback) === 'function') {
-                successCallback();
-            }
-        };
+                // We expect exactly one updated definition.
+                if (
+                    !_.has(responseData, 'updated_definitions')
+                    || !_.isArray(responseData['updated_definitions'])
+                    || 1 !== responseData['updated_definitions'].length
+                ) {
+                    handleFailure(response);
+                    return;
+                }
+                // If the slug has change it has to access the new page.
+                var newSlug = responseData.updated_definitions[0].slug;
+                if (previousSlug !== newSlug) {
+                    history.pushState({screen: 'editing'}, null, document.location.href.replace(/slug=[\w\d-_]+/, 'slug=' + newSlug));
+                }
+                Types.page.relationships.main.viewModel.displayMessagesFromAjax(responseData, 'info', 'Relationship has been saved.');
+                updateViewModelFromModel(_.first(responseData['updated_definitions']), model);
+                // Reset changedProperties.
+                self.changedProperties([]);
+                finalize();
+                if (typeof(successCallback) === 'function') {
+                    successCallback();
+                }
+            };
 
         ajax.doAjax(ajax.action.update, model, handleSuccess, handleFailure);
     };
+
+
+    /**
+     * Check whether a currently selected bulk action can be performed on this field group.
+     *
+     * @since 3.0
+     */
+    self.isBulkActionAllowed = ko.computed(function() {
+        var bulkAction = listingViewModel.selectedBulkAction();
+
+        if( 'merge' === bulkAction ) {
+
+            // Allow a relationship to be selected for merging only if
+            // - it is an one-to-many relationship
+            // - the child element domain+type is used in exactly two relationships (including this one)
+            // - the second relationship acceptable is also one-to-many
+            // - the second relationship has a different parent domain+type
+            // - it's not a polymorphic relationship
+            //
+            // Accepting anything else might result in a serious mess after the merging.
+            //
+            // Follow-up validation is taking place on the server side.
+            if( self.cardinalityClass().parent !== 'one' || self.cardinalityClass().child !== 'many' ) {
+                return false;
+            }
+
+            if(self.types.child.types().length > 1 || self.types.parent.types().length > 1 ) {
+                return false;
+            }
+
+            // We can afford this because we are not merging polymorphic relationships (even if they become possible in the future).
+            var myChildPostType = _.first(self.types.child.types());
+            var myParentPostType = _.first(self.types.parent.types());
+
+            var relationshipsWithSameChildPostType = _.filter(_.without(listingViewModel.items(), self), function(relationship) {
+                var otherChildPostType = _.first(relationship.types.child.types());
+
+                if(relationship.types.child.domain() !== self.types.child.domain()) {
+                    return false;
+                }
+
+                return ( otherChildPostType === myChildPostType );
+            });
+
+            if(relationshipsWithSameChildPostType.length > 1) {
+                // This would mean that after the transformation, we'd have another relationship pointed at the IPT,
+                // which is not allowed.
+                return false;
+            }
+
+            var isRelationshipMergeable = function(relationship) {
+
+                var otherChildPostType = _.first(relationship.types.child.types());
+                var otherParentPostType = _.first(relationship.types.parent.types());
+
+                if(relationship.cardinalityClass().parent !== 'one' || relationship.cardinalityClass().child !== 'many' ) {
+                    return false;
+                }
+                if(relationship.types.child.domain() !== self.types.child.domain()) {
+                    return false;
+                }
+
+                if(relationship.types.child.types().length !== 1) {
+                    return false;
+                }
+
+                if(
+                    relationship.types.parent.domain() === self.types.parent.domain()
+                    && otherParentPostType === myParentPostType
+                ) {
+                    return false;
+                }
+
+                return ( otherChildPostType === myChildPostType );
+            };
+
+            var selectedItems = _.without(listingViewModel.selectedItems(), self);
+
+            if(selectedItems.length === 0) {
+                // Discard this relationship if there is more than one acceptable option for the second relationship.
+                var otherAcceptableRelationships = _.filter(
+                    _.without(listingViewModel.items(), self),
+                    isRelationshipMergeable
+                );
+                if (otherAcceptableRelationships.length !== 1) {
+                    return false;
+                }
+            } else if(selectedItems.length === 1 && ! isRelationshipMergeable(_.first(selectedItems))) {
+                // One relationship is already selected but it's not mergeable together with this one.
+                return false;
+            } else if(selectedItems.length > 1) {
+                // Already got selected two or more items, we cannot select another.
+                return false;
+            }
+
+            // We can merge this, yay
+        }
+
+        return true;
+    });
 
 
     // Responses to global events

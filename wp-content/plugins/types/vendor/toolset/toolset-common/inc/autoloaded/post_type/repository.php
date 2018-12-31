@@ -175,12 +175,21 @@ class Toolset_Post_Type_Repository {
 		foreach ( $custom_types as $slug => $definition ) {
 
 			// Mimicking behaviour from Types.
-			if ( empty( $definition ) || $this->is_custom_definition_for_builtin_post_type( $slug, $definition ) ) {
+			if ( empty( $definition ) ) {
 				continue;
 			}
 
 			$registered_post_type = toolset_getarr( $registered_post_types, $slug, null );
-			$results[ $slug ] = $this->post_type_factory->post_type_from_types( $slug, $definition, $registered_post_type );
+			$post_type_from_types = $this->post_type_factory->post_type_from_types( $slug, $definition, $registered_post_type );
+
+			if( $this->is_custom_definition_for_builtin_post_type( $slug, $definition ) ) {
+				// Try to make everyone happy.
+				$post_type_model = $this->post_type_factory->builtin_post_type_with_overrides( $registered_post_type, $post_type_from_types );
+			} else {
+				$post_type_model = $post_type_from_types;
+			}
+
+			$results[ $slug ] = $post_type_model;
 		}
 
 		return $results;

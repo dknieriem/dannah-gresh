@@ -48,8 +48,7 @@ class Toolset_Association_Query_Condition_Postmeta extends Toolset_Association_Q
 		Toolset_Association_Query_Table_Join_Manager $join_manager
 	) {
 		if(
-			! is_string( $meta_key ) || empty( $meta_key )
-			|| ! is_string( $meta_value ) || empty( $meta_value )
+			! is_string( $meta_key ) || Toolset_Utils::is_field_value_truly_empty( $meta_key )
 			|| ! in_array( $comparison_operator, Toolset_Query_Comparison_Operator::all() )
 		) {
 			throw new InvalidArgumentException();
@@ -72,7 +71,8 @@ class Toolset_Association_Query_Condition_Postmeta extends Toolset_Association_Q
 		$postmeta = $this->join_manager->wp_postmeta( $this->for_role, $this->meta_key );
 		$meta_value = esc_sql( $this->meta_value );
 
-		return "$postmeta $this->comparison_operator '$meta_value'";
+		// The comparison operator is sanitized in the constructor.
+		return "{$postmeta}.meta_value $this->comparison_operator '$meta_value'";
 	}
 
 }

@@ -53,13 +53,6 @@ class Types_Page_Extension_Settings {
 			)
 		);
 
-		wp_enqueue_style(
-			'types-toolset-settings',
-			TYPES_RELPATH . '/public/css/settings.css',
-			array(),
-			TYPES_VERSION
-		);
-
 		wp_enqueue_script(
 			'types-toolset-settings',
 			TYPES_RELPATH . '/public/js/settings.js',

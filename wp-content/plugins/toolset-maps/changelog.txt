@@ -1,4 +1,54 @@
 -------------------------------------------------------------------------------------------------------------------
+Toolset Maps 1.7.1
+	- Added lots of features to Map Gutenberg block.
+	- Refactored "Reload" button dialog now has nicer UI.
+
+-------------------------------------------------------------------------------------------------------------------
+Toolset Maps 1.7
+	- Added Gutenberg block for Maps.
+	- Improved SVG Compatibility for markers with Google API, and especially for IE11.
+	- Improved initializing of map preview in address editor fixes some edge cases and improves performance a bit.
+	- Fixed a regression where current user location search (which requires HTTPS) was offered even if site is loaded with HTTP.
+	- Fixed an issue where map distance filter fields were shown twice after current visitor location was determined.
+
+-------------------------------------------------------------------------------------------------------------------
+Toolset Maps 1.6
+	- Added an option to return results outside of the radius instead of inside in Distance Filter.
+	- Added a shortcode for conditional display based on visitor location.
+	- Added a shortcode to show the distance of an address field to a given point.
+	- Added heading and pitch attributes to manually adjust street view.
+	- Added ability to order custom search results by distance from location being searched.
+	- Updated translations.
+	- Improved UI: when “Use my location” is clicked, preview map is automatically updated.
+	- Fixed UI for ordering by distance - it needed a page reload to show the "As a distance" option.
+
+-------------------------------------------------------------------------------------------------------------------
+Toolset Maps 1.5.4
+	- Fixed an issue where the option to order by distance was only available after page reload.
+	- Fixed distance filtering & ordering to account for repeating address fields.
+	- Fixed some minor translation issues.
+	- Fixed an edge case with distance filter and paging.
+	- Fixed an issue when saving a non-existing address with Azure API.
+	- A number of small UI fixes, especially in combination with Azure.
+	- Updated key check for distance filter to be multi-API aware.
+	- Improved performance: optimized JS and CSS loading.
+
+-------------------------------------------------------------------------------------------------------------------
+Toolset Maps 1.5.3
+	- Improved Azure Maps API feature parity with Google Maps API:
+		- Map rendering improvements: support for scrollwheel="off", everything in "Map zoom and center" section, etc.
+		- Markers support custom icons now.
+		- Marker popups now support HTML content.
+		- Address autocomplete on distance filter frontend with Azure styling issue fixed.
+		- Elementor editor preview fixed with Azure.
+		- Full feature parity address editor implemented.
+	- Updated dependency for Toolset Types to 3.0.
+	- Removed API key entering from plugins page (because we support using 2 APIs now).
+	- Removed compatibility code for Views < 2.6. (Views 2.6 are a minimum requirement for Maps anyway.)
+	- Fixed an issue with distance ordering and "Limit and Offset" option in Views.
+	- Fixed a regression from 1.5 where map preview was not rendered on form that includes an address field.
+
+-------------------------------------------------------------------------------------------------------------------
 Toolset Maps 1.5.2
 	- Fixed an issue with the ability to insert and display markers for address fields coming from non trivial source.
 

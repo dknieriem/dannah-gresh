@@ -1,25 +1,10 @@
 <?php
 
+use OTGS\Toolset\Common\PostType\EditorMode;
+
 require_once WPCF_INC_ABSPATH . '/classes/class.types.admin.page.php';
 include_once WPCF_INC_ABSPATH.'/common-functions.php';
 
-/**
- * Summary.
- *
- * Description.
- *
- * @since x.x.x
- * @access (for functions: only use if private)
- *
- * @see Function/method/class relied on
- * @link URL
- * @global type $varname Description.
- * @global type $varname Description.
- *
- * @param type $var Description.
- * @param type $var Optional. Description.
- * @return type Description.
- */
 class Types_Admin_Edit_Post_Type extends Types_Admin_Page
 {
     private $fields;
@@ -124,19 +109,17 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
     {
         $this->save();
 
-      // Flush rewrite rules if we're asked to do so.
-      //
-      // This must be done after all post types and taxonomies are registered, and they can be registered properly
-      // only on 'init'. So after making changes, we need to reload the page and THEN flush.
-      if( '1' == toolset_getget( 'flush', '0' ) ) {
-        flush_rewrite_rules();
-      }
+		// Flush rewrite rules if we're asked to do so.
+		//
+		// This must be done after all post types and taxonomies are registered, and they can be registered properly
+		// only on 'init'. So after making changes, we need to reload the page and THEN flush.
+		if ( '1' == toolset_getget( 'flush', '0' ) ) {
+			flush_rewrite_rules();
+		}
 
-
-        global $wpcf;
+		global $wpcf;
 
         $id = false;
-        $update = false;
 
         if ( isset( $_GET[$this->get_id] ) ) {
             $id = sanitize_text_field( $_GET[$this->get_id] );
@@ -342,6 +325,49 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
             $form['slug']['#pattern'] = '<tr><td><LABEL></td><td><ERROR><BEFORE><ELEMENT><DESCRIPTION><AFTER></td></tr>';
             $form['slug']['#description'] = $this->get_disabled_field_explanation();
         }
+
+		$block_editor_available = new Toolset_Condition_Plugin_Gutenberg_Active();
+		if( $block_editor_available->is_met() ) {
+			// CPT, which was created pre editor choice (pre-Gutenberg). In this case, we select 'Classic' as default
+			// for custom post types but 'Block' for built-in post types (which is according to WordPress, so that
+			// nothing changes when they don't touch this setting and save the settings for a built-in post type
+			// for the first time.
+			$editor_default_value = ( toolset_getarr( $this->ct, '_builtin' ) ? EditorMode::BLOCK : EditorMode::CLASSIC );
+
+			$form['editor'] = array(
+				'#type' => 'radios',
+				'#name' => 'ct[editor]',
+				'#title' => __( 'Editor', 'wpcf' ). ' (<strong>' . __( 'required', 'wpcf' ) . '</strong>)',
+				'#validate' => array(
+					'required' => array('value' => 'true'),
+				),
+				'#options' => array(
+					'block' => array(
+						'#title' => __( 'Block', 'wpcf' ),
+						'#name' => 'editor',
+						'#value' => EditorMode::BLOCK,
+						'#inline' => true,
+					),
+					'classic' => array(
+						'#title' => __( 'Classic', 'wpcf' ),
+						'#name' => 'editor',
+						'#value' => EditorMode::CLASSIC,
+						'#inline' => true,
+					),
+					'per_post' => array(
+						'#title' => __( 'Per post', 'wpcf' ),
+						'#name' => 'editor',
+						'#value' => EditorMode::PER_POST,
+						'#inline' => true,
+					),
+				),
+				'#inline' => true,
+				'#default_value' => isset( $this->ct['editor'] ) && ! empty( $this->ct['editor'] )
+					? $this->ct['editor']
+					: $editor_default_value,
+				'#pattern' => '<tr><td><LABEL></td><td><ERROR><BEFORE><ELEMENT><DESCRIPTION><AFTER></td></tr>',
+			);
+		}
 
         $form['description'] = array(
             '#type' => 'textarea',
@@ -726,7 +752,12 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
                     '#name' => 'ct[hierarchical]',
                     '#default_value' => !empty( $this->ct['hierarchical'] ),
                     '#title' => __( 'hierarchical', 'wpcf' ),
-                    '#description' => __( 'Whether the post type is hierarchical. Allows Parent to be specified.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' ),
+                    '#description' => __( 'Whether the post type is hierarchical. Allows Parent to be specified.', 'wpcf' ) .
+									  '<br />' . sprintf(
+										  __( 'Note that %sPage Attributes%s must be active to show the select for Parent.', 'wpcf' ),
+										  '<a href="#types_display_sections">'
+										  , '</a>' ) .
+									  '<br />' . __( 'Default: false.', 'wpcf' ),
                     '#inline' => true,
                 ),
                 'can_export' => array(
@@ -766,14 +797,30 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
             '#inline' => true,
         );
 
-        $form['show_in_rest'] = array(
+		$show_in_rest_descr_block =  __( 'For the block editor this option needs to be checked.', 'wpcf' );
+		$show_in_rest_descr_classic = __( 'Whether to expose this post type in the REST API.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' );
+
+        $form['show_in_rest_control'] = array(
             '#type' => 'checkbox',
-            '#name' => 'ct[show_in_rest]',
+            '#name' => 'ct[show_in_rest_control]',
             '#default_value' => !empty( $this->ct['show_in_rest'] ),
             '#title' => __( 'show_in_rest', 'wpcf' ),
-            '#description' => __( 'Whether to expose this post type in the REST API.', 'wpcf' ) . '<br />' . __( 'Default: false.', 'wpcf' ),
+            '#description' => isset( $this->ct['editor'] ) && $this->ct['editor'] == 'block'
+				? $show_in_rest_descr_block
+				: $show_in_rest_descr_classic,
+            '#attributes' => array(
+            	'data-description-block' => $show_in_rest_descr_block,
+				'data-description-classic' => $show_in_rest_descr_classic,
+			),
             '#inline' => true,
+			'#pattern' => '<div id="attr_show_in_rest"><ELEMENT><LABEL><DESCRIPTION></div>',
         );
+
+		$form['show_in_rest'] = array(
+			'#type' => 'hidden',
+			'#value' => '',
+			'#name' => 'ct[show_in_rest]',
+		);
 
         $form['rest_base'] = array(
             '#type' => 'textfield',
@@ -1112,7 +1159,7 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
         }
 
         $data['slug'] = $post_type;
-      $post_type_option = new Types_Utils_Post_Type_Option();
+      	$post_type_option = new Types_Utils_Post_Type_Option();
         $custom_types = $post_type_option->get_post_types();
         $protected_data_check = array();
 
@@ -1266,68 +1313,21 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
             }
         }
 
-        /**
-         * save custom field group
-         */
-        /* removed types-608
-        $post_to_groups = isset($_POST['ct']['custom-field-group'])?$_POST['ct']['custom-field-group']:array();
-        $groups = $this->fields->get_groups_with_post_types();
-        foreach( $groups as $group) {
-            $post_types_to_save = $group['_wp_types_group_post_types'];
-            // save
-            if ( array_key_exists($group['id'], $post_to_groups)) {
-                $post_types_to_save[] = $data['slug'];
-            } else {
-                if(($key = array_search($data['slug'], $post_types_to_save)) !== false) {
-                    unset($post_types_to_save[$key]);
-                }
-                if (
-                    false
-                    || empty($post_types_to_save)
-                    || (
-                        true
-                        && 1 == sizeof($post_types_to_save)
-                        && 'all' == current($post_types_to_save)
-                    )
-                ) {
-                    $post_types_to_save = array();
-                    foreach( get_post_types() as $key => $value ) {
-                        if ( $data['slug'] == $value) {
-                            continue;
-                        }
-                        if ( in_array($value, $wpcf->excluded_post_types) ) {
-                            continue;
-                        }
-                        $post_types_to_save[] = $value;
-                    }
-                }
-            }
-            wpcf_admin_fields_save_group_post_types($group['id'], $post_types_to_save);
-        }
-        */
 
-        /**
-         * set last edit time
-         */
+        // set last edit time
         $data[TOOLSET_EDIT_LAST] = time();
 
-        /**
-         * set last edit author
-         */
-
+        // set last edit author
         $data[WPCF_AUTHOR] = get_current_user_id();
 
-        /**
-         * add builid in
-         */
         if ( $data['_builtin'] && !isset( $protected_data_check[$data['slug']])) {
             $protected_data_check[$data['slug']] = array();
         }
 
-      // Always reserve m2m flags
-      $post_type_helper = new Types_Post_Type_Helper( $data['slug'] );
-      $data[ Toolset_Post_Type_From_Types::DEF_IS_REPEATING_FIELD_GROUP ] = $post_type_helper->is_repeating_field_group();
-      $data[ Toolset_Post_Type_From_Types::DEF_IS_INTERMEDIARY_POST_TYPE ] = $post_type_helper->is_intermediary();
+		// Always reserve m2m flags
+		$post_type_helper = new Types_Post_Type_Helper( $data['slug'] );
+		$data[ Toolset_Post_Type_From_Types::DEF_IS_REPEATING_FIELD_GROUP ] = $post_type_helper->is_repeating_field_group();
+		$data[ Toolset_Post_Type_From_Types::DEF_IS_INTERMEDIARY_POST_TYPE ] = $post_type_helper->is_intermediary();
 
         // Merging protected data
         $custom_types[$post_type] = array_merge( $protected_data_check, $data );
@@ -1349,7 +1349,7 @@ class Types_Admin_Edit_Post_Type extends Types_Admin_Page
             'updated notice notice-success is-dismissible'
         );
 
-      flush_rewrite_rules();
+		flush_rewrite_rules();
 
         if ( !$data['_builtin'] ) {
             do_action( 'wpcf_custom_types_save', $data );

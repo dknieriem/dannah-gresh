@@ -9,7 +9,7 @@
 
 import classnames from 'classnames';
 
-const blockIcon = <span className={ classnames( 'toolset-gutenberg-block-image', 'toolset-cred-form-gutenberg-block', 'dashicon', ) }></span>;
+const blockIcon = <span><span className={ classnames( 'toolset-gutenberg-block-image', 'toolset-cred-form-gutenberg-block', 'dashicon' ) }></span></span>;
 
 const blockPlaceholder = <span className={ classnames( 'toolset-gutenberg-block-placeholder', 'toolset-cred-form-gutenberg-block', 'dashicon', ) }></span>;
 

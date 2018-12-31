@@ -36,6 +36,7 @@ Types.page.relationships.Class = function() {
         var modelData = self.getModelData();
         //noinspection JSUnresolvedVariable
         Types.page.relationships.jsPath = modelData.jsIncludePath;
+        Types.page.relationships.typesVersion = modelData.typesVersion;
 
         self.initStaticData(modelData);
 
@@ -44,14 +45,16 @@ Types.page.relationships.Class = function() {
 
 
     self.loadDependencies = function (nextStep) {
+        var typesVersion = Types.page.relationships.typesVersion;
         // Continue after loading the view of the listing table.
         Types.head.load(
-            Types.page.relationships.jsPath + '/viewmodels/ListingViewModel.js',
-            Types.page.relationships.jsPath + '/viewmodels/RelationshipViewModel.js',
-            Types.page.relationships.jsPath + '/viewmodels/WizardViewModel.js',
-            Types.page.relationships.jsPath + '/viewmodels/dialogs/DeleteRelationship.js',
-            Types.page.relationships.jsPath + '/viewmodels/dialogs/DeleteIntermediaryPostType.js',
-            Types.page.relationships.jsPath + '/viewmodels/dialogs/ConfirmChangeCardinality.js',
+            Types.page.relationships.jsPath + '/viewmodels/ListingViewModel.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/RelationshipViewModel.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/WizardViewModel.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/dialogs/DeleteRelationship.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/dialogs/DeleteIntermediaryPostType.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/dialogs/ConfirmChangeCardinality.js?ver=' + typesVersion,
+            Types.page.relationships.jsPath + '/viewmodels/dialogs/MergeRelationships.js?ver=' + typesVersion,
             nextStep
         );
     };
@@ -470,33 +473,6 @@ Types.page.relationships.Class = function() {
     };
 
 
-    // Knockout helpers specific for Toolset
-    // todo Move this to Toolset GUI base
-    Toolset.ko = {
-
-        /**
-         * Update an object property when a Knockout subscribable changes.
-         *
-         * @param {ko.subscribable} subscribable An instance of ko.observable, ko.observableArray, ko.computed, ...
-         * @param {function|*} modelOrCallable Model to update or an update callback.
-         * @param {string|undefined} propertyName If a model object is provided, this is the property name that will be
-         *     updated with the new value when the subscribable changes.
-         *
-         * @since m2m
-         */
-        synchronize: function(subscribable, modelOrCallable, propertyName) {
-            if(typeof modelOrCallable === 'function') {
-                subscribable.subscribe(modelOrCallable);
-            } else {
-                var model = modelOrCallable;
-                subscribable.subscribe(function(newValue) {
-                    model[propertyName] = newValue;
-                });
-            }
-        }
-    };
-
-
     /**
      * Handles all the interaction with the server.
      *
@@ -570,6 +546,7 @@ Types.page.relationships.Class = function() {
 };
 
 
+// noinspection JSUnusedLocalSymbols
 /**
  * Role slugs format
  *

@@ -60,12 +60,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 162);
+/******/ 	return __webpack_require__(__webpack_require__.s = 90);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ (function(module, exports) {
 
 var core = module.exports = { version: '2.5.3' };
@@ -73,8 +72,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 
 /***/ }),
-
-/***/ 1:
+/* 1 */
 /***/ (function(module, exports) {
 
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
@@ -86,407 +84,32 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
 
 /***/ }),
-
-/***/ 10:
-/***/ (function(module, exports, __webpack_require__) {
-
-var dP = __webpack_require__(6);
-var createDesc = __webpack_require__(18);
-module.exports = __webpack_require__(4) ? function (object, key, value) {
-  return dP.f(object, key, createDesc(1, value));
-} : function (object, key, value) {
-  object[key] = value;
-  return object;
-};
-
-
-/***/ }),
-
-/***/ 110:
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = { "default": __webpack_require__(111), __esModule: true };
-
-/***/ }),
-
-/***/ 111:
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(112);
-module.exports = __webpack_require__(0).Object.assign;
-
-
-/***/ }),
-
-/***/ 112:
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.3.1 Object.assign(target, source)
-var $export = __webpack_require__(3);
-
-$export($export.S + $export.F, 'Object', { assign: __webpack_require__(113) });
-
-
-/***/ }),
-
-/***/ 113:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 19.1.2.1 Object.assign(target, source, ...)
-var getKeys = __webpack_require__(14);
-var gOPS = __webpack_require__(39);
-var pIE = __webpack_require__(24);
-var toObject = __webpack_require__(36);
-var IObject = __webpack_require__(48);
-var $assign = Object.assign;
-
-// should work with symbols and should have deterministic property order (V8 bug)
-module.exports = !$assign || __webpack_require__(12)(function () {
-  var A = {};
-  var B = {};
-  // eslint-disable-next-line no-undef
-  var S = Symbol();
-  var K = 'abcdefghijklmnopqrst';
-  A[S] = 7;
-  K.split('').forEach(function (k) { B[k] = k; });
-  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
-}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-  var T = toObject(target);
-  var aLen = arguments.length;
-  var index = 1;
-  var getSymbols = gOPS.f;
-  var isEnum = pIE.f;
-  while (aLen > index) {
-    var S = IObject(arguments[index++]);
-    var keys = getSymbols ? getKeys(S).concat(getSymbols(S)) : getKeys(S);
-    var length = keys.length;
-    var j = 0;
-    var key;
-    while (length > j) if (isEnum.call(S, key = keys[j++])) T[key] = S[key];
-  } return T;
-} : $assign;
-
-
-/***/ }),
-
-/***/ 12:
+/* 2 */
 /***/ (function(module, exports) {
-
-module.exports = function (exec) {
-  try {
-    return !!exec();
-  } catch (e) {
-    return true;
-  }
-};
-
-
-/***/ }),
-
-/***/ 14:
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.2.14 / 15.2.3.14 Object.keys(O)
-var $keys = __webpack_require__(45);
-var enumBugKeys = __webpack_require__(31);
-
-module.exports = Object.keys || function keys(O) {
-  return $keys(O, enumBugKeys);
-};
-
-
-/***/ }),
-
-/***/ 15:
-/***/ (function(module, exports) {
-
-var toString = {}.toString;
 
 module.exports = function (it) {
-  return toString.call(it).slice(8, -1);
+  return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
 
 
 /***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 16:
-/***/ (function(module, exports) {
-
-var id = 0;
-var px = Math.random();
-module.exports = function (key) {
-  return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
-};
-
-
-/***/ }),
-
-/***/ 162:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign__ = __webpack_require__(110);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_classnames__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_classnames__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_editor_scss__ = __webpack_require__(163);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__styles_editor_scss___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__styles_editor_scss__);
-
-/**
- * Block dependencies
- //  */
-
-
-
-/**
- * Internal block libraries
- */
-var __ = wp.i18n.__;
-var addFilter = wp.hooks.addFilter;
-var BlockControls = wp.editor.BlockControls;
-var createElement = wp.element.createElement;
-
-
-addFilter('blocks.BlockEdit', 'toolset/extend-html', function (BlockEdit) {
-	var modifyCustomHTMLBlock = function modifyCustomHTMLBlock(props) {
-		var clonedProps = __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_assign___default()({}, props, { key: 'toolset-extended-html-block' });
-
-		var element = createElement(BlockEdit, clonedProps);
-		if ((props.focus || props.isSelected) && 'core/html' === props.name) {
-			var fieldsAndViewsButton = 'undefined' !== typeof window.WPViews && wp.element.createElement(
-				BlockControls,
-				{ key: 'toolset-controls-views' },
-				wp.element.createElement(
-					'div',
-					{ className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('components-toolbar') },
-					wp.element.createElement(
-						'button',
-						{
-							className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('components-button wpv-block-button'),
-							onClick: function onClick(e) {
-								window.wpcfActiveEditor = 'toolset-extended-html-' + props.id;
-
-								var customHtmlTextArea = e.target.closest('.editor-block-contextual-toolbar').nextSibling.querySelector('textarea');
-								if (customHtmlTextArea) {
-									// Add an id to the Custom HTML text area to use it when inserting the Fields and Views shortcode.
-									customHtmlTextArea.id = window.wpcfActiveEditor;
-									// Open the Fields and Views dialog
-									window.WPViews.shortcodes_gui.open_fields_and_views_dialog();
-								}
-							} },
-						wp.element.createElement('i', { className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('icon-views-logo', 'fa', 'fa-wpv-custom', 'ont-icon-18', 'ont-color-gray') }),
-						wp.element.createElement(
-							'span',
-							null,
-							' ',
-							__('Fields and Views')
-						)
-					)
-				)
-			);
-
-			var credFormsButton = 'undefined' !== typeof window.CRED && wp.element.createElement(
-				BlockControls,
-				{ key: 'toolset-controls-cred' },
-				wp.element.createElement(
-					'div',
-					{ className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('components-toolbar') },
-					wp.element.createElement(
-						'button',
-						{
-							className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('components-button wpv-block-button'),
-							onClick: function onClick(e) {
-								window.wpcfActiveEditor = 'toolset-extended-html-' + props.id;
-
-								var customHtmlTextArea = e.target.closest('.editor-block-contextual-toolbar').nextSibling.querySelector('textarea');
-								if (customHtmlTextArea) {
-									// Add an id to the Custom HTML text area to use it when inserting the CRED forms shortcode.
-									customHtmlTextArea.id = window.wpcfActiveEditor;
-									// Open the CRED Forms dialog
-									window.Toolset.CRED.shortcodeGUI.openCredDialog();
-								}
-							} },
-						wp.element.createElement('i', { className: __WEBPACK_IMPORTED_MODULE_1_classnames___default()('icon-cred-logo', 'fa', 'fa-wpv-custom', 'ont-icon-18', 'ont-color-gray') }),
-						wp.element.createElement(
-							'span',
-							null,
-							' ',
-							__('Toolset Forms')
-						)
-					)
-				)
-			);
-
-			element = [element, fieldsAndViewsButton, credFormsButton];
-		}
-		return element;
-	};
-
-	return modifyCustomHTMLBlock;
+// Thank's IE8 for his funny defineProperty
+module.exports = !__webpack_require__(5)(function () {
+  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
-/***/ }),
-
-/***/ 163:
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ }),
-
-/***/ 17:
-/***/ (function(module, exports, __webpack_require__) {
-
-// optional / simple context binding
-var aFunction = __webpack_require__(32);
-module.exports = function (fn, that, length) {
-  aFunction(fn);
-  if (that === undefined) return fn;
-  switch (length) {
-    case 1: return function (a) {
-      return fn.call(that, a);
-    };
-    case 2: return function (a, b) {
-      return fn.call(that, a, b);
-    };
-    case 3: return function (a, b, c) {
-      return fn.call(that, a, b, c);
-    };
-  }
-  return function (/* ...args */) {
-    return fn.apply(that, arguments);
-  };
-};
-
-
-/***/ }),
-
-/***/ 18:
-/***/ (function(module, exports) {
-
-module.exports = function (bitmap, value) {
-  return {
-    enumerable: !(bitmap & 1),
-    configurable: !(bitmap & 2),
-    writable: !(bitmap & 4),
-    value: value
-  };
-};
-
-
-/***/ }),
-
-/***/ 24:
-/***/ (function(module, exports) {
-
-exports.f = {}.propertyIsEnumerable;
-
-
-/***/ }),
-
-/***/ 25:
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
-  Copyright (c) 2016 Jed Watson.
-  Licensed under the MIT License (MIT), see
-  http://jedwatson.github.io/classnames
-*/
-/* global define */
-
-(function () {
-	'use strict';
-
-	var hasOwn = {}.hasOwnProperty;
-
-	function classNames () {
-		var classes = [];
-
-		for (var i = 0; i < arguments.length; i++) {
-			var arg = arguments[i];
-			if (!arg) continue;
-
-			var argType = typeof arg;
-
-			if (argType === 'string' || argType === 'number') {
-				classes.push(arg);
-			} else if (Array.isArray(arg)) {
-				classes.push(classNames.apply(null, arg));
-			} else if (argType === 'object') {
-				for (var key in arg) {
-					if (hasOwn.call(arg, key) && arg[key]) {
-						classes.push(key);
-					}
-				}
-			}
-		}
-
-		return classes.join(' ');
-	}
-
-	if (typeof module !== 'undefined' && module.exports) {
-		module.exports = classNames;
-	} else if (true) {
-		// register as 'classnames', consistent with npm package name
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function () {
-			return classNames;
-		}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else {
-		window.classNames = classNames;
-	}
-}());
-
-
-/***/ }),
-
-/***/ 27:
-/***/ (function(module, exports) {
-
-// 7.2.1 RequireObjectCoercible(argument)
-module.exports = function (it) {
-  if (it == undefined) throw TypeError("Can't call method on  " + it);
-  return it;
-};
-
-
-/***/ }),
-
-/***/ 28:
-/***/ (function(module, exports) {
-
-// 7.1.4 ToInteger
-var ceil = Math.ceil;
-var floor = Math.floor;
-module.exports = function (it) {
-  return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
-};
-
-
-/***/ }),
-
-/***/ 29:
-/***/ (function(module, exports, __webpack_require__) {
-
-var shared = __webpack_require__(30)('keys');
-var uid = __webpack_require__(16);
-module.exports = function (key) {
-  return shared[key] || (shared[key] = uid(key));
-};
-
-
-/***/ }),
-
-/***/ 3:
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
 var core = __webpack_require__(0);
-var ctx = __webpack_require__(17);
-var hide = __webpack_require__(10);
+var ctx = __webpack_require__(18);
+var hide = __webpack_require__(11);
 var PROTOTYPE = 'prototype';
 
 var $export = function (type, name, source) {
@@ -547,8 +170,289 @@ module.exports = $export;
 
 
 /***/ }),
+/* 5 */
+/***/ (function(module, exports) {
 
-/***/ 30:
+module.exports = function (exec) {
+  try {
+    return !!exec();
+  } catch (e) {
+    return true;
+  }
+};
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(2);
+module.exports = function (it) {
+  if (!isObject(it)) throw TypeError(it + ' is not an object!');
+  return it;
+};
+
+
+/***/ }),
+/* 7 */,
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// to indexed object, toObject with fallback for non-array-like ES3 strings
+var IObject = __webpack_require__(24);
+var defined = __webpack_require__(15);
+module.exports = function (it) {
+  return IObject(defined(it));
+};
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(6);
+var IE8_DOM_DEFINE = __webpack_require__(35);
+var toPrimitive = __webpack_require__(29);
+var dP = Object.defineProperty;
+
+exports.f = __webpack_require__(3) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
+  anObject(O);
+  P = toPrimitive(P, true);
+  anObject(Attributes);
+  if (IE8_DOM_DEFINE) try {
+    return dP(O, P, Attributes);
+  } catch (e) { /* empty */ }
+  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
+  if ('value' in Attributes) O[P] = Attributes.value;
+  return O;
+};
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+var hasOwnProperty = {}.hasOwnProperty;
+module.exports = function (it, key) {
+  return hasOwnProperty.call(it, key);
+};
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var dP = __webpack_require__(9);
+var createDesc = __webpack_require__(21);
+module.exports = __webpack_require__(3) ? function (object, key, value) {
+  return dP.f(object, key, createDesc(1, value));
+} : function (object, key, value) {
+  object[key] = value;
+  return object;
+};
+
+
+/***/ }),
+/* 12 */,
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.14 / 15.2.3.14 Object.keys(O)
+var $keys = __webpack_require__(32);
+var enumBugKeys = __webpack_require__(27);
+
+module.exports = Object.keys || function keys(O) {
+  return $keys(O, enumBugKeys);
+};
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.1.13 ToObject(argument)
+var defined = __webpack_require__(15);
+module.exports = function (it) {
+  return Object(defined(it));
+};
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+// 7.2.1 RequireObjectCoercible(argument)
+module.exports = function (it) {
+  if (it == undefined) throw TypeError("Can't call method on  " + it);
+  return it;
+};
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = function (it) {
+  return toString.call(it).slice(8, -1);
+};
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+// 7.1.4 ToInteger
+var ceil = Math.ceil;
+var floor = Math.floor;
+module.exports = function (it) {
+  return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
+};
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// optional / simple context binding
+var aFunction = __webpack_require__(20);
+module.exports = function (fn, that, length) {
+  aFunction(fn);
+  if (that === undefined) return fn;
+  switch (length) {
+    case 1: return function (a) {
+      return fn.call(that, a);
+    };
+    case 2: return function (a, b) {
+      return fn.call(that, a, b);
+    };
+    case 3: return function (a, b, c) {
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function (/* ...args */) {
+    return fn.apply(that, arguments);
+  };
+};
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+var id = 0;
+var px = Math.random();
+module.exports = function (key) {
+  return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
+};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+module.exports = function (it) {
+  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
+  return it;
+};
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+module.exports = function (bitmap, value) {
+  return {
+    enumerable: !(bitmap & 1),
+    configurable: !(bitmap & 2),
+    writable: !(bitmap & 4),
+    value: value
+  };
+};
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+  Copyright (c) 2016 Jed Watson.
+  Licensed under the MIT License (MIT), see
+  http://jedwatson.github.io/classnames
+*/
+/* global define */
+
+(function () {
+	'use strict';
+
+	var hasOwn = {}.hasOwnProperty;
+
+	function classNames () {
+		var classes = [];
+
+		for (var i = 0; i < arguments.length; i++) {
+			var arg = arguments[i];
+			if (!arg) continue;
+
+			var argType = typeof arg;
+
+			if (argType === 'string' || argType === 'number') {
+				classes.push(arg);
+			} else if (Array.isArray(arg)) {
+				classes.push(classNames.apply(null, arg));
+			} else if (argType === 'object') {
+				for (var key in arg) {
+					if (hasOwn.call(arg, key) && arg[key]) {
+						classes.push(key);
+					}
+				}
+			}
+		}
+
+		return classes.join(' ');
+	}
+
+	if (typeof module !== 'undefined' && module.exports) {
+		module.exports = classNames;
+	} else if (true) {
+		// register as 'classnames', consistent with npm package name
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = (function () {
+			return classNames;
+		}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else {
+		window.classNames = classNames;
+	}
+}());
+
+
+/***/ }),
+/* 23 */,
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// fallback for non-array-like ES3 and non-enumerable old V8 strings
+var cof = __webpack_require__(16);
+// eslint-disable-next-line no-prototype-builtins
+module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
+  return cof(it) == 'String' ? it.split('') : Object(it);
+};
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var shared = __webpack_require__(26)('keys');
+var uid = __webpack_require__(19);
+module.exports = function (key) {
+  return shared[key] || (shared[key] = uid(key));
+};
+
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
@@ -560,8 +464,7 @@ module.exports = function (key) {
 
 
 /***/ }),
-
-/***/ 31:
+/* 27 */
 /***/ (function(module, exports) {
 
 // IE 8- don't enum bug keys
@@ -571,23 +474,24 @@ module.exports = (
 
 
 /***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 32:
-/***/ (function(module, exports) {
-
+var isObject = __webpack_require__(2);
+var document = __webpack_require__(1).document;
+// typeof document.createElement is 'object' in old IE
+var is = isObject(document) && isObject(document.createElement);
 module.exports = function (it) {
-  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
-  return it;
+  return is ? document.createElement(it) : {};
 };
 
 
 /***/ }),
-
-/***/ 33:
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject = __webpack_require__(5);
+var isObject = __webpack_require__(2);
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 module.exports = function (it, S) {
@@ -601,59 +505,26 @@ module.exports = function (it, S) {
 
 
 /***/ }),
-
-/***/ 36:
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.1.13 ToObject(argument)
-var defined = __webpack_require__(27);
-module.exports = function (it) {
-  return Object(defined(it));
-};
-
-
-/***/ }),
-
-/***/ 37:
-/***/ (function(module, exports, __webpack_require__) {
-
-var isObject = __webpack_require__(5);
-var document = __webpack_require__(1).document;
-// typeof document.createElement is 'object' in old IE
-var is = isObject(document) && isObject(document.createElement);
-module.exports = function (it) {
-  return is ? document.createElement(it) : {};
-};
-
-
-/***/ }),
-
-/***/ 39:
+/* 30 */
 /***/ (function(module, exports) {
 
-exports.f = Object.getOwnPropertySymbols;
+exports.f = {}.propertyIsEnumerable;
 
 
 /***/ }),
-
-/***/ 4:
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// Thank's IE8 for his funny defineProperty
-module.exports = !__webpack_require__(12)(function () {
-  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
-});
-
+module.exports = { "default": __webpack_require__(37), __esModule: true };
 
 /***/ }),
-
-/***/ 45:
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(8);
-var toIObject = __webpack_require__(9);
-var arrayIndexOf = __webpack_require__(57)(false);
-var IE_PROTO = __webpack_require__(29)('IE_PROTO');
+var has = __webpack_require__(10);
+var toIObject = __webpack_require__(8);
+var arrayIndexOf = __webpack_require__(39)(false);
+var IE_PROTO = __webpack_require__(25)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -670,35 +541,11 @@ module.exports = function (object, names) {
 
 
 /***/ }),
-
-/***/ 46:
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = !__webpack_require__(4) && !__webpack_require__(12)(function () {
-  return Object.defineProperty(__webpack_require__(37)('div'), 'a', { get: function () { return 7; } }).a != 7;
-});
-
-
-/***/ }),
-
-/***/ 48:
-/***/ (function(module, exports, __webpack_require__) {
-
-// fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(15);
-// eslint-disable-next-line no-prototype-builtins
-module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
-  return cof(it) == 'String' ? it.split('') : Object(it);
-};
-
-
-/***/ }),
-
-/***/ 49:
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.15 ToLength
-var toInteger = __webpack_require__(28);
+var toInteger = __webpack_require__(17);
 var min = Math.min;
 module.exports = function (it) {
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
@@ -706,25 +553,69 @@ module.exports = function (it) {
 
 
 /***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 5:
-/***/ (function(module, exports) {
-
-module.exports = function (it) {
-  return typeof it === 'object' ? it !== null : typeof it === 'function';
+// most Object methods by ES6 should accept primitives
+var $export = __webpack_require__(4);
+var core = __webpack_require__(0);
+var fails = __webpack_require__(5);
+module.exports = function (KEY, exec) {
+  var fn = (core.Object || {})[KEY] || Object[KEY];
+  var exp = {};
+  exp[KEY] = exec(fn);
+  $export($export.S + $export.F * fails(function () { fn(1); }), 'Object', exp);
 };
 
 
 /***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 57:
+module.exports = !__webpack_require__(3) && !__webpack_require__(5)(function () {
+  return Object.defineProperty(__webpack_require__(28)('div'), 'a', { get: function () { return 7; } }).a != 7;
+});
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports) {
+
+exports.f = Object.getOwnPropertySymbols;
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(38);
+module.exports = __webpack_require__(0).Object.keys;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.14 Object.keys(O)
+var toObject = __webpack_require__(14);
+var $keys = __webpack_require__(13);
+
+__webpack_require__(34)('keys', function () {
+  return function keys(it) {
+    return $keys(toObject(it));
+  };
+});
+
+
+/***/ }),
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
-var toIObject = __webpack_require__(9);
-var toLength = __webpack_require__(49);
-var toAbsoluteIndex = __webpack_require__(58);
+var toIObject = __webpack_require__(8);
+var toLength = __webpack_require__(33);
+var toAbsoluteIndex = __webpack_require__(40);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
     var O = toIObject($this);
@@ -746,11 +637,10 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-
-/***/ 58:
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(28);
+var toInteger = __webpack_require__(17);
 var max = Math.max;
 var min = Math.min;
 module.exports = function (index, length) {
@@ -760,65 +650,258 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-
-/***/ 6:
+/* 41 */,
+/* 42 */,
+/* 43 */,
+/* 44 */,
+/* 45 */,
+/* 46 */,
+/* 47 */,
+/* 48 */,
+/* 49 */,
+/* 50 */,
+/* 51 */,
+/* 52 */,
+/* 53 */,
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(7);
-var IE8_DOM_DEFINE = __webpack_require__(46);
-var toPrimitive = __webpack_require__(33);
-var dP = Object.defineProperty;
+module.exports = { "default": __webpack_require__(55), __esModule: true };
 
-exports.f = __webpack_require__(4) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
-  anObject(O);
-  P = toPrimitive(P, true);
-  anObject(Attributes);
-  if (IE8_DOM_DEFINE) try {
-    return dP(O, P, Attributes);
-  } catch (e) { /* empty */ }
-  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
-  if ('value' in Attributes) O[P] = Attributes.value;
-  return O;
-};
+/***/ }),
+/* 55 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(56);
+module.exports = __webpack_require__(0).Object.assign;
 
 
 /***/ }),
-
-/***/ 7:
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(5);
-module.exports = function (it) {
-  if (!isObject(it)) throw TypeError(it + ' is not an object!');
-  return it;
-};
+// 19.1.3.1 Object.assign(target, source)
+var $export = __webpack_require__(4);
+
+$export($export.S + $export.F, 'Object', { assign: __webpack_require__(57) });
 
 
 /***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
 
-/***/ 8:
+"use strict";
+
+// 19.1.2.1 Object.assign(target, source, ...)
+var getKeys = __webpack_require__(13);
+var gOPS = __webpack_require__(36);
+var pIE = __webpack_require__(30);
+var toObject = __webpack_require__(14);
+var IObject = __webpack_require__(24);
+var $assign = Object.assign;
+
+// should work with symbols and should have deterministic property order (V8 bug)
+module.exports = !$assign || __webpack_require__(5)(function () {
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line no-undef
+  var S = Symbol();
+  var K = 'abcdefghijklmnopqrst';
+  A[S] = 7;
+  K.split('').forEach(function (k) { B[k] = k; });
+  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+  var T = toObject(target);
+  var aLen = arguments.length;
+  var index = 1;
+  var getSymbols = gOPS.f;
+  var isEnum = pIE.f;
+  while (aLen > index) {
+    var S = IObject(arguments[index++]);
+    var keys = getSymbols ? getKeys(S).concat(getSymbols(S)) : getKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) if (isEnum.call(S, key = keys[j++])) T[key] = S[key];
+  } return T;
+} : $assign;
+
+
+/***/ }),
+/* 58 */,
+/* 59 */,
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_assign__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_assign___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_assign__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_classnames__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_classnames___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_classnames__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__styles_editor_scss__ = __webpack_require__(91);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__styles_editor_scss___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__styles_editor_scss__);
+
+
+/**
+ * Handles the extension of the Custom HTML core editor (Gutenberg) block.
+ *
+ * @since  2.6.0
+ */
+
+/**
+ * Block dependencies
+ */
+
+
+
+/**
+ * Internal block libraries
+ */
+var addFilter = wp.hooks.addFilter;
+var BlockControls = wp.editor.BlockControls;
+var createElement = wp.element.createElement;
+var _window = window,
+    i18n = _window.toolset_custom_html_block_strings;
+
+// "setCustomHTMLContentWithToolsetShortcode" needs to be out of the "wp.compose.createHigherOrderComponent" because
+// everytime this method is called an new instance of "setCustomHTMLContentWithToolsetShortcode" is created, thus when
+// removing the action, the callback is not matched and the action is not removed.
+
+var setCustomHTMLContentWithToolsetShortcode = function setCustomHTMLContentWithToolsetShortcode(shortcodeDataSafe, shortcodeGuiAction) {
+	if ('insert' === shortcodeGuiAction) {
+		var newContent = document.querySelector('#' + window.wpcfActiveEditor).value;
+		window.currentToolsetBlockProps.setAttributes({ content: newContent });
+	}
+
+	removeHooks();
+};
+
+var addHooks = function addHooks() {
+	// Views
+	window.Toolset.hooks.doAction('wpv-action-wpv-shortcodes-gui-set-gui-action', 'insert');
+	window.Toolset.hooks.addAction('wpv-action-wpv-shortcodes-gui-after-do-action', setCustomHTMLContentWithToolsetShortcode, 10, 2);
+
+	// Toolset Common (Types & Forms)
+	window.Toolset.hooks.doAction('toolset-action-set-shortcode-gui-action', 'insert');
+	window.Toolset.hooks.addAction('toolset-action-after-do-shortcode-gui-action', setCustomHTMLContentWithToolsetShortcode, 10, 2);
+
+	// Access
+	window.Toolset.hooks.doAction('toolset-access-action-set-shortcode-gui-action', 'insert');
+	window.Toolset.hooks.addAction('toolset-access-action-after-do-shortcode-gui-action', setCustomHTMLContentWithToolsetShortcode, 10, 2);
+};
+
+var removeHooks = function removeHooks() {
+	// Views
+	window.Toolset.hooks.doAction('wpv-action-wpv-shortcodes-gui-set-gui-action', 'insert');
+	window.Toolset.hooks.removeAction('wpv-action-wpv-shortcodes-gui-after-do-action', setCustomHTMLContentWithToolsetShortcode);
+
+	// Toolset Common (Types & Forms)
+	window.Toolset.hooks.doAction('toolset-action-set-shortcode-gui-action', 'insert');
+	window.Toolset.hooks.removeAction('toolset-action-after-do-shortcode-gui-action', setCustomHTMLContentWithToolsetShortcode);
+
+	// Access
+	window.Toolset.hooks.doAction('toolset-access-action-set-shortcode-gui-action', 'insert');
+	window.Toolset.hooks.removeAction('toolset-access-action-after-do-shortcode-gui-action', setCustomHTMLContentWithToolsetShortcode);
+};
+
+var modifyCustomHTMLBlock = wp.compose.createHigherOrderComponent(function (BlockEdit) {
+	return function (props) {
+		var clonedProps = __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_assign___default()({}, props, { key: 'toolset-extended-html-block' });
+
+		var element = createElement(BlockEdit, clonedProps);
+		if ((props.focus || props.isSelected) && 'core/html' === props.name) {
+			var ToolsetButtonFactory = function ToolsetButtonFactory(plugin, modalOpeningCallback) {
+				var buttonKey = 'toolset-controls-' + plugin;
+				return wp.element.createElement(
+					BlockControls,
+					{ key: buttonKey },
+					wp.element.createElement(
+						'div',
+						{ className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()('components-toolbar') },
+						wp.element.createElement(
+							'button',
+							{
+								className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()('components-button wpv-block-button'),
+								onClick: function onClick(e) {
+									window.currentToolsetBlockProps = props;
+
+									window.wpcfActiveEditor = 'toolset-extended-html-' + props.clientId;
+
+									var customHtmlTextArea = e.target.closest('.editor-block-contextual-toolbar').nextSibling.querySelector('textarea');
+									if (customHtmlTextArea) {
+										// Add an id to the Custom HTML text area to use it when inserting the CRED forms shortcode.
+										customHtmlTextArea.id = window.wpcfActiveEditor;
+										// Open the Τoolset Shortcode dialog for this button
+										modalOpeningCallback();
+
+										removeHooks();
+
+										addHooks();
+									}
+								} },
+							wp.element.createElement('i', { className: __WEBPACK_IMPORTED_MODULE_2_classnames___default()('icon-' + plugin + '-logo', 'fa', 'fa-wpv-custom', 'ont-icon-24', 'ont-color') })
+						)
+					)
+				);
+			};
+
+			element = [element];
+			__WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_object_keys___default()(i18n.extensionButtons).map(function (key) {
+				var callback = window;
+
+				i18n.extensionButtons[key].clickCallback.split('.').slice(1).forEach(function (property) {
+					return callback = 'undefined' !== typeof callback[property] ? callback[property] : null;
+				});
+				var butonToInsert = ToolsetButtonFactory(key, callback);
+
+				element.push(butonToInsert);
+			});
+		}
+		return element;
+	};
+}, 'modifyCustomHTMLBlock');
+
+addFilter('editor.BlockEdit', 'toolset/extend-html', modifyCustomHTMLBlock);
+
+/***/ }),
+/* 91 */
 /***/ (function(module, exports) {
 
-var hasOwnProperty = {}.hasOwnProperty;
-module.exports = function (it, key) {
-  return hasOwnProperty.call(it, key);
-};
-
-
-/***/ }),
-
-/***/ 9:
-/***/ (function(module, exports, __webpack_require__) {
-
-// to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(48);
-var defined = __webpack_require__(27);
-module.exports = function (it) {
-  return IObject(defined(it));
-};
-
+// removed by extract-text-webpack-plugin
 
 /***/ })
-
-/******/ });
+/******/ ]);
 //# sourceMappingURL=custom.html.block.editor.js.map

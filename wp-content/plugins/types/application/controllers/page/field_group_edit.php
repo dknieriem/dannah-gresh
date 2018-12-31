@@ -139,6 +139,9 @@ final class Types_Page_Field_Group_Edit {
 			TYPES_VERSION,
 			true
 		);
+
+		// repeatable field group
+		wp_enqueue_style( 'toolset-types' );
 	}
 
 	/**
@@ -164,7 +167,6 @@ final class Types_Page_Field_Group_Edit {
 			: 0;
 
 		return array(
-			'jsIncludePath' => TYPES_RELPATH . '/public/page/field/group',
 			// 'templates' => $this->build_templates(),
 			'strings'       => $this->build_strings_for_js(),
 			'ajaxInfo'      => array(

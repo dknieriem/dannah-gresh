@@ -536,7 +536,7 @@ if ( ! class_exists( 'Toolset_WPML_Compatibility', false ) ) {
 				if ( in_array( $content_slug, $types, true ) && defined( 'WPML_CONTENT_TYPE_TRANSLATE' ) && $mode == WPML_CONTENT_TYPE_TRANSLATE ) {
 					$disabled_state_for_mode['state'] = true;
 					// translators: Relationship name.
-					$disabled_state_for_mode['reason_message'] = sprintf( __( 'You cannot set this translation mode because the post type is involved in the relationship "%s".', 'wpcf' ), $relationship->get_display_name() ) . ' <a href="https://toolset.com/documentation/translating-sites-built-with-toolset/translating-related-content/" target="_blank">' . __( 'Learn more' , 'wpcf' ) . '</a>.';
+					$disabled_state_for_mode['reason_message'] = sprintf( __( 'You cannot set this translation mode because the post type is involved in the relationship "%s".', 'wpv-views' ), $relationship->get_display_name() ) . ' <a href="https://toolset.com/documentation/translating-sites-built-with-toolset/translating-related-content/" target="_blank">' . __( 'Learn more' , 'wpv-views' ) . '</a>.';
 					return $disabled_state_for_mode;
 				}
 			}

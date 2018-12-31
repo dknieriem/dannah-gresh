@@ -92,7 +92,7 @@ abstract class Types_Field_Type_View_Frontend_Abstract implements Types_Interfac
 	 *
 	 * @return bool
 	 */
-	protected function is_raw_output() {
+	public function is_raw_output() {
 		// first check "output" param
 		if( isset( $this->params['output'] ) && $this->params['output'] == 'raw' ) {
 			return true;
@@ -234,13 +234,39 @@ abstract class Types_Field_Type_View_Frontend_Abstract implements Types_Interfac
 		if ( ! is_array( $values ) ) {
 			$values = array( $values );
 		}
-		$values = array_filter( $values,
-			function( $value ) {
-				return '0' === $value
-					|| ( ! empty( $value ) && ! is_array( $value ) );
-			}
-		);
 
-		return empty( $values );
+		return ! $this->has_value( $values );
+	}
+
+	/**
+	 * Loop function for $this->empty_values() to check if the array has any value
+	 *
+	 * @param $arr
+	 *
+	 * @return bool
+	 */
+	private function has_value( $arr ) {
+		foreach( $arr as $val ) {
+			if( is_array( $val ) ) {
+				if( $this->has_value( $val ) ) {
+					return true;
+				}
+
+				continue;
+			}
+
+			if( $val === '0' ) {
+				// 0 is also a valid value
+				return true;
+			}
+
+			if( ! empty( $val ) ) {
+				// not empty
+				return true;
+			}
+		}
+
+		// empty array
+		return false;
 	}
 }

@@ -81,6 +81,9 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 	// post type force insert (used for RFG post types, when the RFG is imported)
 	$post_type_force_insert = array();
 
+	// check this is called by types import page
+	$is_called_by_import_page = toolset_getget( 'page', false ) == 'toolset-export-import';
+
 	// Process groups
 	$groups_check = array();
 	$groups_update_fields_string_after_import = array();
@@ -90,6 +93,12 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 		foreach ( $data->groups->group as $group ) {
 			$group                  = wpcf_admin_import_export_simplexml2array( $group );
 			$groups[ $group['ID'] ] = $group;
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$groups[ $group['ID'] ]['add']    = false;
+				$groups[ $group['ID'] ]['update'] = false;
+			}
 		}
 
 		// Set insert data from POST
@@ -102,7 +111,9 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 				$groups[ $group_id ]['update'] = ( isset( $group['update'] ) && $group['update'] == 'update' ) ? true
 					: false;
 			}
-		} else {
+
+		} elseif( ! $is_called_by_import_page ) {
+			// this else is not used by Types, but can be important for other callers like Module Manager
 			foreach ( $groups as $group_id => $group ) {
 				$groups[ $group_id ]['add']    = true;
 				$groups[ $group_id ]['update'] = false;
@@ -338,7 +349,14 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 			} else {
 				$fields[ $field['id'] ] = $field;
 			}
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$fields[ $field['id'] ]['add']    = false;
+				$fields[ $field['id'] ]['update'] = false;
+			}
 		}
+
 		// Set insert data from POST
 		if ( ! empty( $_POST['fields'] ) ) {
 			foreach ( $_POST['fields'] as $field_id => $field ) {
@@ -432,6 +450,12 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 		foreach ( $data->user_groups->group as $group ) {
 			$group                  = wpcf_admin_import_export_simplexml2array( $group );
 			$groups[ $group['ID'] ] = $group;
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$groups[ $group['ID'] ]['add']    = false;
+				$groups[ $group['ID'] ]['update'] = false;
+			}
 		}
 		// Set insert data from POST
 		if ( ! empty( $_POST['user_groups'] ) ) {
@@ -443,7 +467,8 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 				$groups[ $group_id ]['update'] = ( isset( $group['update'] ) && $group['update'] == 'update' ) ? true
 					: false;
 			}
-		} else {
+		} elseif( ! $is_called_by_import_page ) {
+			// this else is not used by Types, but can be important for other callers like Module Manager
 			foreach ( $groups as $group_id => $group ) {
 				$groups[ $group_id ]['add']    = true;
 				$groups[ $group_id ]['update'] = false;
@@ -646,6 +671,12 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 			} else {
 				$fields[ $field['id'] ] = $field;
 			}
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$fields[ $field['id'] ]['add']    = false;
+				$fields[ $field['id'] ]['update'] = false;
+			}
 		}
 		// Set insert data from POST
 		if ( ! empty( $_POST['user_fields'] ) ) {
@@ -782,6 +813,12 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 			} else {
 				$types[ $type['id'] ] = $type;
 			}
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$types[ $type['id'] ]['add']    = false;
+				$types[ $type['id'] ]['update'] = false;
+			}
 		}
 		// Set insert data from POST
 		if ( ! empty( $_POST['types'] ) ) {
@@ -874,6 +911,12 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 				}
 			} else {
 				$taxonomies[ $taxonomy['id'] ] = $taxonomy;
+			}
+
+			if( $is_called_by_import_page ) {
+				// apply defaults if called by types import
+				$taxonomies[ $taxonomy['id'] ]['add']    = false;
+				$taxonomies[ $taxonomy['id'] ]['update'] = false;
 			}
 		}
 		// Set insert data from POST
@@ -1000,6 +1043,16 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 			foreach ( $relationships as $relationship ) {
 				$relationship = (array) $relationship;
 
+				if( $is_called_by_import_page
+					&& ! isset( $_POST['m2m-relationships'][$relationship['slug']] )
+					&& $relationship['origin'] != 'repeatable_group'
+					&& $relationship['origin'] != 'post_reference_field'
+				) {
+					// on Types import page user did not select to import relationship
+					// (rfg / prf are checked later agains the related fields)
+					continue;
+				}
+
 				// For Wizard relationships: check that user wants to import this relationship
 				// if there is no $_POST we do the import (the user had no choice/GUI -> import done by hook)
 				if( $relationship['origin'] == 'wizard'
@@ -1091,6 +1144,11 @@ function wpcf_admin_import_data( $data = '', $redirect = true, $context = 'types
 					if ( isset( $intermediary_post_type ) ) {
 						$definition->get_driver()->set_intermediary_post_type(
 							$intermediary_post_type, $intermediary_post_type->is_public() );
+					}
+
+					// check if relationship is disabled
+					if( isset( $relationship['is_active'] ) && ! $relationship['is_active'] ) {
+						$definition->is_active( false );
 					}
 
 					$relationship_repository->persist_definition( $definition );

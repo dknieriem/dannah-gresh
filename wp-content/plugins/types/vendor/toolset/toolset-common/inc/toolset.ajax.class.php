@@ -33,6 +33,8 @@
  * - Override get_callback_names().
  * - Override additional_ajax_init() if you need to.
  *
+ * @refactoring Alternatively, allow namespace usage for handler classes (also considering subclasses of Toolset_Ajax).
+ *
  * @since m2m
  */
 class Toolset_Ajax {
@@ -45,6 +47,21 @@ class Toolset_Ajax {
 	const DELIMITER = '_';
 
 
+	const CALLBACK_MIGRATE_TO_M2M = 'migrate_to_m2m';
+	const CALLBACK_SELECT2_SUGGEST_POSTS_BY_TITLE = 'select2_suggest_posts_by_title';
+	const CALLBACK_SELECT2_SUGGEST_POSTS_BY_POST_TYPE = 'select2_suggest_posts_by_post_type';
+	const CALLBACK_SELECT2_SUGGEST_TERMS = 'select2_suggest_terms';
+	const CALLBACK_SELECT2_SUGGEST_USERS = 'select2_suggest_users';
+	const CALLBACK_GET_POST_BY_ID = 'get_post_by_id';
+	const CALLBACK_GET_TERM_BY_ID = 'get_term_by_id';
+	const CALLBACK_GET_USER_BY_ID = 'get_user_by_id';
+	const CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW = 'get_cred_form_block_preview';
+	const CALLBACK_INTERMEDIARY_POST_CLEANUP = 'intermediary_post_cleanup';
+	const CALLBACK_CODE_SNIPPETS_ACTION = 'code_snippets_action';
+	const CALLBACK_GET_VIEW_CUSTOM_SEARCH_STATUS = 'get_view_custom_search_status';
+
+
+	/** @var Toolset_Ajax */
 	private static $instance;
 
 
@@ -69,39 +86,13 @@ class Toolset_Ajax {
 		$instance->additional_ajax_init();
 	}
 
-
-	const CALLBACK_MIGRATE_TO_M2M = 'migrate_to_m2m';
-
-	const CALLBACK_SELECT2_SUGGEST_POSTS_BY_TITLE = 'select2_suggest_posts_by_title';
-
-	const CALLBACK_SELECT2_SUGGEST_POSTS_BY_POST_TYPE = 'select2_suggest_posts_by_post_type';
-
-	const CALLBACK_SELECT2_SUGGEST_TERMS = 'select2_suggest_terms';
-
-	const CALLBACK_SELECT2_SUGGEST_USERS = 'select2_suggest_users';
-
-	const CALLBACK_GET_POST_BY_ID = 'get_post_by_id';
-
-	const CALLBACK_GET_TERM_BY_ID = 'get_term_by_id';
-
-	const CALLBACK_GET_USER_BY_ID = 'get_user_by_id';
-
-	const CALLBACK_GET_VIEW_BLOCK_PREVIEW = 'get_view_block_preview';
-
-	const CALLBACK_GET_CONTENT_TEMPLATE_BLOCK_PREVIEW = 'get_content_template_block_preview';
-
-	const CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW = 'get_cred_form_block_preview';
-
-	const CALLBACK_INTERMEDIARY_POST_CLEANUP = 'intermediary_post_cleanup';
-
-
 	protected function get_callback_names() {
 		return array(
 			self::CALLBACK_MIGRATE_TO_M2M,
 			self::CALLBACK_INTERMEDIARY_POST_CLEANUP,
-			self::CALLBACK_GET_VIEW_BLOCK_PREVIEW,
-			self::CALLBACK_GET_CONTENT_TEMPLATE_BLOCK_PREVIEW,
 			self::CALLBACK_GET_CRED_FORM_BLOCK_PREVIEW,
+			self::CALLBACK_CODE_SNIPPETS_ACTION,
+			self::CALLBACK_GET_VIEW_CUSTOM_SEARCH_STATUS,
 		);
 	}
 
@@ -115,6 +106,7 @@ class Toolset_Ajax {
 			self::CALLBACK_GET_POST_BY_ID,
 			self::CALLBACK_GET_TERM_BY_ID,
 			self::CALLBACK_GET_USER_BY_ID,
+			self::CALLBACK_GET_VIEW_CUSTOM_SEARCH_STATUS,
 		);
 	}
 
@@ -234,7 +226,20 @@ class Toolset_Ajax {
 
 		// Obtain an instance of the handler class.
 		try {
-			/** @var Toolset_Ajax_Handler_Interface $handler */
+			/** @var \OTGS\Toolset\Common\Auryn\Injector $dic */
+			$dic = apply_filters( 'toolset_dic', false );
+			// This is pretty important because $this may be a subclass of Toolset_Ajax, not Toolset_Ajax itself.
+			$dic->share( $this );
+			// If the handler doesn't override the constructor, it will have "Toolset_Ajax $ajax_manager" as the
+			// first parameter. But when the handler belongs to a plugin, we want to inject the plugin's AJAX manager
+			// and not the one from Toolset Common.
+			$handler = $dic->make( $class_name, array( ':ajax_manager' => $this ) );
+		} catch ( \OTGS\Toolset\Common\Auryn\InjectionException $injection_exception ) {
+			// For some reason, we're unable to instantiate the class with DIC. Use the old way, assuming
+			// the handler constructor is handling everything on its own.
+			//
+			// This happens mostly when the constructor contains other parameters than just the $ajax_manager, and
+			// these parameters have typehints or missing default values, which the DIC is unable to solve.
 			$handler = new $class_name( $this );
 		} catch ( Exception $e ) {
 			// The handler class could not have been instantiated, resign.
@@ -356,10 +361,10 @@ class Toolset_Ajax {
 
 
 	/**
-	 * Handles all initialization of except AJAX callbacks itself that is needed when
-	 * we're DOING_AJAX.
-	 *
-	 * Since this is executed on every AJAX call, make sure it's as lightweight as possible.
+	 * Handles all initialization that is needed when doing AJAX,
+	 * except the actual AJAX callbacks.
+	 * 
+	 * Note that this gets fired when the class is intialized, not only during AJAX calls.
 	 *
 	 * @since m2m
 	 */

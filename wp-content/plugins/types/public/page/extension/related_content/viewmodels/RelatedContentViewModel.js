@@ -8,15 +8,55 @@
  * @param {Object} relatedContentActions An object with methods to perform actions on field definitions.
  * @param {string} container_id The ID of the container HTML element
  * @param {Object} listingModel Types.page.extension.relatedContent.viewmodels.ListingViewModel
+ * @param {Object} relatedContentModels Main model data get from main.js @see Types_Page_Extension_Meta_Box_Related_Content::build_js_data()
  *
  * @since m2m
  */
-Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = function(model, relatedContentActions, container_id, listingModel) {
+Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = function(model, relatedContentActions, container_id, listingModel, relatedContentModels) {
 	var self = this;
 
 	// Apply the ItemViewModel constructor on this object.
 	Toolset.Gui.ItemViewModel.call(self, model, relatedContentActions);
 
+	// Can User Edit Post
+    self.canUserEditPost = ko.pureComputed( function() {
+    	if( ! listingModel.userCaps.publish_posts && model.is_published ) {
+    		// user is not allowed to touch published posts (no matter if it's his own)
+			return false;
+		}
+
+        if( listingModel.userCaps.edit_others_posts ) {
+        	// user can edit any posts
+        	return true;
+		}
+
+		if( listingModel.userCaps.edit_posts && listingModel.userId == model.author_id ) {
+        	// user is allowed to edit his own posts and this is one of them
+			return true;
+		}
+
+		return false;
+    } );
+
+    // Can User Delete Post
+    self.canUserDeletePost = ko.pureComputed( function() {
+        if( ! listingModel.userCaps.publish_posts && model.is_published ) {
+            // user is not allowed to touch published posts (no matter if it's his own)
+            return false;
+        }
+
+        if( listingModel.userCaps.delete_others_posts ) {
+            // user can delete any posts
+            return true;
+        }
+
+        if( listingModel.userCaps.delete_posts && listingModel.userId == model.author_id ) {
+            // user is allowed to delete his own posts and this is one of them
+            return true;
+        }
+
+        return false;
+    } );
 
 	self.isFieldVisible = listingModel.isFieldVisible;
 
@@ -81,9 +121,10 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 	 */
 	self.removeDisplayedMessage = function () {
 		self.messageVisibilityMode('remove');
+
 	};
 
-
+	var postFieldsEnabled = false;
 	/**
 	 * Enables the post related fields
 	 *
@@ -98,7 +139,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 		$button.parents('td:first').find("[name*='wpcf[post]']").removeAttr('disabled');
 		$button.parents('td:first').find(".js-wpt-wysiwyg-disabled-overlay").remove();
 		if ($button.parents('div:first').find(':checkbox').is(':checked')) {
-			var $container = $button.parents('.types-quick-edit-fields');
+			var $container = $button.parents('.types-quick-edit-fields:first');
 			var nonce = Types.page.extension.relatedContent.ajaxInfo.nonce;
 			Types.page.extension.relatedContent.doAjax(
 				'enable_fields',
@@ -109,6 +150,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 			);
 		}
 		$button.parents('td:first').find('.types-warning').slideUp();
+		postFieldsEnabled = true;
 	};
 
 
@@ -189,7 +231,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 					nonce,
 					{
 						'association_uid': model.association_uid,
-						post_id: WPV_Toolset.Utils.getParameterByName('post')
+						post_id: model.post_id
 					},
 					successCallback,
 					errorCallback
@@ -271,11 +313,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 	 * @since m2m
 	 */
 	self.showQuickEdit = function(object, event) {
-		var $container = jQuery(event.target).parents('tr').next().show().find('.types-quick-edit-fields');
-		$container.on( 'click', '.js-wpt-file-upload', function( event ) {
-			event.preventDefault();
-			wptFile.bindOpen( jQuery( this ) );
-		} );
+		var $container = jQuery(event.target).parents('tr:first').next().show().find('.types-quick-edit-fields');
 		wptDate.init( $container[0] );
 		// Nested forms are not valid and the browser removes the child one during loading, so this workaround is needed.
 		var $fakeForm = $container.parent(); // It should be a form, but it is created as a div.
@@ -283,12 +321,36 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 			var id = $fakeForm.attr('id');
 			$fakeForm.removeAttr('id');
 			$container.wrap( '<form id="' + id + '">' );
-			$container.slideDown();
-			listingModel.activateFieldJS(self.relatedContentFormID());
 		}
+		$container.slideDown();
+		listingModel.activateFieldJS(self.relatedContentFormID());
 		// Init repetitive fields.
 		if ( typeof wptRep !== 'undefined' ) {
 			wptRep.init();
+		}
+
+		// Hide fields when group terms doesn't match with post terms
+		var postId = $container.find('[name=post_id]').val();
+		var disabledFieldByPost = relatedContentModels.relatedContent.disabled_fields_by_post;
+		if ( !! disabledFieldByPost[ postId ] ) {
+			disabledFieldByPost[ postId ].forEach( function( inputId ) {
+				$container.find('[data-wpt-name="wpcf[post][' + inputId + ']"]').parents('.js-wpt-field:first').remove();
+			} );
+		}
+		// Set fields conditionals
+		var formId = '#' + $container.parent().attr('id');
+
+		wptCondTriggers[formId] = {};
+		wptCondFields[formId] = {};
+		relatedContentModels.relatedContent.conditionals.forEach( function( conditional) {
+			var data = {};
+			data[formId] = conditional;
+			wptCond.addConditionals( data );
+		});
+		wptCond.check(formId, Object.keys(wptCondFields[formId]));
+		// Conditionals.js enables fields that may be disabled initially
+		if ( !postFieldsEnabled && $container.find('.types-warning:visible').length ) {
+			$container.find('[data-bind*=disableInputs]').find("[name*='wpcf[post]']").attr('disabled', 'disabled');
 		}
 
 		// Repetitive elements have to add [post] or [relationship] to their template.
@@ -316,8 +378,8 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 	 * @since m2m
 	 */
 	self.onCancelQuickEdit = function(object, event) {
-		jQuery(event.target).parents('.types-quick-edit-fields').slideUp(function() {
-			jQuery(this).parents('tr').hide();
+		jQuery(event.target).parents('.types-quick-edit-fields:first').slideUp(function() {
+			jQuery(this).parents('tr:first').hide();
 		});
 	}
 
@@ -332,7 +394,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 	self.onUpdateQuickEdit = function(object, event) {
 		var $button = jQuery(event.target);
 		$button.next().css('visibility', 'visible');
-		var $container = $button.parents('.types-quick-edit-fields');
+		var $container = $button.parents('.types-quick-edit-fields:first');
 		// Do form validation.
 		if ( ! $container.parent().valid() ) {
 			$button.next().css('visibility', 'hidden');
@@ -561,7 +623,7 @@ Types.page.extension.relatedContent.viewmodels.RelatedContentViewModel = functio
 				if (isHandled) {
 					if (!data.arePostFieldsEditables()) {
 						jQuery(element).parents('td:first').find("[name*='wpcf[post]']").attr('disabled', 'disabled');
-						jQuery(element).parents('td:first').find(".js-wpt-wysiwyg .js-wpt-field-items")
+						jQuery(element).parents('td:first').find(".js-wpt-wysiwyg .js-wpt-field-items, .js-wpt-repetitive > .js-wpt-field-items")
 							.css( { position: 'relative' } )
 							.append( '<div class="js-wpt-wysiwyg-disabled-overlay" style="position:absolute;top:0;right:0;left:0;bottom:0;z-index:1;background:#fff;opacity:0.5;"></div>' );
 					} else {

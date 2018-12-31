@@ -1,4 +1,4 @@
-var Toolset = Toolset || {};
+Toolset = Toolset || {};
 Toolset.Gui = Toolset.Gui || {};
 Toolset.Gui.Mixins = Toolset.Gui.Mixins || {};
 
@@ -38,6 +38,31 @@ Toolset.Gui.Mixins.KnockoutExtensions = function() {
                 // Whenever the value subsequently changes, slowly fade the element in or out
                 var value = valueAccessor();
                 ko.unwrap(value) ? $(element).fadeIn() : $(element).fadeOut();
+            }
+        };
+
+
+        ko.bindingHandlers.slideVisible = {
+            init: function (element, valueAccessor) {
+                // Initially set the element to be instantly visible/hidden depending on the value
+                var value = valueAccessor();
+                $(element).toggle(ko.unwrap(value)); // Use "unwrapObservable" so we can handle values that may or may not be observable
+            },
+            update: function (element, valueAccessor) {
+                // Whenever the value subsequently changes, slowly fade the element in or out
+                var value = valueAccessor();
+                ko.unwrap(value) ? $(element).slideDown('slow') : $(element).slideUp('slow');
+            }
+        };
+
+
+        ko.bindingHandlers.readonly = {
+            'update': function (element, valueAccessor) {
+                var value = ko.utils.unwrapObservable(valueAccessor());
+                if (!value && element.readOnly)
+                    element.readOnly = false;
+                else if (value && !element.readOnly)
+                    element.readOnly = true;
             }
         };
 
@@ -203,4 +228,31 @@ Toolset.Gui.Mixins.KnockoutExtensions = function() {
         }
     };
 
+};
+
+
+// Knockout helpers specific for Toolset
+// Ported originally from the Relationships page. This may need further attention.
+Toolset.ko = {
+
+    /**
+     * Update an object property when a Knockout subscribable changes.
+     *
+     * @param {ko.subscribable} subscribable An instance of ko.observable, ko.observableArray, ko.computed, ...
+     * @param {function|*} modelOrCallable Model to update or an update callback.
+     * @param {string|undefined} propertyName If a model object is provided, this is the property name that will be
+     *     updated with the new value when the subscribable changes.
+     *
+     * @since m2m
+     */
+    synchronize: function(subscribable, modelOrCallable, propertyName) {
+        if(typeof modelOrCallable === 'function') {
+            subscribable.subscribe(modelOrCallable);
+        } else {
+            var model = modelOrCallable;
+            subscribable.subscribe(function(newValue) {
+                model[propertyName] = newValue;
+            });
+        }
+    }
 };

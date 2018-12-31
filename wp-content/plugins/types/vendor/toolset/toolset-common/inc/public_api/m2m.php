@@ -4,224 +4,111 @@
  * Public-facing m2m API.
  *
  * Note: This file is included only when m2m is active, so there's no point in checking that anymore.
+ *
+ * @refactoring Exctract all remaining code into command classes under inc/autoloaded/interop/commands
  */
 
 use \OTGS\Toolset\Common\M2M as m2m;
+use OTGS\Toolset\Common\Interop\Commands as commands;
 
 /**
  * Query related post if many-to-many relationship functionality is enabled.
  *
- * @param int|\WP_Post $query_by_element Post to query by. All results will be posts connected to this one.
+ * By default, this function accepts an argument array as its third parameter ($args_or_query_by_role), but for backward
+ * compatibility reasons, the third argument can be also a query limit, and a number of other arguments is supported.
+ * If you need documentation for those, look into an older version of this file before Types 3.1.
+ *
+ * For our purposes, $args_or_query_by_role is the argument array and following function parameters are completely ignored.
+ *
+ * @param int|\WP_Post|int[]|\WP_Post[]|int[][]|\WP_Post[][] $query_by_elements One or more posts to query by.
+ *     There are several formats accepted:
+ *     - single post (ID or a post object): The function will return only posts that are connected to this one
+ *       in the role provided by the query_by_role argument.
+ *     - array of posts indexed by role names: The function will return only posts that are connected to all of these
+ *       posts in given roles.
+ *     - arrays of arrays of posts indexed by role names: The function will return only posts that are connected to
+ *       any of the provided posts for each role.
+ *     Example:
+ *         array( 'parent' => array( $parent1, $parent2 ), 'intermediary' => $intermediary1 )
+ *         -> returns posts connected to $parent1 OR $parent2 in the parent role, AND to the $intermediary1 in the
+ *         intermediary role.
+ *
  * @param string|string[] $relationship Slug of the relationship to query by or an array with the parent and the child post type.
  *     The array variant can be used only to identify relationships that have been migrated from the legacy implementation.
- * @param string $query_by_role_name Name of the element role to query by. Accepted values: 'parent'|'child'|'intermediary'
- * @param int $limit Maximum number of returned results ("posts per page").
- * @param int $offset Result offset ("page number")
- * @param array $args Additional query arguments. Accepted arguments:
- *      - meta_key, meta_value and meta_compare: Works exactly like in WP_Query. Only limited values are supported for meta_compare ('='|'LIKE').
- *      - s: Text search in the posts.
- *      - post_status: Array of post status values. Only post with matching status will be returned.
- * @param string $return Determines return type. 'post_id' for array of post IDs, 'post_object' for an array of \WP_Post objects.
- * @param string $role_name_to_return Which posts from the relationship should be returned. Accepted values
- *     are 'parent'|'child'|'intermediary', but the value must be different from $query_by_role_name.
- *     If $query_by_role_name is 'parent' or 'child', it is also possible to pass 'other' here.
- * @param null|string $orderby Determine how the results will be ordered. Accepted values: null, 'title', 'meta_value',
- *     'meta_value_num'. If the latter two are used, there also needs to be a 'meta_key' argument in $args.
- *     Passing null means no ordering.
- * @param string $order Accepted values: 'ASC' or 'DESC'.
- * @param bool $need_found_rows Signal if the query should also determine the total number of results (disregarding pagination).
- * @param null|&int $found_rows If $need_found_rows is set to true, the total number of results will be set
- *     into the variable passed to this parameter.
  *
- * @return int[]|\WP_Post[]
+ * @param int|array $args_or_query_by_role
+ *    - 'query_by_role' string - Name of the element role to query by. This argument is required $query_by_elements, and in other
+ *        cases, it must not be present at all. Accepted values: 'parent'|'child'|'intermediary'.
+ *    - 'limit': int - Maximum number of returned results ("posts per page").
+ *    - 'offset': int - Result offset ("page number")
+ *    - 'args': array - Additional query arguments. Accepted arguments:
+ *        - meta_key, meta_value and meta_compare: Works exactly like in WP_Query. Only limited values are supported for meta_compare ('='|'LIKE').
+ *        - s: Text search in the posts.
+ *        - post_status: Array of post status values, or a string with one or more statuses separated by commas.
+ *          The passed statuses need to be among the values returned by get_post_statuses() or added by the
+ *          toolset_accepted_post_statuses_for_api filter.
+ *          If this argument is not empty, only post with matching status will be returned.
+ *    - 'return': string - Determines return type. 'post_id' for array of post IDs, 'post_object' for an array of \WP_Post objects.
+ *    - 'role_to_return' string|array - Which posts from the relationship should be returned. Accepted values
+ *        are 'parent'|'child'|'intermediary'|'other'|'all' or an array of them, but the value must be different from $query_by_role_name.
+ *        If the query_by_role argument is 'parent' or 'child', it is also possible to pass 'other' here.
+ *    - 'orderby': null|string - Determine how the results will be ordered. Accepted values: null, 'title', 'meta_value',
+ *        'meta_value_num'. If the latter two are used, there also needs to be a 'meta_key' argument in $args.
+ *        Passing null means no ordering.
+ *    - 'order': string - Accepted values: 'ASC' or 'DESC'.
+ *    - 'need_found_rows': bool - Signal if the query should also determine the total number of results (disregarding pagination).
+ *
+ * @param int $legacy_limit Ignored.
+ * @param int $legacy_offset Ignored.
+ * @param array $legacy_args Ignored.
+ * @param string $legacy_return Ignored.
+ * @param string $legacy_role_name_to_return Ignored.
+ * @param null $legacy_orderby Ignored.
+ * @param string $legacy_order Ignored.
+ * @param bool $legacy_need_found_rows Ignored.
+ * @param null $legacy_found_rows Ignored.
+ *
+ * @return int[]|\WP_Post[]|array If need_founds_rows is true, the array returned will be [ 'results' => $actual_results, 'found_rows' => $n ].
+ *     Otherwise, only $actual_results results will be returned (array of post IDs or posts according to the "return" argument).
  */
 function toolset_get_related_posts(
-	$query_by_element,
+	$query_by_elements,
 	$relationship,
-	$query_by_role_name,
-	$limit = 100,
-	$offset = 0,
-	$args = array(),
-	$return = 'post_id',
-	$role_name_to_return = 'other',
-	$orderby = null,
-	$order = 'ASC',
-	$need_found_rows = false,
-	&$found_rows = null
+	$args_or_query_by_role = null,
+	$legacy_limit = 100,
+	$legacy_offset = 0,
+	$legacy_args = array(),
+	$legacy_return = 'post_id',
+	$legacy_role_name_to_return = 'other',
+	$legacy_orderby = null,
+	$legacy_order = 'ASC',
+	$legacy_need_found_rows = false,
+	&$legacy_found_rows = null
 ) {
 	do_action( 'toolset_do_m2m_full_init' );
 
-	// Input validation
-	//
-	//
-	if( ! is_string( $relationship ) && ! ( is_array( $relationship ) && count( $relationship ) === 2 ) ) {
-		throw new \InvalidArgumentException( 'The relationship must be a string with the relationship slug or an array with two post types.' );
-	}
+	$is_legacy_mode = ! is_array( $args_or_query_by_role );
 
-	if( ! in_array( $query_by_role_name, \Toolset_Relationship_Role::all_role_names() ) ) {
-		throw new \InvalidArgumentException( 'The role name to query by is not valid. Allowed values are: "' . implode( '", "', \Toolset_Relationship_Role::all_role_names() ) . '".' );
-	}
-
-	if(
-		! in_array( $role_name_to_return, \Toolset_Relationship_Role::all_role_names() )
-		&& ( 'other' !== $role_name_to_return || \Toolset_Relationship_Role::INTERMEDIARY === $query_by_role_name )
-	) {
-		throw new \InvalidArgumentException(
-			'The role name to return is not valid. Allowed values are: "' .
-			implode( '", "', \Toolset_Relationship_Role::all_role_names() ) .
-			'" or "other" if $query_by_role_name is parent or child.'
-		);
-	}
-
-	if( ! \Toolset_Utils::is_natural_numeric( $query_by_element ) && ! $query_by_element instanceof \WP_Post ) {
-		throw new \InvalidArgumentException( 'The provided argument for a related element must be either an ID or a WP_Post object.' );
-	}
-
-	if( ! \Toolset_Utils::is_natural_numeric( $limit ) || ! \Toolset_Utils::is_nonnegative_numeric( $offset ) ) {
-		throw new \InvalidArgumentException( 'Limit and offset must be non-negative integers.' );
-	}
-
-	if( ! in_array( $return , array( 'post_id', 'post_object' ) ) ) {
-		throw new \InvalidArgumentException( 'The provided argument for a return type must be either "post_id" or "post_object".' );
-	}
-
-	if( 'meta_key' === $orderby && ! array_key_exists( 'meta_key', $args ) ) {
-		throw new \InvalidArgumentException( 'Cannot use ordering by a meta_key if no meta_key argument is provided.' );
-	}
-
-	if( ! in_array( strtoupper( $order ), array( 'ASC', 'DESC' ) ) ) {
-		throw new \InvalidArgumentException( 'Allowed order values are only ASC and DESC.' );
-	}
-
-
-	// Input post-processing
-	//
-	//
-	$element_id = (int) ( $query_by_element instanceof \WP_Post ? $query_by_element->ID : $query_by_element );
-	$limit = (int) $limit;
-	$offset = (int) $offset;
-	$query_by_role = \Toolset_Relationship_Role::role_from_name( $query_by_role_name );
-	$need_found_rows = (bool) $need_found_rows;
-	$search = toolset_getarr( $args, 's' );
-	$has_meta_condition = ( array_key_exists( 'meta_key', $args ) && array_key_exists( 'meta_value', $args ) );
-
-	if( 'other' === $role_name_to_return ) {
-		// This will happen only if the $query_by_role not intermediary.
-		/** @var \IToolset_Relationship_Role_Parent_Child $query_by_role */
-		$role_to_return = $query_by_role->other();
+	if ( $is_legacy_mode ) {
+		$keys = array( 'query_by_role', 'limit', 'offset', 'args', 'return', 'role_to_return', 'orderby', 'order', 'need_found_rows', 'ignored_found_rows' );
+		$elements = array_slice( func_get_args(), 2 );
+		$keys = array_slice( $keys, 0, count( $elements ) );
+		$arguments = array_combine( $keys, $elements  );
+		// Found rows are handled differently.
+		unset( $arguments['ignored_found_rows'] );
 	} else {
-		$role_to_return = \Toolset_Relationship_Role::role_from_name( $role_name_to_return );
+		$arguments = $args_or_query_by_role;
 	}
 
-	if( is_array( $relationship ) ) {
-		$definition_repository = Toolset_Relationship_Definition_Repository::get_instance();
-		$relationship_definition = $definition_repository->get_legacy_definition( $relationship[0], $relationship[1] );
-		if( null === $relationship_definition ) {
-			//throw new \InvalidArgumentException( 'There is no relationship between the two provided post types (no migrated one from the legacy implementation).' );
-			return array();
-		}
-		$relationship = $relationship_definition->get_slug();
+	$related_posts_command = new commands\RelatedPosts( $query_by_elements, $relationship, $arguments );
+	$results = $related_posts_command->get_results();
+
+	if( $is_legacy_mode && $legacy_need_found_rows ) {
+		$legacy_found_rows = $results['found_rows'];
+		$results = $results['results']; // Needed for legacy arguments.
 	}
 
-	$post_statuses = toolset_getarr( $args, 'post_status' );
-	if( is_string( $post_statuses ) ) {
-		$post_statuses = array( $post_statuses );
-	}
-	$accepted_post_statuses = array_keys( get_post_statuses() );
-	$post_statuses = array_filter(
-		toolset_ensarr( $post_statuses ),
-		function( $post_status ) use ( $accepted_post_statuses ) {
-			return in_array( $post_status, $accepted_post_statuses );
-		}
-	);
-
-	// Build the query
-	//
-	//
-	try {
-		$query = new \Toolset_Association_Query_V2();
-
-		$query->add( $query->relationship_slug( $relationship ) )
-			->add(
-				$query->element_id_and_domain(
-					$element_id,
-					\Toolset_Element_Domain::POSTS,
-					$query_by_role
-				)
-			)
-			->limit( $limit )
-			->offset( $offset )
-			->order( $order )
-			->need_found_rows( $need_found_rows );
-
-		if ( ! empty( $search ) ) {
-			$query->add( $query->search( $search, $role_to_return ) );
-		}
-
-		if ( $has_meta_condition ) {
-			$query->add(
-				$query->meta(
-					toolset_getarr( $args, 'meta_key' ),
-					toolset_getarr( $args, 'meta_value' ),
-					\Toolset_Element_Domain::POSTS,
-					$role_to_return,
-					toolset_getarr( $args, 'meta_compare', \Toolset_Query_Comparison_Operator::EQUALS )
-				)
-			);
-		}
-
-		if ( 'post_id' === $return ) {
-			$query->return_element_ids( $role_to_return );
-		} else {
-			$query->return_element_instances( $role_to_return );
-		}
-
-		switch ( $orderby ) {
-			case 'title':
-				$query->order_by_title( $role_to_return );
-				break;
-			case 'meta_value':
-				$query->order_by_meta( toolset_getarr( $args, 'meta_key' ), \Toolset_Element_Domain::POSTS, $role_to_return );
-				break;
-			case 'meta_value_num':
-				$query->order_by_meta( toolset_getarr( $args, 'meta_key' ), \Toolset_Element_Domain::POSTS, $role_to_return, true );
-				break;
-			default:
-				$query->dont_order();
-				break;
-		}
-
-		if( ! empty( $post_statuses ) ) {
-			// This will replace the default condition to show only "available" posts.
-			$query->add( $query->element_status( $post_statuses, $role_to_return ) );
-		}
-
-		// Get results and post-process them
-		//
-		//
-		$results = $query->get_results();
-
-		if ( $need_found_rows ) {
-			$found_rows = $query->get_found_rows();
-		}
-
-		if ( 'post_id' === $return ) {
-			return $results;
-		} else {
-			$results = array_map(
-				function ( $result ) {
-					/** @var \IToolset_Post $result */
-					return $result->get_underlying_object();
-				}, $results
-			);
-
-			return $results;
-		}
-	} catch ( Exception $e ) {
-		// This is most probably caused by an element not existing, an exception raised from the depth of
-		// the association query - otherwise, there are no reasons for it to fail, all the inputs should be valid.
-		return array();
-	}
+	return $results;
 }
 
 
@@ -237,42 +124,17 @@ function toolset_get_related_posts(
  *     are 'parent' and 'child'. The relationship needs to have only one possible result in this role,
  *     otherwise an exception will be thrown.
  * @param null|array $args Additional arguments. Accepted values:
- *      - post_status: Array of post status values. Only post with matching status will be returned.
+ *        - meta_key, meta_value and meta_compare: Works exactly like in WP_Query. Only limited values are supported for meta_compare ('='|'LIKE').
+ *        - s: Text search in the posts.
+ *        - post_status: Array of post status values, or a string with one or more statuses separated by commas.
+ *          The passed statuses need to be among the values returned by get_post_statuses() or added by the
+ *          toolset_accepted_post_statuses_for_api filter.
+ *          If this argument is not empty, only post with matching status will be returned.
  *
  * @return int Post ID or zero if no related post was found.
  */
 function toolset_get_related_post( $post, $relationship, $role_name_to_return = 'parent', $args = null ) {
-
 	do_action( 'toolset_do_m2m_full_init' );
-
-	// Input validation and pre-processing
-	//
-	//
-	if( ! is_string( $relationship ) && ! ( is_array( $relationship ) && count( $relationship ) === 2 ) ) {
-		throw new \InvalidArgumentException( 'The relationship must be a string with the relationship slug or an array with two post types.' );
-	}
-
-	$post = get_post( $post );
-
-	if( ! $post instanceof WP_Post ) {
-		return 0;
-	}
-
-	$definition_repository = Toolset_Relationship_Definition_Repository::get_instance();
-
-	if( is_array( $relationship ) ) {
-		$relationship_definition = $definition_repository->get_legacy_definition( $relationship[0], $relationship[1] );
-	} else {
-		$relationship_definition = $definition_repository->get_definition( $relationship );
-	}
-
-	if( null === $relationship_definition ) {
-		return 0;
-	}
-
-	if( $relationship_definition->get_cardinality()->get_limit( $role_name_to_return ) > Toolset_Relationship_Cardinality::ONE_ELEMENT ) {
-		return 0;
-	}
 
 	if( ! in_array( $role_name_to_return, \Toolset_Relationship_Role::parent_child_role_names() ) ) {
 		throw new \InvalidArgumentException(
@@ -282,50 +144,14 @@ function toolset_get_related_post( $post, $relationship, $role_name_to_return = 
 		);
 	}
 
-	/** @var IToolset_Relationship_Role_Parent_Child $role_to_return */
-	$role_to_return = \Toolset_Relationship_Role::role_from_name( $role_name_to_return );
+	$query_by_role_name = \Toolset_Relationship_Role::other( $role_name_to_return );
 
-	$post_statuses = toolset_getarr( $args, 'post_status' );
-	if( is_string( $post_statuses ) ) {
-		$post_statuses = array( $post_statuses );
-	}
-	$accepted_post_statuses = array_keys( get_post_statuses() );
-	$post_statuses = array_filter(
-		toolset_ensarr( $post_statuses ),
-		function( $post_status ) use ( $accepted_post_statuses ) {
-			return in_array( $post_status, $accepted_post_statuses );
-		}
+	$related_posts = new commands\RelatedPosts(
+		$post,
+		$relationship,
+		array( 'args' => toolset_ensarr( $args ), 'query_by_role' => $query_by_role_name )
 	);
-
-	// Query the single result
-	//
-	//
-
-	try {
-		$query = new Toolset_Association_Query_V2();
-
-		if( ! empty( $post_statuses ) ) {
-			// This will replace the default condition to show only "available" posts.
-			$query->add( $query->element_status( $post_statuses, $role_to_return ) );
-		}
-
-		$results = $query->add( $query->relationship( $relationship_definition ) )
-			->add(
-				$query->element_id_and_domain(
-					$post->ID,
-					Toolset_Element_Domain::POSTS,
-					$role_to_return->other()
-				)
-			)
-			->limit( 1 )
-			->return_element_ids( $role_to_return )
-			->get_results();
-
-	} catch ( Exception $e ) {
-		// This is most probably caused by an element not existing, an exception raised from the depth of
-		// the association query - otherwise, there are no reasons for it to fail, all the inputs should be valid.
-		return 0;
-	}
+	$results = $related_posts->get_results();
 
 	if( empty( $results ) ) {
 		return 0; // No result.
@@ -402,6 +228,7 @@ function toolset_get_parent_post_by_type( $post, $target_type ) {
  */
 function toolset_get_relationship( $identification ) {
 	do_action( 'toolset_do_m2m_full_init' );
+
 	$service = new m2m\PublicApiService();
 	$definition = null;
 
@@ -801,7 +628,7 @@ function toolset_disconnect_posts( $relationship, $parent, $child ) {
 	if( empty( $results ) ) {
 		return array(
 			'success' => false,
-			'message' => __( 'There is no association between the two given posts that can be deleted', 'wpcf' )
+			'message' => __( 'There is no association between the two given posts that can be deleted', 'wpv-views' )
 		);
 	}
 

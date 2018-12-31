@@ -375,7 +375,7 @@ if (!class_exists('Wpcf_Cake_Validation')) {
                     break;
                 default:
                     $_this = & Wpcf_Cake_Validation::getInstance();
-                    $_this->errors[] = __('You must define the $operator parameter for Wpcf_Cake_Validation::comparison()', 'wpcf');
+                    $_this->errors[] = __('You must define the $operator parameter for Wpcf_Cake_Validation::comparison()', 'wpv-views');
                     break;
             }
             return false;
@@ -399,7 +399,7 @@ if (!class_exists('Wpcf_Cake_Validation')) {
                 $_this->_extract($check);
             }
             if ($_this->regex === null) {
-                $_this->errors[] = __('You must define a regular expression for Wpcf_Cake_Validation::custom()', 'wpcf');
+                $_this->errors[] = __('You must define a regular expression for Wpcf_Cake_Validation::custom()', 'wpv-views');
                 return false;
             }
             return $_this->_check();

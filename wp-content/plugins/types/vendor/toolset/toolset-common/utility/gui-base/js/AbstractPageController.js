@@ -63,7 +63,7 @@ Toolset.Gui.AbstractPage = function() {
     self.getModelData = function(selector) {
 
         if(!_.has(this, 'modelData')) {
-            if(typeof(selector) == 'undefined') {
+            if(typeof(selector) === 'undefined') {
                 selector = '#toolset_model_data';
             }
 
@@ -138,55 +138,59 @@ Toolset.Gui.AbstractPage = function() {
 
         var modelData = self.getModelData();
 
-        if( _.has(modelData, 'templates') && _.isObject(_.property('templates')(modelData))) {
-
-            self.templates = new function() {
-
-                var templates = this;
-
-                templates.raw = _.property('templates')(modelData);
-
-                /**
-                 * @param {string} templateName
-                 * @returns {string} Raw template content.
-                 */
-                templates.getRawTemplate = function(templateName) {
-                    if(_.has(templates.raw, templateName)) {
-                        return templates.raw[templateName];
-                    } else {
-                        self.log('Template "' + templateName + '" not found.');
-                        return '';
-                    }
-                };
-
-                templates.compiledUnderscoreTemplates = {};
-
-                /**
-                 * @param {string} templateName
-                 * @returns {function} Compiled underscore template
-                 */
-                templates.getUnderscoreTemplate = function(templateName) {
-                    if(!_.has(templates.compiledUnderscoreTemplates, templateName)) {
-                        templates.compiledUnderscoreTemplates[templateName] = _.template(templates.getRawTemplate(templateName));
-                    }
-                    return templates.compiledUnderscoreTemplates[templateName];
-                };
-
-
-                /**
-                 * Compile an underscore template (with using cache) and render it.
-                 *
-                 * @param {string} templateName
-                 * @param {object} context Underscore context for rendering the template.
-                 * @returns {string} Rendered markup.
-                 */
-                templates.renderUnderscore = function(templateName, context) {
-                    var compiled = templates.getUnderscoreTemplate(templateName);
-                    return compiled(context);
-                };
-
-            };
+        if( ! _.has(modelData, 'templates') || ! _.isObject(_.property('templates')(modelData))) {
+            modelData.templates = {};
         }
+
+        self.templates = new function() {
+
+            var templates = this;
+
+            templates.raw = _.property('templates')(modelData);
+
+            /**
+             * @param {string} templateName
+             * @returns {string} Raw template content.
+             */
+            templates.getRawTemplate = function(templateName) {
+                if(_.has(templates.raw, templateName)) {
+                    return templates.raw[templateName];
+                } else if( templateName === 'messageMultiple' ) {
+                    // Only template used in all page controllers. If we have more of them, a more generic solution is preferred.
+                    return "<%= (typeof(mainMessage) != 'undefined' && 0 < mainMessage.length ? '<p>' + mainMessage + '</p>' : '' ) %><ol><% _.each(messages, function(message) { print('<li>' + message + '</li>'); }); %></ol>";
+                } else {
+                    self.log('Template "' + templateName + '" not found.');
+                    return '';
+                }
+            };
+
+            templates.compiledUnderscoreTemplates = {};
+
+            /**
+             * @param {string} templateName
+             * @returns {function} Compiled underscore template
+             */
+            templates.getUnderscoreTemplate = function(templateName) {
+                if(!_.has(templates.compiledUnderscoreTemplates, templateName)) {
+                    templates.compiledUnderscoreTemplates[templateName] = _.template(templates.getRawTemplate(templateName));
+                }
+                return templates.compiledUnderscoreTemplates[templateName];
+            };
+
+
+            /**
+             * Compile an underscore template (with using cache) and render it.
+             *
+             * @param {string} templateName
+             * @param {object} context Underscore context for rendering the template.
+             * @returns {string} Rendered markup.
+             */
+            templates.renderUnderscore = function(templateName, context) {
+                var compiled = templates.getUnderscoreTemplate(templateName);
+                return compiled(context);
+            };
+
+        };
     };
 
     /**

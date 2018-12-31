@@ -253,29 +253,34 @@
 /*************************
  * Step 5
  *************************/
-#types-wizard-step-5 label {
-	width: 30%;
-	display: inline-block;
-	text-align: right;
-	padding-right: 15px;
-	vertical-align: middle;
+@media (max-width: 479px) {
+	#types-wizard-step-5 input[type='text'] {
+		width: 100%;
+	}
+}
+@media (min-width: 480px) {
+	#types-wizard-step-5 label {
+		width: 30%;
+		display: inline-block;
+		text-align: right;
+		padding-right: 15px;
+		vertical-align: middle;
+	}
+	#types-wizard-step-5 input[type='text'] {
+		width: 65%;
+	}
+	#types-wizard-step-5 .wizard-form-checkbox {
+		margin-left: calc(30% + 15px + 5px);
+	}
+	#types-wizard-step-5 .wizard-form-checkbox label {
+		text-align: start;
+		padding-right: 0;
+		width: auto;
+		display: inline
+	}
 }
 .wizard-form-field {
 	margin-bottom: 15px;
-}
-#types-wizard-step-5 label.names-checks {
-	width: 64%;
-	text-align: left;
-	float: right;
-}
-#types-wizard-step-5 input[type='text'] {
-	width: 65%;
-}
-#types-wizard-create-intermediary + .js-show-tooltip {
-	display: none;
-}
-#types-wizard-create-intermediary:disabled + .js-show-tooltip {
-	display: inline;
 }
 
 

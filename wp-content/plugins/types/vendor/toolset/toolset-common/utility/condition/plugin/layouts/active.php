@@ -6,13 +6,19 @@
  * @since 2.3.0
  */
 class Toolset_Condition_Plugin_Layouts_Active implements Toolset_Condition_Interface {
+	/**
+	 * @var Toolset_Constants
+	 */
+	protected $constants;
+
+	public function __construct( \Toolset_Constants $constants = null ) {
+		$this->constants = $constants
+			? $constants
+			: new \Toolset_Constants();
+	}
 
 	public function is_met() {
-		if( defined( 'WPDDL_DEVELOPMENT' ) || defined( 'WPDDL_PRODUCTION' ) ) {
-			return true;
-		}
-
-		return false;
+		return $this->constants->defined( 'WPDDL_DEVELOPMENT' ) || $this->constants->defined( 'WPDDL_PRODUCTION' );
 	}
 
 }

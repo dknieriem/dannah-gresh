@@ -55,7 +55,7 @@
 	<tr>
 		<th class="c-rgx__th c-rgx__th--invisible"></th>
 		<!-- ko foreach: $data.headlines -->
-		<th class="c-rgx__th"><span data-bind="html: $data.title"></span> <i class="fa fa-lock js-wpcf-tooltip" data-bind="visible: $data.wpmlIsCopied" data-tooltip="<?php _e( 'This field is locked for editing because WPML will copy its value from the original language.', 'wpcf' ); ?>"></i></th>
+		<th class="c-rgx__th" data-bind="visible: $data.group.cols()[ $index() ].isVisible"><span data-bind="html: $data.title"></span> <i class="fa fa-lock js-wpcf-tooltip" data-bind="visible: $data.wpmlIsCopied" data-tooltip="<?php _e( 'This field is locked for editing because WPML will copy its value from the original language.', 'wpcf' ); ?>"></i></th>
 		<!-- /ko -->
 		<th class="c-rgx__th c-rgx__th--invisible"></th>
 	</tr>
@@ -100,12 +100,14 @@
 </script>
 <?php /* Group Item */ ?>
 <script type="text/html" id="tplItem">
-	<td class="c-rgx__td">
+	<td class="c-rgx__td" data-bind="visible: $data.item.group.cols()[ $index() ].isVisible">
 		<!-- ko if: $index() === 0 -->
 		<!-- ko template: { name: 'tplDeleteNotice' } --><!-- /ko -->
 		<!-- /ko -->
-		<div class="js-wpcf-tooltip c-rgx__input_container" data-bind="html: $data.htmlInput, attr: { 'data-object': $data.setElement( $element ), 'data-tooltip': $data.title }"></div>
-	</td>
+        <div data-bind="visible: $data.fieldConditionsMet">
+		    <div class="js-wpcf-tooltip c-rgx__input_container" data-bind="html: $data.htmlInput, attr: { 'data-object': $data.setElement( $element ), 'data-tooltip': $data.title }"></div>
+        </div>
+    </td>
 </script>
 
 <?php /* Group Toggle/Create */ ?>

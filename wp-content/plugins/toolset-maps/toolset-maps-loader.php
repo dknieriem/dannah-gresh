@@ -3,7 +3,7 @@
 Plugin Name: Toolset Maps
 Plugin URI: https://toolset.com/documentation/user-guides/display-on-google-maps/
 Description: Toolset Maps will extend Types, Views and Forms with advanced geolocalization features
-Version: 1.5.2
+Version: 1.7.1
 Text Domain: toolset-maps
 Domain Path: /languages
 Author: OnTheGoSystems
@@ -50,7 +50,7 @@ function toolset_addon_map_load_or_deactivate() {
 		'types'		=> array(
 			'class_exists'	    => 'Types_Main',
 			'version_constant'	=> 'TYPES_VERSION',
-			'version_minimum'	=> '2.2.22',
+			'version_minimum'	=> '3.0',
 			'require_once'		=> '/includes/google_address.php'
 		),
 		'common'    => array(
@@ -66,11 +66,11 @@ function toolset_addon_map_load_or_deactivate() {
 	foreach ( $requirements as $req_slug => $req_data ) {
 		if (
 			(
-				( 
-					isset( $req_data['class_exists'] ) 
+				(
+					isset( $req_data['class_exists'] )
 					&& class_exists( $req_data['class_exists'] )
-				) || ( 
-					isset( $req_data['function_exists'] ) 
+				) || (
+					isset( $req_data['function_exists'] )
 					&& function_exists( $req_data['function_exists'] )
 				)
 			)
@@ -92,19 +92,23 @@ function toolset_addon_map_load_or_deactivate() {
 	}
 
 	if ( $do_load ) {
-		define( 'TOOLSET_ADDON_MAPS_VERSION', '1.5.2' );
+		define( 'TOOLSET_ADDON_MAPS_VERSION', '1.7.1' );
 		define( 'TOOLSET_ADDON_MAPS_PATH', dirname( __FILE__ ) );
 		define( 'TOOLSET_ADDON_MAPS_TEMPLATE_PATH', TOOLSET_ADDON_MAPS_PATH . '/application/views/' );
 		define( 'TOOLSET_ADDON_MAPS_FOLDER', basename( TOOLSET_ADDON_MAPS_PATH ) );
 		define( 'TOOLSET_ADDON_MAPS_FIELD_TYPE', 'google_address' );
 		define( 'TOOLSET_ADDON_MAPS_MESSAGE_SPACE_CHAR', '&nbsp;' );
 		define( 'TOOLSET_ADDON_MAPS_DOC_LINK', 'https://toolset.com/documentation/user-guides/display-on-google-maps/' );
-		define( 'TOOLSET_ADDON_MAPS_URL', rtrim( str_replace( 'http://', '//', str_replace( 'https://', '//', plugins_url() )), '/' ) . '/' . TOOLSET_ADDON_MAPS_FOLDER );
+		define( 'TOOLSET_ADDON_MAPS_URL', rtrim( str_replace( array( 'https://', 'http://'), '//', plugins_url() ), '/' ) . '/' . TOOLSET_ADDON_MAPS_FOLDER );
 		define( 'TOOLSET_ADDON_MAPS_FRONTEND_URL', TOOLSET_ADDON_MAPS_URL );
 		define( 'TOOLSET_ADDON_MAPS_URL_JS', TOOLSET_ADDON_MAPS_URL.'/resources/js/' );
 
-		add_action( 'init', 'toolset_addon_maps_late_load' );
+		// Bootstrap plugin
+		require_once TOOLSET_ADDON_MAPS_PATH . '/application/Bootstrap.php';
+		$bootstrap = new \OTGS\Toolset\Maps\Bootstrap( $do_available );
+		$bootstrap->init();
 
+		// Load legacy classes
 		require_once TOOLSET_ADDON_MAPS_PATH.'/includes/toolset-common-functions.php';
 		foreach ( $do_available as $do_slug ) {
 			if ( isset( $requirements[ $do_slug ]['require_once'] ) ) {
@@ -168,13 +172,4 @@ function toolset_addon_map_deactivate_notice() {
 		</p>
 	</div>
 	<?php
-}
-
-/**
- * Because we need Toolset Common autoloader active before loading this class... Once we implement autoloader
- * for Maps, this probably won't be needed any more.
- * @since 1.5
- */
-function toolset_addon_maps_late_load() {
-	require_once TOOLSET_ADDON_MAPS_PATH . '/includes/toolset-maps-shortcode-generator.php';
 }

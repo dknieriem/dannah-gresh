@@ -120,7 +120,7 @@ class Toolset_Ajax_Handler_Migrate_To_M2M extends Toolset_Ajax_Handler_Abstract 
 						$results->add( $this->enable_maintenance_mode() );
 						$continue = $results->is_complete_success();
 					} else {
-						$results->add( true, __( 'Not using maintenance mode for the migration.', 'wpcf' ) );
+						$results->add( true, __( 'Not using maintenance mode for the migration.', 'wpv-views' ) );
 						$continue = true;
 					}
 					$keep_maintenance_mode = true;
@@ -139,7 +139,7 @@ class Toolset_Ajax_Handler_Migrate_To_M2M extends Toolset_Ajax_Handler_Abstract 
 				$definition_migration_result = $migration_controller->migrate_relationship_definitions( $adjust_translation_mode );
 				if ( $definition_migration_result->is_complete_success() ) {
 					$results->add( $definition_migration_result );
-					$results->add( true, __( 'Relationship definitions migrated.', 'wpcf' ) );
+					$results->add( true, __( 'Relationship definitions migrated.', 'wpv-views' ) );
 				} else {
 					$results->add( $definition_migration_result );
 				}
@@ -176,13 +176,14 @@ class Toolset_Ajax_Handler_Migrate_To_M2M extends Toolset_Ajax_Handler_Abstract 
 						$results->add(
 							true,
 							sprintf(
-								__( '(%d) %d items processed.', 'wpcf' ),
+								/* translators: Migration process feedback, as in (Step number) XXX items processed. */
+								__( '(%d) %d items processed.', 'wpv-views' ),
 								$migration_step + 1,
 								$data_migration_result->get_updated_item_count()
 							)
 						);
 					} else {
-						$results->add( true, __( 'Associations processed.', 'wpcf' ) );
+						$results->add( true, __( 'Associations processed.', 'wpv-views' ) );
 						$next_phase = self::PHASE_FINISH;
 					}
 
@@ -194,7 +195,7 @@ class Toolset_Ajax_Handler_Migrate_To_M2M extends Toolset_Ajax_Handler_Abstract 
 			case self::PHASE_FINISH: {
 
 				$migration_controller->finish();
-				$results->add( true, __( 'The migration process is complete.', 'wpcf' ) );
+				$results->add( true, __( 'The migration process is complete.', 'wpv-views' ) );
 				$continue = false;
 
 				break;
@@ -272,7 +273,7 @@ class Toolset_Ajax_Handler_Migrate_To_M2M extends Toolset_Ajax_Handler_Abstract 
 				$dbdelta_results = $migration_controller->do_native_dbdelta();
 
 				if( $dbdelta_results->is_complete_success() ) {
-					$results->add( true, __( 'The toolset_associations, toolset_relationships and toolset_post_type_sets tables have been created.', 'wpcf' ) );
+					$results->add( true, __( 'The toolset_associations, toolset_relationships and toolset_post_type_sets tables have been created.', 'wpv-views' ) );
 				} else {
 					$results->add( $dbdelta_results );
 				}

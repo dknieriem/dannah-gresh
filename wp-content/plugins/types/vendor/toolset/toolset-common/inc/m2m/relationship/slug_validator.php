@@ -50,7 +50,7 @@ class Toolset_Relationship_Slug_Validator {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Unable to rename the relationship slug "%s" to "%s" because it is too long. The maximum allowed length is %d characters.', 'wpcf' ),
+					__( 'Unable to rename the relationship slug "%s" to "%s" because it is too long. The maximum allowed length is %d characters.', 'wpv-views' ),
 					$this->relationship_to_rename->get_slug(),
 					$this->slug_candidate,
 					Toolset_Relationship_Database_Operations::MAXIMUM_RELATIONSHIP_SLUG_LENGTH
@@ -63,7 +63,7 @@ class Toolset_Relationship_Slug_Validator {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Unable to rename the relationship slug "%s" to "%s" because only lowercase letters, numbers, underscores and dashes are allowed.', 'wpcf' ),
+					__( 'Unable to rename the relationship slug "%s" to "%s" because only lowercase letters, numbers, underscores and dashes are allowed.', 'wpv-views' ),
 					$this->relationship_to_rename->get_slug(),
 					esc_html( $this->slug_candidate )
 				)
@@ -75,13 +75,13 @@ class Toolset_Relationship_Slug_Validator {
 			return new Toolset_Result(
 				false,
 				sprintf(
-					__( 'Unable to rename the relationship slug "%s" to "%s" because it is already in use.', 'wpcf' ),
+					__( 'Unable to rename the relationship slug "%s" to "%s" because it is already in use.', 'wpv-views' ),
 					$this->relationship_to_rename->get_slug(),
 					esc_html( $this->slug_candidate )
 				)
 			);
 		}
 
-		return new Toolset_Result( true, __( 'The relationship slug can be renamed.', 'wpcf' ) );
+		return new Toolset_Result( true, __( 'The relationship slug can be renamed.', 'wpv-views' ) );
 	}
 }

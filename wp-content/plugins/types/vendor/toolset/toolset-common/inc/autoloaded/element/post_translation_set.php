@@ -492,4 +492,36 @@ class Toolset_Post_Translation_Set implements IToolset_Post {
 		}
 		return $this->_trid;
 	}
+
+
+	/**
+	 * @param string|null $language_code Preferred language version.
+	 * @return string Post status
+	 * @since Types 3.2
+	 */
+	public function get_status( $language_code = null ) {
+		return $this->get_best_translation( $language_code )->get_status();
+	}
+
+
+	/**
+	 * Preferred editor mode for the current post. Relevant only in the "per post" editor mode of the post type.
+	 *
+	 * @param string|null $language_code Preferred language version.
+	 * @return string
+	 * @since Types 3.2.2
+	 */
+	public function get_editor_mode( $language_code = null ) {
+		return $this->get_best_translation( $language_code )->get_editor_mode();
+	}
+
+
+	/**
+	 * @param string|null $language_code Preferred language version.
+	 * @return string Raw post content
+	 * @since Types 3.2.2
+	 */
+	public function get_content( $language_code = null ) {
+		return $this->get_best_translation( $language_code )->get_content();
+	}
 }

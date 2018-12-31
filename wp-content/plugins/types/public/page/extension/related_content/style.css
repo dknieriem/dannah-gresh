@@ -240,7 +240,7 @@ select[data-rel="select2"] {
 .types-related-content-table-wrapper table {
 	width: calc(100% - 1px);
 }
-.toolset-dialog-connect-related-content, .toolset-dialog-new-related-content {
+.toolset-dialog-connect-related-content, .toolset-dialog-new-related-content, .toolset-dialog-columns-to-be-displayed {
 	z-index: 100101 !important;
 }
 

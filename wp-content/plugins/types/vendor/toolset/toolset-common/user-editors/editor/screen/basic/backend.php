@@ -3,22 +3,36 @@
 class Toolset_User_Editors_Editor_Screen_Basic_Backend
 	extends Toolset_User_Editors_Editor_Screen_Abstract {
 
+	const USER_EDITORS_COMMON_STYLE_HANDLE = 'toolset-user-editors-common-style';
+
+	const USER_EDITORS_COMMON_STYLE_RELATIVE_PATH = '/user-editors/editor/screen/common/backend.css';
+
 	/**
 	 * @var Toolset_Constants
 	 */
 	protected $constants;
 
 	/**
+	 * @var Toolset_Renderer
+	 */
+	protected $toolset_renderer;
+
+	/**
 	 * Toolset_User_Editors_Editor_Screen_Basic_Backend constructor.
 	 *
 	 * @param Toolset_Constants|null $constants
 	 */
-	public function __construct( Toolset_Constants $constants = null ) {
+	public function __construct(
+		Toolset_Constants $constants = null,
+		\Toolset_Renderer $toolset_renderer = null
+	) {
 		$this->constants = $constants
 			? $constants
 			: new Toolset_Constants();
 
-		$this->constants->define( 'BASIC_SCREEN_ID', 'basic' );
+		$this->toolset_renderer = $toolset_renderer
+			? $toolset_renderer
+			: \Toolset_Renderer::get_instance();
 	}
 
 	public function initialize() {
@@ -26,7 +40,7 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_assets' ), 50 );
 
 		add_filter( 'toolset_filter_toolset_registered_user_editors', array( $this, 'register_user_editor' ) );
-		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes', array( $this, 'layout_template_attribute' ), 10, 3 );
+		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes', array( $this, 'layout_template_attribute' ), 10, 2 );
 
 		add_action( 'wp_ajax_toolset_set_layout_template_user_editor', array( $this, 'set_layout_template_user_editor' ) );
 
@@ -63,7 +77,7 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 	
 	public function register_assets() {
 		
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
+		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
 
 		$toolset_assets_manager->register_style(
 			'toolset-user-editors-basic-style',
@@ -87,15 +101,32 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 			TOOLSET_COMMON_VERSION,
 			true
 		);
-		
-		$basic_layout_template_i18n = array(
-            'template_editor_url'	=> admin_url( 'admin.php?page=ct-editor' ),
-			'template_overlay'		=> array(
-										'title'		=> __( 'Saving...', 'wpv-views' )
-									),
-			'user_editors'			=> apply_filters( 'toolset_filter_toolset_registered_user_editors', array() ),
-			'wpnonce'				=> wp_create_nonce( 'toolset_layout_template_user_editor_nonce' )
+
+		$template_repository = Toolset_Output_Template_Repository::get_instance();
+		$unsaved_ct_dialog_content = $this->toolset_renderer->render(
+			$template_repository->get( Toolset_Output_Template_Repository::USER_EDITORS_MY_DIALOG ),
+			array(),
+			false
 		);
+
+		$basic_layout_template_i18n = array(
+            'template_editor_url' => admin_url( 'admin.php?page=ct-editor' ),
+			'template_overlay' => array(
+				'title'		=> __( 'Saving...', 'wpv-views' )
+			),
+			'user_editors' => apply_filters( 'toolset_filter_toolset_registered_user_editors', array() ),
+			'wpnonce' => wp_create_nonce( 'toolset_layout_template_user_editor_nonce' ),
+			'unsavedContentTemplateDialog' => array(
+				'title' => __( 'Do you want to save this Content Template?', 'wpv-views' ),
+				'content' => $unsaved_ct_dialog_content,
+				'buttons' => array(
+					'cancel' => __( 'Cancel', 'wpv-views' ),
+					'save' => __( 'Save', 'wpv-views' ),
+				),
+				'unknownEditor' => __( 'the selected editor', 'wpv-views' ),
+			),
+		);
+
 		$toolset_assets_manager->localize_script( 
 			'toolset-user-editors-basic-layout-template-script', 
 			'toolset_user_editors_basic_layout_template_i18n', 
@@ -129,11 +160,15 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 	* On a Content Template used inside a View or WPA loop output, we set which builder it is using
 	* so we can link to the CT edit page with the right builder instantiated.
 	*
+	* @param array   $attributes
+	* @param WP_POST $content_template
+	*
+	* @return array
+	*
 	* @since 2.3.0
 	*/
-	
-	public function layout_template_attribute( $attributes, $content_template, $view_id ) {
-		$content_template_has_basic = ( in_array( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ), array( '', $this->constants->constant( 'BASIC_SCREEN_ID' ) ) ) );
+	public function layout_template_attribute( $attributes, $content_template ) {
+		$content_template_has_basic = ( in_array( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ), array( '', Toolset_User_Editors_Editor_Basic::BASIC_SCREEN_ID ), true ) );
 		if ( $content_template_has_basic ) {
 			$attributes['builder'] = $this->editor->get_id();
 		}
@@ -172,7 +207,7 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 		}
 		
 		$ct_id = (int) $_POST['ct_id'];
-		$editor = isset( $_POST['editor'] ) ? sanitize_text_field( $_POST['editor'] ) : $this->constants->constant( 'BASIC_SCREEN_ID' );
+		$editor = isset( $_POST['editor'] ) ? sanitize_text_field( $_POST['editor'] ) : Toolset_User_Editors_Editor_Basic::BASIC_SCREEN_ID;
 		update_post_meta( $ct_id, '_toolset_user_editors_editor_choice', $editor );
 
 		do_action( 'toolset_set_layout_template_user_editor_' . $editor );
@@ -181,7 +216,16 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 	}
 
 	public function load_template() {
-		require_once $this->constants->constant( 'TOOLSET_COMMON_PATH' ) . '/user-editors/editor/templates/inline-ct-overlay.tpl.php';
-		require_once $this->constants->constant( 'TOOLSET_COMMON_PATH' ) . '/user-editors/editor/templates/inline-ct-saving-overlay.tpl.php';
+		$template_repository = Toolset_Output_Template_Repository::get_instance();
+
+		$this->toolset_renderer->render(
+			$template_repository->get( Toolset_Output_Template_Repository::USER_EDITORS_INLINE_EDITOR_OVERLAY ),
+			array()
+		);
+
+		$this->toolset_renderer->render(
+			$template_repository->get( Toolset_Output_Template_Repository::USER_EDITORS_INLINE_EDITOR_SAVING_OVERLAY ),
+			array()
+		);
 	}
 }

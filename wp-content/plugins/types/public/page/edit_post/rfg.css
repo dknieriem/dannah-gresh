@@ -32,6 +32,11 @@
    The style rules for the horizontal display of a repeatable group
 */
 
+/* TinyMCE under conditionals, fix that both editors are displayed on RFG */
+.c-rg .tmce-active textarea {
+    display: none !important;
+}
+
 /* General */
 .c-rgx {
     box-sizing: border-box;
@@ -43,8 +48,6 @@
     position: relative;
     overflow-x: auto;
     overflow-y: hidden;
-    width: calc(100% - 60px);
-    margin: 0 30px;
 }
 
 .c-rgx__title {
@@ -100,6 +103,7 @@
 
 .c-rgx__td,
 .c-rgx__th {
+	position: relative;
     padding: 5px 20px;
     vertical-align: top;
     text-align: left;
@@ -108,6 +112,11 @@
 .c-rgx__tbody .c-rgx__th,
 .c-rgx__td {
     border-top: 1px solid #ddd;
+}
+
+.c-rgx__thead tr,
+.c-rgx__tbody tr {
+    height: 28px;
 }
 
 .c-rgx__tr--nested .c-rgx__thead .c-rgx__th,
@@ -185,21 +194,18 @@
 .c-rgx__table--master > tbody > tr > th:first-child,
 .c-rgx__table--master > thead > tr > th:last-child,
 .c-rgx__table--master > tbody > tr > th:last-child {
-    position: fixed;
+    position: relative;
     width: 30px;
     padding: 0;
     text-align: center;
     vertical-align: middle;
     margin-left: -30px;
     box-sizing: border-box;
-    border-right: 1px solid #ddd;
-    border-top: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+	border-right: 1px solid #ddd;
 }
 
 .c-rgx__table--master > thead > tr > th:last-child,
 .c-rgx__table--master > tbody > tr > th:last-child {
-    left: 50%;
     margin-left: 0;
     border-right: 0;
     border-left: 1px solid #ddd;

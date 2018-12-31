@@ -63,7 +63,7 @@ class Toolset_User_Editors_Medium_Screen_Content_Template_Frontend_Editor
 
 	public function register_assets() {
 		
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
+		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
 		
 		$toolset_assets_manager->register_style(
 			'toolset-user-editors-ct-frontend-editor-style', 

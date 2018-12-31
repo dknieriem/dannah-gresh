@@ -33,8 +33,10 @@
 		<div data-bind="afterBinding: content, template: {afterRender: wpcfVanillaFormValidation }" class="types-related-content clearfix">
 			<div class="types-related-content-actions alignright">
 				<span class="spinner" data-bind="style: { visibility: (isMainSpinnerVisible() ? 'visible' : 'hidden') }" style="visibility: hidden;"></span>
+				<!-- ko if: userCaps.publish_posts -->
 				<input type="button" class="button" value="{{ strings.misc.addNew }}" data-bind="click: onAddNewRelatedContent, enable: canConnectAnotherElement" />
 				<input type="button" class="button" value="{{ strings.misc.connectExisting }}" data-bind="click: onConnectExistingRelatedContent, enable: canConnectAnotherElement" />
+				<!-- /ko -->
 				<button class="button" data-bind="click: onSelectFieldsDisplayed" ><i class="fa fa-cog" ></i></button>
 				<i class="fa fa-question-circle icon-question-sign js-show-tooltip" data-header="{{ __( 'Related content', 'wpcf' ) }}" data-content='{{ __( 'No more associations are allowed', 'wpcf' ) }}' data-bind="click: function() {showPointer($element)}, visible: !canConnectAnotherElement() && !isOnlyOneRelatedConection()"></i>
 			</div>
@@ -85,6 +87,7 @@
 		{% block afterDisplayName %}{% endblock %}
 
 		<div class="row-actions">
+			<!-- ko if: canUserEditPost -->
 			<span class="edit">
 				<a data-bind="attr: {href: editPostLink()}">{{ __( 'Edit', 'wpcf' ) }}</a> |
 			</span>
@@ -94,9 +97,12 @@
 			<span class="edit">
 				<a data-bind="click: onDisconnectAction">{{ __( 'Disconnect', 'wpcf' ) }}</a> |
 			</span>
+			<!-- /ko -->
+			<!-- ko if: canUserDeletePost -->
 			<span class="delete">
 				<a data-bind="click: onDeleteAction">{{ __( 'Trash', 'wpcf' ) }}</a>
 			</span>
+			<!-- /ko -->
 		</div>
 	</td>
 {% endblock %}

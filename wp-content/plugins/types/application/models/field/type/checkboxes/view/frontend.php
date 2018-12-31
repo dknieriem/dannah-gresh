@@ -53,9 +53,9 @@ class Types_Field_Type_Checkboxes_View_Frontend extends Types_Field_Type_View_Fr
 		$this->params['separator'] = isset( $this->params['separator'] )
 			? $this->params['separator']
 			: ', ';
-		$decorator_separator = new Types_View_Decorator_Separator();
+
 		$filtered = array_filter( $filtered, function( $v ) {
-			return $v !== false;
+			return ! empty( $v );
 		} );
 
 		$value = is_array( $filtered )
@@ -79,7 +79,6 @@ class Types_Field_Type_Checkboxes_View_Frontend extends Types_Field_Type_View_Fr
 			$to_display[] = $option->get_value_raw();
 		}
 
-		$to_display = array_filter( $to_display, array( $this, 'maybe_skip_save_empty_value' ) );
 		$to_display = array_values( $to_display );
 
 		return $to_display;

@@ -10,7 +10,16 @@
 class Toolset_User_Editors_Editor_Gutenberg
 	extends Toolset_User_Editors_Editor_Abstract {
 
-	protected $id = 'gutenberg';
+	const GUTENBERG_SCREEN_ID = 'gutenberg';
+
+	/**
+	 * @var string
+	 */
+	protected $id = self::GUTENBERG_SCREEN_ID;
+
+	/**
+	 * @var string
+	 */
 	protected $name = 'Gutenberg';
 
 	public function initialize() {
@@ -18,13 +27,12 @@ class Toolset_User_Editors_Editor_Gutenberg
 	}
 
 	public function required_plugin_active() {
-		if ( ! apply_filters( 'toolset_is_views_available', false ) ) {
-			return false;
-		}
+		$views_active = new Toolset_Condition_Plugin_Views_Active();
+		$gutenberg_active = new Toolset_Condition_Plugin_Gutenberg_Active();
 
 		if (
-			defined( 'GUTENBERG_VERSION' )
-			|| defined( 'GUTENBERG_DEVELOPMENT_MODE' )
+			$views_active->is_met() &&
+			$gutenberg_active->is_met()
 		) {
 			$this->name = __( 'Gutenberg', 'wpv-views' );
 			return true;

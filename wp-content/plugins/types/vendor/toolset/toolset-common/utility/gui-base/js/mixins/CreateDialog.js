@@ -18,6 +18,7 @@ Toolset.Gui.Mixins.CreateDialog = function() {
 
     var self = this;
 
+
     /**
      * Create a Toolset dialog.
      *
@@ -45,7 +46,18 @@ Toolset.Gui.Mixins.CreateDialog = function() {
 
         var dialog = new dialogDuplicate(processedOptions);
 
+        dialog.$el.on('ddldialogclose', function () {
+            self.onDialogClose();
+
+            // Putting this on the Close button action is not enough, there are other ways to close the dialog.
+            ko.cleanNode(dialog);
+        });
+
         return dialog;
     };
+
+
+    // To be overridden.
+    self.onDialogClose = function() {};
 
 };

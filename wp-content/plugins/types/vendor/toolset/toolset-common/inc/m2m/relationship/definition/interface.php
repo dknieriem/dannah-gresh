@@ -171,15 +171,18 @@ interface IToolset_Relationship_Definition {
 	 *
 	 * @param int|WP_Post|IToolset_Element $parent Parent element (of matching domain, type and other conditions)
 	 * @param int|WP_Post|IToolset_Element $child Child element (of matching domain, type and other conditions)
+	 * @param null|int $intermediary_id ID of the intermediary post to set. If null, the post will be
+	 * 		created automatically (if the relationship needs it)
 	 *
 	 * @return Toolset_Result|IToolset_Association The newly created association or a negative Toolset_Result when it could not have been created.
 	 * @throws RuntimeException when the association cannot be created because of a known reason. The exception would
 	 *     contain a displayable error message.
 	 * @throws InvalidArgumentException when the method is used improperly.
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 *
 	 * @since m2m
 	 */
-	public function create_association( $parent, $child );
+	public function create_association( $parent, $child, $intermediary_id = null );
 
 
 	/**
@@ -262,6 +265,19 @@ interface IToolset_Relationship_Definition {
 
 
 	/**
+	 * Defines whether intermediary posts of this relationship should be automatically deleted
+	 * together with an association.
+	 *
+	 * @param null|bool $value If a boolean value is provided, it will be set.
+	 *
+	 * @return bool
+	 * @since Types 3.2
+	 */
+	public function is_autodeleting_intermediary_posts( $value = null );
+
+
+
+	/**
 	 * @return IToolset_Relationship_Origin
 	 * @since m2m
 	 */
@@ -272,7 +288,8 @@ interface IToolset_Relationship_Definition {
 	 * Set origin
 	 * Can be set by using the origin keyword or the class
 	 *
-	 * @param IToolset_Relationship_Origin|string  $origin
+	 * @param IToolset_Relationship_Origin|string $origin
+	 *
 	 * @return void
 	 * @since m2m
 	 */
@@ -289,6 +306,7 @@ interface IToolset_Relationship_Definition {
 	 * Return the number of existing associations belonging to the relationships
 	 *
 	 * @param string|IToolset_Relationship_Role $role Role.
+	 *
 	 * @return int
 	 * @since m2m
 	 */
@@ -303,4 +321,18 @@ interface IToolset_Relationship_Definition {
 	 * @return null|string
 	 */
 	public function get_intermediary_post_type();
+
+
+	/**
+	 * Set the intermediary post type for this relationship.
+	 *
+	 * Use with caution.
+	 *
+	 * @param IToolset_Post_Type $post_type
+	 * @param bool $override_integrity_check If this is true, do not check whether the given post type can be used as an intermediary.
+	 *
+	 * @since 3.0.5
+	 */
+	public function set_intermediary_post_type( IToolset_Post_Type $post_type, $override_integrity_check = false );
+
 }

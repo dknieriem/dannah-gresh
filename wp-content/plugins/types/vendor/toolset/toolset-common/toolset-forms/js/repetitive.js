@@ -41,7 +41,7 @@ var wptRep = (function ($) {
         
         // Add field
         $(document).off('click', '.js-wpt-repadd', null);
-        $(document).on('click', '.js-wpt-repadd', function (e) {
+        $(document).on('click', '.js-wpt-repadd', function( e, $insertAfterThis ) {
             e.preventDefault();
             var $this = $(this),
                     parent,
@@ -74,8 +74,6 @@ var wptRep = (function ($) {
                 while ($('[name*="[' + _count + ']"]', $parent).length > 0) {
                     _count++;
                 }
-                // Insert the template before the button
-                $this.before(tpl.html().replace(/\[%%(\d+)%%\]/g, '[' + _count + ']'));
             } else {
                 /**
                  * template
@@ -97,10 +95,16 @@ var wptRep = (function ($) {
                 while ($('[name*="[' + _count + ']"]', $parent).length > 0) {
                     _count++;
                 }
-                // Insert the template before the button
-                $this.before(tpl.html().replace(/\[%%(\d+)%%\]/g, '[' + _count + ']'));
+                
 
             }
+			// Insert the template before the button, unless there is a node to insert this after
+			var tplToInsert = tpl.html().replace(/\[%%(\d+)%%\]/g, '[' + _count + ']')
+			if ( typeof $insertAfterThis !== 'undefined' ) {
+				$insertAfterThis.after( tplToInsert );
+			} else {
+				$this.before( tplToInsert );
+			}
             wptCallbacks.addRepetitive.fire($parent);
             _toggleCtl($parent);
             $this.trigger('blur');// To prevent it from staying on the active state

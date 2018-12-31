@@ -5,6 +5,9 @@
  *
  *
  */
+
+use OTGS\Toolset\Common\PostType\EditorMode;
+
 add_action( 'wpcf_type', 'wpcf_filter_type', 10, 2 );
 
 /**
@@ -116,119 +119,43 @@ function wpcf_custom_types_init() {
     	flush_rewrite_rules();
     }
 
-    // rearrange menu items
-    add_filter( 'custom_menu_order' , '__return_true');
-    add_filter( 'menu_order', 'types_menu_order' );
-    // rearrange menu items - end
-
     /** This filter is documented in wp-admin/wp-admin/edit-form-advanced.php */
     add_filter('enter_title_here', 'wpcf_filter_enter_title_here', 10, 2);
 }
 
-function types_menu_order( $menu ) {
-	$post_type_option = new Types_Utils_Post_Type_Option();
-	$custom_types = $post_type_option->get_post_types();
+/**
+ * Enhanced custom menu order
+ *
+ * "Enhanced" because this is on top of the normal "menu_position", which is an CPT attribute on registration.
+ * Using only "menu_position" can end in unexpected results, because WordPress will search the next free menu spot.
+ *
+ * @see types-969
+ *
+ * @param $menu_order
+ *
+ * @return array
+ */
+function wpcf_custom_menu_order( $menu_order ){
+	global $menu, $types_cpt_menu_position;
 
-	if ( !empty( $custom_types ) ) {
-		foreach( $custom_types as $post_type => $data ) {
-			if( empty( $data )
-                || !isset( $data['menu_position'] )
-				|| strpos( $data['menu_position'],'--wpcf-add-menu-after--' ) === false )
-				continue;
+	$types_admin_menu_order = new \OTGS\Toolset\Types\Site\AdminMenuOrder( $menu, $types_cpt_menu_position );
 
-			// at this point we have not only an integer as menu position
-			$target_url = explode( '--wpcf-add-menu-after--', $data['menu_position'] );
-
-			if( !isset( $target_url[1] ) || empty( $target_url[1] ) )
-				continue;
-
-            $target_url = $target_url[1];
-
-            // current url
-            switch( $data['slug'] ) {
-                case 'post':
-                    $current_url = 'edit.php';
-                    break;
-                case 'attachment':
-                    $current_url = 'upload.php';
-                    break;
-                default:
-                    $current_url = 'edit.php?post_type=' . $data['slug'];
-                    break;
-            }
-
-            types_menu_order_item_sort( $menu, $current_url, $target_url );
-
-            // store already reordered items
-            $reordered[$target_url][] = array(
-                'current_url' => $current_url,
-                'menu_position' => $target_url
-            );
-
-            // sort previous sorted items which depend on current again
-            if( isset( $reordered[$current_url] ) ) {
-                foreach( $reordered[$current_url] as $post_type ) {
-                    types_menu_order_item_sort( $menu, $post_type['current_url'], $post_type['menu_position'] );
-                }
-
-                unset( $reordered[$current_url] );
-            }
-		}
+	if( $menu_ordered = $types_admin_menu_order->get_ordered_menu_for_wp_filter_menu_order() ) {
+		return $menu_ordered;
 	}
 
-	return $menu;
+	return $menu_order;
 }
 
 /**
- * @param $menu
- * @param $current_url
- * @param $target_url
- *
- * @return mixed
+ * Run enhanced menu ordering
+ * Filter 'types_enhanced_menu_order' added by 3.2
  */
-function types_menu_order_item_sort( &$menu, $current_url, $target_url ) {
-
-    // current index
-    $current_index = array_search( $current_url, $menu );
-
-    // remove all items of $menu which are not matching selected menu
-    $menu_filtered = array_keys( $menu, $target_url );
-
-    // use last match for resorting
-    // https://onthegosystems.myjetbrains.com/youtrack/issue/types-591
-    $add_menu_after_index = array_pop( $menu_filtered );
-
-    // if both found resort menu
-    if( $current_index && $add_menu_after_index )
-        wpcf_custom_types_menu_order_move( $menu, $current_index, $add_menu_after_index );return $menu;
-}
-
-/**
- * This function is be used to rearrange the admin menu order
- *
- * @param $menu
- * @param mixed $item_move The item index which should be moved
- * @param mixed $item_target The item index where $item_move should be placed after
- */
-function wpcf_custom_types_menu_order_move( &$menu, $item_move, $item_target ) {
-
-    // if item move comes after target we have to select the next element,
-    // otherwise the $item_move would be added before the target.
-    if( $item_move > $item_target )
-        $item_target++;
-
-    // if $item_target is the last menu item, place $item_move to the end of the array
-    if( !isset( $menu[$item_target]) ) {
-        $tmp_menu_item = $menu[$item_move];
-        unset( $menu[$item_move] );
-        $menu[] = $tmp_menu_item;
-
-    // $item_target is not the last menu, place $item_move after it
-    } else {
-        $cut_moving_element = array_splice( $menu, $item_move, 1 );
-        array_splice( $menu, $item_target, 0, $cut_moving_element );
-    }
-
+if( apply_filters( 'types_enhanced_menu_order', '__return_true' ) ) {
+	// enable custom order
+	add_filter( 'custom_menu_order', '__return_true' );
+	// apply our menu order
+	add_filter( 'menu_order', 'wpcf_custom_menu_order', -1, 1 );
 }
 
 /**
@@ -237,12 +164,16 @@ function wpcf_custom_types_menu_order_move( &$menu, $item_move, $item_target ) {
  * @param string $post_type
  * @param array $data
  *
- * @return bool
+ * @return void
  */
 function wpcf_custom_types_register( $post_type, $data ) {
+	global $types_cpt_menu_position;
+	if( $types_cpt_menu_position === null ) {
+		$types_cpt_menu_position = array();
+	}
 
     if ( !empty( $data['disabled'] ) ) {
-        return false;
+        return;
     }
     $data = apply_filters( 'types_post_type', $data, $post_type );
     // Set labels
@@ -289,7 +220,12 @@ function wpcf_custom_types_register( $post_type, $data ) {
     if ( empty( $data['menu_position'] ) ) {
         unset( $data['menu_position'] );
     } else {
+    	$menu_position_parts = explode( '--wpcf-add-menu-after--', $data['menu_position'] );
         $data['menu_position'] = intval( $data['menu_position'] );
+
+        if( isset( $menu_position_parts[1] ) && isset( $data['labels']['name'] ) ){
+	        $types_cpt_menu_position[ $menu_position_parts[1] ][] = $data['labels']['name'];
+        }
     }
     $data['hierarchical'] = !empty( $data['hierarchical'] );
     $data['supports'] = !empty( $data['supports'] ) && is_array( $data['supports'] ) ? array_keys( $data['supports'] ) : array();
@@ -425,11 +361,27 @@ function wpcf_custom_types_register( $post_type, $data ) {
 	// The problem was that we only set 'public' to false, but as our cpt registration always define
 	// all options, the 'public' value is meaningless and each option must be set explicit
 	if( isset( $data['is_repeating_field_group'] ) && $data['is_repeating_field_group'] ) {
-		$data[ 'exclude_from_search' ] = true;
-		$data[ 'publicly_queryable'] = false;
-		$data[ 'show_in_nav_menus'] = false;
+		$data['exclude_from_search'] = true;
+		$data['publicly_queryable'] = false;
+		$data['show_in_nav_menus'] = false;
 		$data[ 'show_ui'] = false;
 	}
+
+	$editor_mode = toolset_getarr( $data, 'editor', EditorMode::CLASSIC );
+	if( EditorMode::BLOCK === $editor_mode ) {
+		// Block editor chosen. Make sure the post type shows in the REST API,
+		// which is a requirement for Gutenberg.
+		$data['show_in_rest'] = true;
+	} elseif( EditorMode::PER_POST === $editor_mode ) {
+		// Block editor might be used for some posts. Make sure the post type shows in the REST API,
+		// which is a requirement for Gutenberg.
+		$data['show_in_rest'] = true;
+
+		// Additionally, the PerPostEditorMode will do its job when editing a particular post.
+	}
+	// Otherwise, the classic editor was chosen or the post type was created pre gutenberg.
+	// Enforcing the classic editor mode is now being handled in \OTGS\Toolset\Types\TypeRegistration\Controller,
+	// because we also need to handle built-in post types which aren't being processed here.
 
     $args = register_post_type( $post_type, apply_filters( 'wpcf_type', $data, $post_type ) );
 
@@ -444,9 +396,6 @@ function wpcf_custom_types_register( $post_type, $data ) {
  *
  * @see https://icanlocalize.basecamphq.com/projects/7393061-wp-views/todo_items/153925180/comments
  * @since 1.1.3.2
- * @param type $data
- * @param type $post_type
- * @return boolean
  */
 function wpcf_filter_type( $data, $post_type ) {
     if ( !empty( $data['rewrite']['enabled'] ) ) {
@@ -566,23 +515,6 @@ function wpcf_dashboard_glance_items($elements)
     return $elements;
 }
 
-/**
- * Summary.
- *
- * Description.
- *
- * @since x.x.x
- * @access (for functions: only use if private)
- *
- * @see Function/method/class relied on
- * @link URL
- * @global type $varname Description.
- * @global type $varname Description.
- *
- * @param type $var Description.
- * @param type $var Optional. Description.
- * @return type Description.
- */
 function wpcf_filter_enter_title_here($enter_title_here, $post)
 {
     if ( is_object($post) && isset( $post->post_type) ) {
@@ -625,127 +557,65 @@ function types_get_array_key_search_in_sub( $array, $search ) {
 
 
 /**
- * Change names of build-in post types in menu
- *
- * @since 1.9
- */
-function types_rename_build_in_post_types_menu() {
-
-	$post_type_option = new Types_Utils_Post_Type_Option();
-    $custom_types = $post_type_option->get_post_types();
-
-    if ( !empty( $custom_types ) ) {
-        global $menu, $submenu;
-
-        foreach( $custom_types as $post_type => $data ) {
-            if(
-                isset( $data['_builtin'] )
-                && $data['_builtin']
-                && isset( $data['slug'] )
-                && isset( $data['labels']['name'] )
-            ) {
-                // post
-                if( $data['slug'] == 'post' ) {
-                    $post_edit_page = 'edit.php';
-                    $post_new_page  = 'post-new.php';
-                // page
-                } elseif( $data['slug'] == 'page' ) {
-                    $post_edit_page = 'edit.php?post_type=page';
-                    $post_new_page  = 'post-new.php?post_type=page';
-                // attachment (Media)
-                } elseif( $data['slug'] == 'attachment' ) {
-                    $post_edit_page = 'upload.php';
-                    $post_new_page  = 'media-new.php';
-                // abort
-                } else {
-                    continue;
-                }
-
-                $post_menu_key = false;
-
-                // find menu key
-                $post_menu_key = types_get_array_key_search_in_sub( $menu, $post_edit_page );
-
-                if( !$post_menu_key )
-                    continue;
-
-                // change menu name
-                $menu[$post_menu_key][0] = $data['labels']['name'];
-
-
-                if( isset( $submenu[$post_edit_page] ) && $post_edit_page != 'upload.php' ) {
-                    $submenu_overview_key = $submenu_new_key = false;
-
-                    // post/page rename overview
-                    $submenu_overview_key = types_get_array_key_search_in_sub( $submenu[$post_edit_page], $post_edit_page );
-
-                    if( $submenu_overview_key )
-                        $submenu[$post_edit_page][$submenu_overview_key][0] = $data['labels']['name'];
-
-                    // post/page rename add new
-                    $submenu_new_key = types_get_array_key_search_in_sub( $submenu[$post_edit_page], $post_new_page );
-
-                    if( $submenu_new_key )
-                        $submenu[$post_edit_page][$submenu_new_key][0] = isset( $data['labels']['singular_name'] )
-                            ? sprintf( _x( 'Add %s', 'Add "Post Type Singular Name"', 'wpcf' ), $data['labels']['singular_name'] )
-                            : sprintf( _x( 'Add %s', 'Add "Post Type Plural Name"', 'wpcf' ), $data['labels']['name'] );
-
-                }
-            }
-        }
-    }
-}
-
-add_action( 'admin_menu', 'types_rename_build_in_post_types_menu' );
-
-/**
  * Change labels of build-in post types
  *
  * @since 1.9
  */
 function types_rename_build_in_post_types() {
-    global $wp_post_types;
+	global $wp_post_types;
 	$post_type_option = new Types_Utils_Post_Type_Option();
-    $custom_types = $post_type_option->get_post_types();
+	$custom_types = $post_type_option->get_post_types();
 
-    if ( !empty( $custom_types ) ) {
-        foreach ( $custom_types as $post_type => $data ) {
-            // only for build_in
-            if (
-                isset( $data['_builtin'] )
-                && $data['_builtin']
-                && isset( $data['slug'] )
-                && isset( $data['labels']['name'] )
-            ) {
-                // check if slug (post/page) exists
-                if( isset( $wp_post_types[$data['slug']] ) ) {
-                    // refer $l to post labels
-                    $l = &$wp_post_types[$data['slug']]->labels;
+	if ( ! empty( $custom_types ) ) {
+		foreach ( $custom_types as $post_type => $data ) {
+			// only for built-in
+			if (
+				! isset( $data['_builtin'] )
+				|| ! $data['_builtin']
+				|| ! isset( $data['slug'] )
+				|| ! isset( $data['labels']['name'] )
+			) {
+				continue;
+			}
 
-                    // change name
-                    $l->name = isset( $data['labels']['name'] ) ? $data['labels']['name'] : $l->name;
+			// check if slug (post/page) exists
+			if ( ! isset( $wp_post_types[ $data['slug'] ] ) ) {
+				continue;
+			}
 
-                    // change singular name
-                    $l->singular_name = isset( $data['labels']['singular_name'] ) ? $data['labels']['singular_name'] : $l->singular_name;
+			// refer $l to post labels
+			$labels = &$wp_post_types[ $data['slug'] ]->labels;
 
-                    // change labels
-                    $l->add_new_item = 'Add New';
-                    $l->add_new = 'Add New ' . $l->singular_name;
-                    $l->edit_item = 'Edit ' . $l->singular_name;
-                    $l->new_item = 'New ' . $l->name ;
-                    $l->view_item = 'View ' . $l->name;
-                    $l->search_items = 'Search '. $l->name;
-                    $l->not_found = 'No ' . $l->name . ' found';
-                    $l->not_found_in_trash = 'No ' . $l->name . ' found in Trash';
-                    $l->parent_item_colon = 'Parent '. $l->name;
-                    $l->all_items = 'All ' . $l->name;
-                    $l->menu_name = $l->name;
-                    $l->name_admin_bar = $l->name;
+			// change name
+			$labels->name = isset( $data['labels']['name'] ) ? $data['labels']['name'] : $labels->name;
 
-                }
-            }
-        }
-    }
+			// change singular name
+			$labels->singular_name = isset( $data['labels']['singular_name'] ) ? $data['labels']['singular_name'] : $labels->singular_name;
+
+			// translators: The "Add New <Item>" label for a built-in post type.
+			$labels->add_new_item = sprintf( __( 'Add New %s', 'wpcf' ), $labels->singular_name );
+			// translators: The "Add New" label for a built-in post type.
+			$labels->add_new = __( 'Add New', 'wpcf' );
+			// translators: The "Edit <Item>" label for a built-in post type.
+			$labels->edit_item = sprintf( __( 'Edit %s', 'wpcf' ), $labels->singular_name );
+			// translators: The "New <Items>" label for a built-in post type.
+			$labels->new_item = sprintf( __( 'New %s', 'wpcf' ), $labels->name );
+			// translators: The "View <Items>" label for a built-in post type.
+			$labels->view_item = sprintf( __( 'View %s', 'wpcf' ), $labels->name );
+			// translators: The "Search <Items>" label for a built-in post type.
+			$labels->search_items = sprintf( __( 'Search %s', 'wpcf' ), $labels->name );
+			// translators: The "No <items> found" label for a built-in post type.
+			$labels->not_found = sprintf( __( 'No %s found', 'wpcf' ), strtolower( $labels->name ) );
+			// translators: The "No <items> found in Trash" label for a built-in post type.
+			$labels->not_found_in_trash = sprintf( __( 'No %s found in Trash', 'wpcf' ), strtolower( $labels->name ) );
+			// translators: The "Parent <Items>" label for a built-in post type.
+			$labels->parent_item_colon = sprintf( __( 'Parent %s', 'wpcf' ), $labels->name );
+			// translators: The "All <Items>" label for a built-in post type.
+			$labels->all_items = sprintf( __( 'All %s', 'wpcf' ), $labels->name );
+			$labels->menu_name = $labels->name;
+			$labels->name_admin_bar = $labels->name;
+		}
+	}
 }
 
 add_action( 'init', 'types_rename_build_in_post_types' );

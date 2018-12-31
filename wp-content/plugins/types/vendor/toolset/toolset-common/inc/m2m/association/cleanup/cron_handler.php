@@ -47,6 +47,17 @@ class Toolset_Association_Cleanup_Cron_Handler {
 	}
 
 
+	/**
+	 * Schedule the cleanup event.
+	 *
+	 * @since 3.0.5
+	 */
+	public function schedule_event() {
+		$cron_event = $this->cleanup_factory->cron_event();
+		$this->cron->schedule_event( $cron_event );
+	}
+
+
 	private function unschedule_event() {
 		$event = $this->cleanup_factory->cron_event();
 		$this->cron->unschedule_event( $event );

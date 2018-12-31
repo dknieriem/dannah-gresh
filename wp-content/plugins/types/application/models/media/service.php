@@ -91,11 +91,14 @@ class Types_Media_Service {
 		}
 
 		$image_abspath = $resized->path;
-		if ( wpcf_get_settings( 'add_resized_images_to_library' )
-		     && ! wpcf_image_is_attachment( $resized->url )
-		) {
-			global $post;
-			wpcf_image_add_to_library( $post, $image_abspath );
+		if ( wpcf_get_settings( 'add_resized_images_to_library' ) ) {
+			if( ! function_exists( 'wpcf_image_is_attachment' ) || ! function_exists( 'wpcf_image_add_to_library') ) {
+				require_once( WPCF_EMBEDDED_ABSPATH . '/includes/fields/image.php' );
+			}
+			if( ! wpcf_image_is_attachment( $resized->url ) ) {
+				global $post;
+				wpcf_image_add_to_library( $post, $image_abspath );
+			}
 		}
 
 		return $resized->url;

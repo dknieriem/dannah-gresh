@@ -35,6 +35,9 @@ $available_editors = array(
 		'backend' => 'Toolset_User_Editors_Editor_Screen_Divi_Backend',
 		'frontend' => 'Toolset_User_Editors_Editor_Screen_Divi_Frontend',
 	),
+	'Toolset_User_Editors_Editor_Layouts' => array(
+		'backend' => 'Toolset_User_Editors_Editor_Screen_Layouts_Backend',
+	),
 );
 
 if ( version_compare( WPV_VERSION, '2.6-b1', '>' ) ) {

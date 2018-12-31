@@ -36,6 +36,12 @@ class Toolset_User_Editors_Editor_Screen_Beaver_Frontend
 		
 		add_filter( 'wpv_filter_content_template_output',		array( $this, 'filter_content_template_output' ), 10, 4 );
 		add_filter( 'the_content',								array( $this, 'restore_beaver_filter' ), 9999 );
+
+		add_filter( 'fl_builder_row_custom_class', array( $this, 'process_shortcodes_inside_custom_class' ), 10, 2 );
+		add_filter( 'fl_builder_column_custom_class', array( $this, 'process_shortcodes_inside_custom_class' ), 10, 2 );
+		add_filter( 'fl_builder_module_custom_class', array( $this, 'process_shortcodes_inside_custom_class' ), 10, 2 );
+
+		add_filter( 'fl_builder_module_attributes', array( $this, 'process_shortcodes_inside_custom_id_for_modules' ), 10, 2 );
 		
 		$this->beaver_filter_enabled = true;
 		$this->beaver_post_id_stack = array();
@@ -135,18 +141,22 @@ class Toolset_User_Editors_Editor_Screen_Beaver_Frontend
 				// set the Content Template in the $wp_the_query (which they use) and then put the old post in its place
 				// after the content is rendered.
 				global $wp_the_query;
-				$wp_the_query_post = $wp_the_query->post;
-				if ( (int) $template_selected !== $wp_the_query_post->ID ) {
-					$ct_post = get_post( $template_selected );
-					$wp_the_query->post = $ct_post;
+				if ( null !== $wp_the_query->post ) {
+					$wp_the_query_post = $wp_the_query->post;
+					if ( (int) $template_selected !== $wp_the_query_post->ID ) {
+						$ct_post            = get_post( $template_selected );
+						$wp_the_query->post = $ct_post;
+					}
 				}
 				
 				$content = FLBuilder::render_content( $content );
 
-				// If the post inside the $wp_the_query global has been substituted by the Content Template, we are putting
-				// it back.
-				if ( $wp_the_query->post->ID !== $wp_the_query_post->ID ) {
-					$wp_the_query->post = $wp_the_query_post;
+				if ( null !== $wp_the_query->post ) {
+					// If the post inside the $wp_the_query global has been substituted by the Content Template, we are putting
+					// it back.
+					if ( $wp_the_query->post->ID !== $wp_the_query_post->ID ) {
+						$wp_the_query->post = $wp_the_query_post;
+					}
 				}
 
 				if ( $revert_in_the_loop ) {
@@ -275,5 +285,41 @@ class Toolset_User_Editors_Editor_Screen_Beaver_Frontend
 			FLBuilderModel::update_post_data( 'post_id', $this->get_active_medium_id() );
 	}
 
+	/**
+	 * Processes the shortcodes that are found inside the custom CSS class attribute for Avada Rows, Columns and Modules.
+	 *
+	 * @param string $class The value of the custom CSS class attribute.
+	 * @param object $row   An object containing information about the currently rendered Avada row, column, module.
+	 *
+	 * @return string
+	 */
+	public function process_shortcodes_inside_custom_class( $class, $row ) {
+		return do_shortcode( $class );
+	}
+
+	/**
+	 * Processes the shortcodes that are found inside the custom CSS ID attribute for Avada Modules.
+	 *
+	 * @param array  $attrs  The attributes of the module.
+	 * @param mixed  $module The instance of the class of the module.
+	 *
+	 * @return mixed The attributes of the module.
+	 */
+	public function process_shortcodes_inside_custom_id_for_modules( $attrs, $module ) {
+		// If the module ID contains escaped single quotes, there is a possibility that they are coming from a shortcode..
+		if (
+			isset( $attrs['id'] ) &&
+			false !== strpos( $attrs['id'], '&#039;' )
+		) {
+			// ...we need to convert escaped single quotes back to unescaped ones
+			$attrs['id'] = str_replace('&#039;', '\'', $attrs['id'] );
+			// ... and do_shortcode.
+			$attrs['id'] = do_shortcode( $attrs['id'] );
+			// Finally we escape the module ID once again.
+			$attrs['id'] = esc_attr( $attrs['id'] );
+		}
+
+		return $attrs;
+	}
 
 }

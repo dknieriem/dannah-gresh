@@ -8,6 +8,44 @@
                     {{ post_type.name }}
                 {% endif %}
             </p>
+			{% if ( is_block_editor_available and ( post_type.is_from_types or post_type.is_builtin ) ) %}
+				<div class="toolset-dashboard__editor-mode">
+
+					<label>
+						{# Translators: Label for the value of the Editor mode setting of a post type, displayed on the Toolset Dashboard page. #}
+						{{ __( 'Post editor:', 'wpcf' ) }}
+					</label>
+
+					<p class="toolset-dashboard__editor-mode-label" data-post-type="{{ post_type.get_name }}">
+						{% if post_type.is_builtin and ( not post_type.is_builtin_editable ) %}
+							<a class="toolset-dashboard__editor-mode-change" href="{{ post_type.get_edit_link }}">
+								{{ post_type.get_editor_mode_label }}
+								<i class="fa fa-edit"></i>
+							</a>
+						{% else %}
+							<a class="toolset-dashboard__editor-mode-change">
+								<span class="toolset-dashboard__editor-mode-label-value" data-post-type="{{ post_type.get_name }}">{{ post_type.get_editor_mode_label }}</span>
+								<i class="fa fa-edit" data-post-type="{{ post_type.get_name }}"></i>
+							</a>
+						{% endif %}
+					</p>
+					<p class="toolset-dashboard__editor-mode-selection" data-post-type="{{ post_type.get_name }}">
+						<select>
+							{# Translators: Editor mode for a post type. #}
+							{% for option in [
+								{ value: 'classic', label: __( 'Classic editor', 'wpcf' ) },
+								{ value: 'block', label: __( 'Block editor', 'wpcf' ) },
+								{ value: 'per_post', label: __( 'Editor choice per post', 'wpcf' ) },
+							] %}
+								<option value="{{ option.value }}" {{ ( option.value == post_type.get_editor_mode ) ? 'selected="selected"' : '' }}>
+									{{ option.label }}
+								</option>
+							{% endfor %}
+						</select>
+						<button class="button button-secondary button-small" data-post-type="{{ post_type.get_name }}">{{ __( 'OK', 'wpcf' ) }}</button>
+					</p>
+				</div>
+			{% endif %}
         </div>
     </td>
     <td>

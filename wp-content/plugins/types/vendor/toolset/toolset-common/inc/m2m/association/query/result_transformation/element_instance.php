@@ -48,22 +48,35 @@ class Toolset_Association_Query_Result_Transformation_Element_Instance
 	 * table in request_element_selection() and then obtain the domain information from there.
 	 *
 	 * @param object $database_row
+	 *
 	 * @return IToolset_Element
 	 */
 	public function transform(
 		$database_row, IToolset_Association_Query_Element_Selector $element_selector
 	) {
-		if(
-			$this->wpml_service->is_wpml_active_and_configured()
-			&& $element_selector->has_element_id_translated( $this->role )
-			&& $this->wpml_service->get_current_language() !== $this->wpml_service->get_default_language()
-		) {
-			// There's a chance of getting two language versions of the element, let's try.
-			return $this->transform_with_wpml( $database_row, $element_selector );
-		}
+		try {
 
-		$element_id = $this->get_element_id( $database_row, $element_selector, true );
-		return $this->element_factory->get_element( Toolset_Element_Domain::POSTS, $element_id );
+			if (
+				$this->wpml_service->is_wpml_active_and_configured()
+				&& $element_selector->has_element_id_translated( $this->role )
+				&& $this->wpml_service->get_current_language() !== $this->wpml_service->get_default_language()
+			) {
+				// There's a chance of getting two language versions of the element, let's try.
+				return $this->transform_with_wpml( $database_row, $element_selector );
+			}
+
+			$element_id = $this->get_element_id( $database_row, $element_selector, true );
+			if ( ! $element_id ) {
+				return null;
+			}
+
+			return $this->element_factory->get_element( Toolset_Element_Domain::POSTS, $element_id );
+
+		} catch ( Toolset_Element_Exception_Element_Doesnt_Exist $e ) {
+			// No element to transform. This may indicate either a missing intermediary post or data corruption
+			// but we can't do anything about this at this level.
+			return null;
+		}
 	}
 
 
@@ -83,9 +96,13 @@ class Toolset_Association_Query_Result_Transformation_Element_Instance
 		$default_language_element_id = $this->get_element_id( $database_row, $element_selector, false );
 		$current_language_element_id = $this->get_element_id( $database_row, $element_selector, true );
 
-		if( $current_language_element_id === $default_language_element_id ) {
+		if ( 0 === $default_language_element_id ) {
+			throw new Toolset_Element_Exception_Element_Doesnt_Exist( Toolset_Element_Domain::POSTS, $database_row );
+		}
+
+		if ( $current_language_element_id === $default_language_element_id ) {
 			// Only a default language is available.
-			return $this->element_factory->get_element( Toolset_Element_Domain::POSTS, $current_language_element_id );
+			return $this->element_factory->get_element( Toolset_Element_Domain::POSTS, $default_language_element_id );
 		}
 
 		$element_ids = array(

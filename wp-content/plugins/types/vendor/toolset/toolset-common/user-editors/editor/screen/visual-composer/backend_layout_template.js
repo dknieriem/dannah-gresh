@@ -109,6 +109,13 @@ ToolsetCommon.UserEditor.VisualComposerBackendLayoutTemplate = function( $ ) {
 		return self;
 	};
 	
+
+	// It is triggered when the WPA Loop selection is saved.
+	$( document ).on( 'js_event_wpv_wpa_loop_selection_saved', '.js-wpv-loop-selection-update', function() {
+		self.reloadVCEditorsLinkTarget();
+	});
+
+	// It is triggered when the View Content Selection is saved.
 	$( document ).on( 'js_event_wpv_query_type_options_saved', '.js-wpv-query-type-update', function( event, queryType ) {
 		self.reloadVCEditorsLinkTarget();
 	});

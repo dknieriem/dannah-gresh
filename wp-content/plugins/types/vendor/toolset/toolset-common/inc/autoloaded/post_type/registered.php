@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\PostType\EditorMode;
+
 /**
  * Represents a post type that is currently registered on the site.
  *
@@ -154,4 +156,49 @@ class Toolset_Post_Type_Registered extends Toolset_Post_Type_Abstract implements
 	}
 
 
+	/**
+	 * Check if the post type can be used in a many-to-many relationship as an intermediary post.
+	 *
+	 * @param bool $skip_check_for_existing_intermediary
+	 * @param bool $skip_check_for_relationship_involvment
+	 *
+	 * @return Toolset_Result
+	 */
+	public function can_be_used_as_intermediary( $skip_check_for_existing_intermediary = false, $skip_check_for_relationship_involvment = false ) {
+		return new Toolset_Result( false, __( 'Only post types registered by Toolset Types can be used as intermediary.', 'wpv-views' ) );
+	}
+
+
+	/**
+	 * @inheritdoc
+	 *
+	 * Note that this will be overridden in BuiltinPostTypeWithOverrides.
+	 *
+	 * @return string
+	 * @since Types 3.2.2
+	 */
+	public function get_editor_mode() {
+		$is_gutenberg_active = new Toolset_Condition_Plugin_Gutenberg_Active();
+		if( ! $is_gutenberg_active->is_met() ) {
+			// There's no block editor.
+			return EditorMode::CLASSIC;
+		}
+
+		// Block editor is present, the behaviour now depends on the show_in_rest property, unless overridden by a filter later.
+		$show_in_rest = property_exists( $this->get_wp_object(), 'show_in_rest' ) && $this->get_wp_object()->show_in_rest;
+		return ( $show_in_rest ? EditorMode::BLOCK : EditorMode::CLASSIC );
+	}
+
+
+	/**
+	 * @inheritdoc
+	 *
+	 * This is not supported for post types not managed by Types.
+	 *
+	 * @param string $value
+	 * @since Types 3.2.2
+	 */
+	public function set_editor_mode( $value ) {
+		throw new RuntimeException( 'Not supported.' );
+	}
 }

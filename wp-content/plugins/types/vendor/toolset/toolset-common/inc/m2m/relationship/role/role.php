@@ -65,7 +65,7 @@ abstract class Toolset_Relationship_Role {
 
 
 	public static function is_valid( $role_name ) {
-		return in_array( $role_name, self::all_role_names() );
+		return in_array( $role_name, self::all_role_names(), true );
 	}
 
 
@@ -156,7 +156,7 @@ abstract class Toolset_Relationship_Role {
 			case self::INTERMEDIARY:
 				return new Toolset_Relationship_Role_Intermediary();
 			default:
-				throw new InvalidArgumentException( 'Invalid element role name.' );
+				throw new InvalidArgumentException( 'Invalid element role name: ' . $role_name );
 		}
 	}
 

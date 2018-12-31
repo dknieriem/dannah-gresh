@@ -619,7 +619,8 @@ abstract class Toolset_Field_Group {
 			self::XML_LEGACY_EXCERPT => '',
 			self::XML_LEGACY_POST_STATUS => $this->get_post_status(),
 			self::XML_META_SECTION => array(
-				self::POSTMETA_FIELD_SLUGS_LIST => $field_slugs
+				self::POSTMETA_FIELD_SLUGS_LIST => $field_slugs,
+				self::POSTMETA_GROUP_PURPOSE => $this->get_purpose(),
 			),
 			WPCF_AUTHOR => $this->get_author()
 		);
@@ -757,5 +758,119 @@ abstract class Toolset_Field_Group {
 		}, false );
 
 		return $has_rfg;
+	}
+
+
+	/**
+	 * Gets conditional display data
+	 *
+	 * @return array
+	 * @since 3.0.8
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	public function get_conditional_display() {
+		$result = array();
+		$conditional_display = get_post_meta( $this->get_id(), '_wpcf_conditional_display', true );
+		$result['fields'] = $this->get_conditional_display_fields( $conditional_display );
+		$result['triggers'] = $this->get_conditional_display_triggers( $result['fields'] );
+		return $result;
+	}
+
+	/**
+	 * Gets conditional fields data needed for conditionals.js
+	 *
+	 * @param array $conditional_data Data from field conditional_display attribute
+	 * @return array
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	private function get_conditional_display_fields( $conditional_data ) {
+		if ( empty( $conditional_data )
+		     || ! is_array( $conditional_data )
+		     || ! isset( $conditional_data['conditions'] ) ) {
+			return array();
+		}
+		$fields = array();
+		$group_id = 'wpcf-group-' . $this->get_slug();
+
+		// TODO: needs @refactoring. @see WPToolset_Types::filterConditional()
+		$conditionals = array();
+		foreach ( $conditional_data['conditions'] as $condition ) {
+			$field = types_get_field( $condition['field'] );
+			if ( ! empty( $field ) ) {
+				$conditionals[] = array(
+					'id' => wpcf_types_get_meta_prefix( $field ) . $condition['field'],
+					'type' => $field['type'],
+					'operator' => $condition['operation'],
+					'args' => array( $condition['value'] ),
+				);
+			}
+		}
+		$conditional_data['conditions'] = $conditionals;
+
+		return array( $group_id => $conditional_data );
+	}
+
+
+	/**
+	 * Gets conditional triggers data needed for conditionals.js
+	 *
+	 * @param array $conditional_data Data from field conditional_display attribute
+	 * @return array
+	 * @link https://git.onthegosystems.com/toolset/types/wikis/Fields-conditionals:-Toolset-forms-conditionals.js
+	 */
+	private function get_conditional_display_triggers( $conditional_data ) {
+		$result = array();
+		foreach ( $conditional_data as $id => $conditional ) {
+			if ( isset( $conditional['conditions'] ) ) {
+				foreach ( $conditional['conditions'] as $condition ) {
+					if ( ! isset( $result[ $condition['id'] ] ) ) {
+						$result[ $condition['id'] ] = array();
+					}
+					$result[ $condition['id'] ][] = $id;
+				}
+			}
+		}
+		return $result;
+	}
+
+
+	/**
+	 * Gets conditionals by fields.
+	 *
+	 * Instead of acting on group containers it points into group's fields. Used in related content metabox
+	 *
+	 * @return array
+	 * @since 3.0.8
+	 */
+	public function get_conditional_display_by_fields() {
+		$conditionals = $this->get_conditional_display();
+		$field_slugs = $this->get_field_slugs();
+		// Fields.
+		foreach ( $conditionals['fields'] as $group_slug => $conditional ) {
+			foreach( $field_slugs as $field_slug ) {
+				$conditionals['fields'][ 'wpcf-' . $field_slug ] = $conditional;
+			}
+			unset( $conditionals['fields'][ $group_slug ] );
+		}
+		// Triggers.
+		foreach ( $conditionals['triggers'] as $i => $conditional ) {
+			$conditionals['triggers'][ $i ] = array();
+			foreach ( $field_slugs as $field_slug ) {
+				$conditionals['triggers'][ $i ][] = 'wpcf-' . $field_slug;
+			}
+		}
+		return $conditionals;
+	}
+
+
+	/**
+	 * Has conditional display related to terms
+	 *
+	 * @return boolean
+	 * @since 3.0.8
+	 */
+	public function has_conditional_display_by_terms() {
+		$group_terms = get_post_meta( $this->get_id(), '_wp_types_group_terms', true );
+		return ! empty( $group_terms );
 	}
 }

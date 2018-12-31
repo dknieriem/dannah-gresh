@@ -3,6 +3,7 @@
 /**
  * Condition to query associations without intermediary post. Needed when fields are added and association have to be updated.
  *
+ * @refactoring this is being used directly, instead of having a method in the association query.
  * @since 2.5.8
  */
 class Toolset_Association_Query_Condition_Empty_Intermediary extends Toolset_Association_Query_Condition {

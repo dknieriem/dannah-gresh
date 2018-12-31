@@ -124,4 +124,36 @@ class Toolset_Relationship_Query_Factory {
 	public function associations_v2() {
 		return new Toolset_Association_Query_V2();
 	}
+
+
+	/**
+	 * @param IToolset_Relationship_Definition $relationship
+	 * @param IToolset_Relationship_Role_Parent_Child $target_role
+	 * @param IToolset_Element $for_element
+	 * @param potentialAssociation\JoinManager $join_manager
+	 * @param Toolset_Relationship_Table_Name|null $table_names_di
+	 * @param wpdb|null $wpdb_di
+	 * @param Toolset_WPML_Compatibility|null $wpml_service_di
+	 *
+	 * @return potentialAssociation\PostResultOrder
+	 */
+	public function post_result_order_adjustments(
+		IToolset_Relationship_Definition $relationship,
+		IToolset_Relationship_Role_Parent_Child $target_role,
+		IToolset_Element $for_element,
+		potentialAssociation\JoinManager $join_manager,
+		Toolset_Relationship_Table_Name $table_names_di = null,
+		wpdb $wpdb_di = null,
+		Toolset_WPML_Compatibility $wpml_service_di = null
+	) {
+		return new potentialAssociation\PostResultOrder(
+			$relationship,
+			$target_role,
+			$for_element,
+			$join_manager,
+			$table_names_di,
+			$wpdb_di,
+			$wpml_service_di
+		);
+	}
 }

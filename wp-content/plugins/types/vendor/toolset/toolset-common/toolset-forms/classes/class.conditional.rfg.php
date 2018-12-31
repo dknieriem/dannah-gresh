@@ -11,23 +11,18 @@
 class WPToolset_Forms_Conditional_RFG extends WPToolset_Forms_Conditional {
 
 	/**
-	 * @var string
-	 */
-	private $form_selector;
-
-	/**
 	 * Other than the parent class, this does not need the $form_id
 	 *
 	 * @param string $form_selector Selector of the form.
+	 * @param string $post_type
 	 */
-	public function __construct( $form_selector = '#post' ) {
-		// IMPORTANT: Do not run parent::__construct() here
+	public function __construct( $form_selector = '#post', $post_type = null ) {
+		if ( $post_type ) {
+			// important to run set_post_type before set_form_selectors
+			$this->set_post_type( $post_type );
+		}
 
-		// for parent usages
-		$this->__formID = trim( $form_selector, '#' );
-
-		// only for this subclass
-		$this->form_selector = $form_selector;
+		$this->set_form_selectors( $form_selector );
 	}
 
 	/**
@@ -38,13 +33,16 @@ class WPToolset_Forms_Conditional_RFG extends WPToolset_Forms_Conditional {
 	public function get_conditions() {
 		$this->_parseData();
 
-		return array(
-			$this->form_selector => array(
-				'triggers' => $this->_triggers,
-				'fields' => $this->_fields,
+		$forms_conditions = array();
+		foreach ( $this->form_selectors as $form_selector ) {
+			$forms_conditions[ $form_selector ] = array(
+				'triggers'        => $this->_triggers,
+				'fields'          => $this->_fields,
 				'custom_triggers' => $this->_custom_triggers,
-				'custom_fields' => $this->_custom_fields
-			)
-		);
+				'custom_fields'   => $this->_custom_fields
+			);
+		}
+
+		return $forms_conditions;
 	}
 }

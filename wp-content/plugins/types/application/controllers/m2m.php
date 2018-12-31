@@ -131,6 +131,9 @@ class Types_M2M {
 		add_filter( 'wpml_disable_translation_mode_radio',
 			array( $this, 'remove_rfgs_from_cpt_translation_mode_settings' ), 10, 3 );
 
+		// register RFG post status
+		$this->register_rfg_post_status();
+
 		// export of associations
 		add_action( 'export_wp', function( $args ) {
 			// better init here than always loading Types_Import_Export
@@ -337,5 +340,23 @@ class Types_M2M {
 		}
 
 		return $disabled_state_for_mode;
+	}
+
+	/**
+	 * For RFGs we have a custom post status 'hidden'
+	 */
+	public function register_rfg_post_status() {
+		// Registering hidden post status
+		register_post_status( 'hidden', array(
+			'label'                     => 'Hidden',
+			'public'                    => false,
+			'exclude_from_search'       => false,
+			'show_in_admin_all_list'    => false,
+			'show_in_admin_status_list' => false,
+			'label_count'               => array(
+				'Hidden <span class="count">(%s)</span>',
+				'Hidden <span class="count">(%s)</span>'
+			),
+		) );
 	}
 }

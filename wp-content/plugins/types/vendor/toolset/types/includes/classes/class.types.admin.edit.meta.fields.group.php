@@ -181,9 +181,14 @@ class Types_Admin_Edit_Meta_Fields_Group extends Types_Admin_Edit_Fields
             '#value' => $this->update['id'],
         );
 
-	    $field_settings_collapsed_class = $this->update['id'] !== 0 // means not a new field group
+	    $view_helper = new \OTGS\Toolset\Types\Field\Group\View\Group( $this->update, get_post( $this->update['id'] ) );
+	    $field_settings_collapsed_class = $view_helper->are_settings_collapsed()
 		    ? ' toolset-collapsible-closed'
 		    : '';
+
+	    $settings_title = isset( $this->update['name'] )
+		    ? sprintf( __( 'Settings for %s', 'wpcf' ), $this->update['name'] )
+		    : __( 'Settings for the fields group', 'wpcf' );
 
 	    $form['field-group-settings-box-open'] = array(
 		    '#type' => 'markup',
@@ -191,7 +196,7 @@ class Types_Admin_Edit_Meta_Fields_Group extends Types_Admin_Edit_Fields
 			    '<div class="toolset-field-group-settings toolset-postbox%s"><div data-toolset-collapsible=".toolset-postbox" class="toolset-collapsible-handle" title="%s"><br></div><h3 data-toolset-collapsible=".toolset-postbox" class="toolset-postbox-title">%s</h3><div class="toolset-collapsible-inside">',
 			    $field_settings_collapsed_class,
 			    esc_attr__('Click to toggle', 'wpcf'),
-			    __( 'Settings for the fields group', 'wpcf' )
+			    $settings_title
 		    )
 	    );
 

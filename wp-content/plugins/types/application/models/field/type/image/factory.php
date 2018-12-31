@@ -47,6 +47,7 @@ class Types_Field_Type_Image_Factory implements Types_Field_Factory_Interface {
 			new Types_Site_Domain( get_site_url() ),
 			new Types_View_Placeholder_Media(),
 			new Types_View_Decorator_Image(),
+		    new Types_View_Decorator_Index(),
 		    $user_params
 		);
 

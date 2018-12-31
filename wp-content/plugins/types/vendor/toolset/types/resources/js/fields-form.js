@@ -216,11 +216,7 @@ jQuery(document).ready(function($){
      */
     $( document ).on( 'click', '.js-wpcf-filter-container .js-wpcf-filter-button-edit', function() {
         var thiz = $(this);
-        if( $( '.types-repeatable-group, .js-wpcf-post-reference-field' ).length > 0 && assignedPostTypesCount === 1 ) {
-            Types.page.fieldGroupEdit.dialogNoConditionsChangeAllowed();
 
-            return;
-        }
         // show a spinner or something via css
         var dialog = $('<div style="display:none;height:450px;" class="wpcf-filter-contant"><span class="spinner"></span>'+thiz.data('wpcf-message-loading')+'</div>').appendTo('body');
         // open the dialog
@@ -330,6 +326,13 @@ jQuery(document).ready(function($){
             current_page = 'wpcf-edit';
         }
 
+        var assignedPostTypes = [];
+        $( 'input[id^="wpcf-form-groups-support-post-type"]' ).filter( function() {
+            return this.value && this.value !== '0';
+        } ).each( function() {
+            assignedPostTypes.push( $( this ).val() );
+        });
+
         dialog.load(
             ajaxurl,
             {
@@ -337,6 +340,8 @@ jQuery(document).ready(function($){
                 action: 'wpcf_ajax_filter',
                 _wpnonce: thiz.data('wpcf-nonce'),
                 id: thiz.data('wpcf-id'),
+                rfg_prf_count: $( '.types-repeatable-group, .js-wpcf-post-reference-field' ).length,
+                assigned_post_types: assignedPostTypes,
                 type: thiz.data('wpcf-type'),
                 page: current_page,
                 current: $current,

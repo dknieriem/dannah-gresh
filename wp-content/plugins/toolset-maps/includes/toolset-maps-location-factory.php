@@ -54,6 +54,8 @@ class Toolset_Maps_Location_Factory {
 	 * @return null|Toolset_Maps_Location
 	 */
 	public static function create_from_address( $address ) {
+		if ( !$address ) return null; // An empty address would hit the API otherwise. We can cut it here.
+
 		$coordinates = Toolset_Addon_Maps_Common::get_coordinates( $address );
 
 		if ( is_array( $coordinates ) ) {

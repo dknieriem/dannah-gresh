@@ -162,13 +162,13 @@ if ( ! class_exists( 'Toolset_CssComponent' ) ) {
                     'DDL_CSS_JS' => array(
                         'current_screen' => $current_screen,
                         'available_css' => $get_components['css'],
-                        'button_toggle_show' => __('Show Bootstrap buttons','ddl-layouts'),
-                        'button_toggle_hide' => __('Hide Bootstrap buttons','ddl-layouts'),
-                        'group_label_bs_components' => __('Bootstrap Elements:','ddl-layouts'),
-                        'group_label_bs_css' => __('Bootstrap CSS:','ddl-layouts'),
-                        'group_label_other' => __('Other Elements:','ddl-layouts'),
-                        'codemirror_pop_message' => __('Got markup for "<span class="bs_pop_element_name_codemirror">Element</span>"? Now paste it into the editor.','ddl-layouts'),
-                        'tinymce_pop_message' => __('Got markup for "<span class="bs_pop_element_name_tinymce">Element</span>"? Before you paste HTML into the editor, <br>remember to switch to HTML editing. Then, paste the code into the editor.','ddl-layouts'),
+                        'button_toggle_show' => __('Show Bootstrap buttons','wpv-views'),
+                        'button_toggle_hide' => __('Hide Bootstrap buttons','wpv-views'),
+                        'group_label_bs_components' => __('Bootstrap Elements:','wpv-views'),
+                        'group_label_bs_css' => __('Bootstrap CSS:','wpv-views'),
+                        'group_label_other' => __('Other Elements:','wpv-views'),
+                        'codemirror_pop_message' => __('Got markup for "<span class="bs_pop_element_name_codemirror">Element</span>"? Now paste it into the editor.','wpv-views'),
+                        'tinymce_pop_message' => __('Got markup for "<span class="bs_pop_element_name_tinymce">Element</span>"? Before you paste HTML into the editor, <br>remember to switch to HTML editing. Then, paste the code into the editor.','wpv-views'),
                         'available_components' => $get_components['components'],
                         'other' => $get_components['other'],
                         'hide_editor_pop_msg' => (get_option( 'toolset_bs_component_hide_pop_msg' )) ? get_option( 'toolset_bs_component_hide_pop_msg' ) : "no",
@@ -427,238 +427,238 @@ if ( ! class_exists( 'Toolset_CssComponent' ) ) {
                     array(
                         'glyphicons' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#glyphicons',
-                            'description' => __('Includes over 250 glyphs in font format from the Glyphicon Halflings set. Glyphicons Halflings are normally not available for free, but their creator has made them available for Bootstrap free of cost.','ddl-layouts'),
+                            'description' => __('Includes over 250 glyphs in font format from the Glyphicon Halflings set. Glyphicons Halflings are normally not available for free, but their creator has made them available for Bootstrap free of cost.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-plus-sign',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Glyphicons','ddl-layouts')
+                            'name' => __('Glyphicons','wpv-views')
                         ),
                         'dropdowns' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#dropdowns',
-                            'description' => __('Toggleable, contextual menu for displaying lists of links. Made interactive with the dropdown JavaScript plugin.','ddl-layouts'),
+                            'description' => __('Toggleable, contextual menu for displaying lists of links. Made interactive with the dropdown JavaScript plugin.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-list-alt',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Dropdowns','ddl-layouts')
+                            'name' => __('Dropdowns','wpv-views')
                         ),
                         'button_groups' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#btn-groups',
-                            'description' => __('Group a series of buttons together on a single line with the button group. Add on optional JavaScript radio and checkbox style behavior with our buttons plugin.','ddl-layouts'),
+                            'description' => __('Group a series of buttons together on a single line with the button group. Add on optional JavaScript radio and checkbox style behavior with our buttons plugin.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-tasks ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Button groups','ddl-layouts')
+                            'name' => __('Button groups','wpv-views')
                         ),
                         'button_dropdowns' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#btn-dropdowns',
-                            'description' => __('Use any button to trigger a dropdown menu by placing it within a .btn-group and providing the proper menu markup.','ddl-layouts'),
+                            'description' => __('Use any button to trigger a dropdown menu by placing it within a .btn-group and providing the proper menu markup.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-th-list ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Button dropdowns','ddl-layouts')
+                            'name' => __('Button dropdowns','wpv-views')
                         ),
                         'input_groups' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#input-groups',
-                            'description' => __('Extend form controls by adding text or buttons before, after, or on both sides of any text-based input.','ddl-layouts'),
+                            'description' => __('Extend form controls by adding text or buttons before, after, or on both sides of any text-based input.','wpv-views'),
                             'button_icon' => ' icon-input-groups ',
                             'button_icon_size' => 'ont-icon-13',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Input groups','ddl-layouts')
+                            'name' => __('Input groups','wpv-views')
                         ),
                         'navs' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#nav',
-                            'description' => __('Navs available in Bootstrap have shared markup, starting with the base .nav class, as well as shared states. Swap modifier classes to switch between each style.','ddl-layouts'),
+                            'description' => __('Navs available in Bootstrap have shared markup, starting with the base .nav class, as well as shared states. Swap modifier classes to switch between each style.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-object-align-top ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Navs','ddl-layouts')
+                            'name' => __('Navs','wpv-views')
                         ),
                         'navbar' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#navbar',
-                            'description' => __('Navbars are responsive meta components that serve as navigation headers for your application or site.','ddl-layouts'),
+                            'description' => __('Navbars are responsive meta components that serve as navigation headers for your application or site.','wpv-views'),
                             'button_icon' => ' icon-navbar ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Navbar','ddl-layouts')
+                            'name' => __('Navbar','wpv-views')
                         ),
                         'breadcrumbs' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#breadcrumbs',
-                            'description' => __('Indicate the current page\'s location within a navigational hierarchy.','ddl-layouts'),
+                            'description' => __('Indicate the current page\'s location within a navigational hierarchy.','wpv-views'),
                             'button_icon' => ' icon-breadcrumbs ',
                             'button_icon_size' => 'ont-icon-5',
                             'dialog_icon_size' => 'ont-icon-30',
-                            'name' => __('Breadcrumbs','ddl-layouts')
+                            'name' => __('Breadcrumbs','wpv-views')
                         ),
                         'pagination' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#pagination',
-                            'description' => __('Provide pagination links for your site or app with the multi-page pagination component.','ddl-layouts'),
+                            'description' => __('Provide pagination links for your site or app with the multi-page pagination component.','wpv-views'),
                             'button_icon' => ' icon-bootstrap-pagination ',
                             'button_icon_size' => 'ont-icon-6',
                             'dialog_icon_size' => 'ont-icon-30',
-                            'name' => __('Pagination','ddl-layouts')
+                            'name' => __('Pagination','wpv-views')
                         ),
                         'labels' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#labels',
-                            'description' => __('Provide different kind of labels for your website.','ddl-layouts'),
+                            'description' => __('Provide different kind of labels for your website.','wpv-views'),
                             'button_icon' => ' icon-labels ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Labels','ddl-layouts')
+                            'name' => __('Labels','wpv-views')
                         ),
                         'badges' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#badges',
-                            'description' => __('Easily highlight new or unread items by adding a <span class="badge"></span> to links, Bootstrap navs, and more.','ddl-layouts'),
+                            'description' => __('Easily highlight new or unread items by adding a <span class="badge"></span> to links, Bootstrap navs, and more.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-certificate ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Badges','ddl-layouts')
+                            'name' => __('Badges','wpv-views')
                         ),
                         'page_header' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#page-header',
-                            'description' => __('A simple shell for an h1 to appropriately space out and segment sections of content on a page. It can utilize the h1\'s default small element, as well as most other components (with additional styles).','ddl-layouts'),
+                            'description' => __('A simple shell for an h1 to appropriately space out and segment sections of content on a page. It can utilize the h1\'s default small element, as well as most other components (with additional styles).','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-header ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Page header','ddl-layouts')
+                            'name' => __('Page header','wpv-views')
                         ),
                         'thumbnails' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#thumbnails',
-                            'description' => __('Extend Bootstrap\'s grid system with the thumbnail component to easily display grids of images, videos, text, and more.','ddl-layouts'),
+                            'description' => __('Extend Bootstrap\'s grid system with the thumbnail component to easily display grids of images, videos, text, and more.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-picture ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Thumbnails','ddl-layouts')
+                            'name' => __('Thumbnails','wpv-views')
                         ),
                         'alerts' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#alerts',
-                            'description' => __('Provide contextual feedback messages for typical user actions with the handful of available and flexible alert messages.','ddl-layouts'),
+                            'description' => __('Provide contextual feedback messages for typical user actions with the handful of available and flexible alert messages.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-warning-sign ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Alerts','ddl-layouts')
+                            'name' => __('Alerts','wpv-views')
                         ),
                         'progress_bars' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#progress',
-                            'description' => __('Provide up-to-date feedback on the progress of a workflow or action with simple yet flexible progress bars.','ddl-layouts'),
+                            'description' => __('Provide up-to-date feedback on the progress of a workflow or action with simple yet flexible progress bars.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-tasks ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Progress bars','ddl-layouts')
+                            'name' => __('Progress bars','wpv-views')
                         ),
                         'media_object' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#media',
-                            'description' => __('Abstract object styles for building various types of components (like blog comments, Tweets, etc) that feature a left- or right-aligned image alongside textual content.','ddl-layouts'),
+                            'description' => __('Abstract object styles for building various types of components (like blog comments, Tweets, etc) that feature a left- or right-aligned image alongside textual content.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-film ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Media object','ddl-layouts')
+                            'name' => __('Media object','wpv-views')
                         ),
                         'list_group' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#list-group',
-                            'description' => __('List groups are a flexible and powerful component for displaying not only simple lists of elements, but complex ones with custom content.','ddl-layouts'),
+                            'description' => __('List groups are a flexible and powerful component for displaying not only simple lists of elements, but complex ones with custom content.','wpv-views'),
                             'button_icon' => ' icon-list-group ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('List group','ddl-layouts')
+                            'name' => __('List group','wpv-views')
                         ),
                         'panels' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#panels',
-                            'description' => __('While not always necessary, sometimes you need to put your DOM in a box. For those situations, try the panel component.','ddl-layouts'),
+                            'description' => __('While not always necessary, sometimes you need to put your DOM in a box. For those situations, try the panel component.','wpv-views'),
                             'button_icon' => ' icon-panels ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Panels','ddl-layouts')
+                            'name' => __('Panels','wpv-views')
                         ),
                         'responsive_embed' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#responsive-embed',
-                            'description' => __('Allow browsers to determine video or slideshow dimensions based on the width of their containing block by creating an intrinsic ratio that will properly scale on any device.','ddl-layouts'),
+                            'description' => __('Allow browsers to determine video or slideshow dimensions based on the width of their containing block by creating an intrinsic ratio that will properly scale on any device.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-resize-full ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Responsive embed','ddl-layouts')
+                            'name' => __('Responsive embed','wpv-views')
                         ),
                         'wells' => array(
                             'url' => self::BOOTSTRAP_CSS_COMPONENTS_DOC_BASE.'#wells',
-                            'description' => __('Use the well as a simple effect on an element to give it an inset effect.','ddl-layouts'),
+                            'description' => __('Use the well as a simple effect on an element to give it an inset effect.','wpv-views'),
                             'button_icon' => ' icon-wells ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Wells','ddl-layouts')
+                            'name' => __('Wells','wpv-views')
                         ),
                     ),
                 "css"=> 
                     array(
                         'grid_system' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#grid',
-                            'description' => __('Bootstrap includes a responsive, mobile first fluid grid system that appropriately scales up to 12 columns as the device or viewport size increases','ddl-layouts'),
+                            'description' => __('Bootstrap includes a responsive, mobile first fluid grid system that appropriately scales up to 12 columns as the device or viewport size increases','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-th ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Grid system','ddl-layouts')
+                            'name' => __('Grid system','wpv-views')
                         ),
                         'typography' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#type',
-                            'description' => __('Bootstrap includes simple and easily customized typography for headings, body text, lists, and more.','ddl-layouts'),
+                            'description' => __('Bootstrap includes simple and easily customized typography for headings, body text, lists, and more.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-text-height ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Typography','ddl-layouts')
+                            'name' => __('Typography','wpv-views')
                         ),
                         'code' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#code',
-                            'description' => __('Bootstrap includes styling for different types of text quotes. This includes code, blockquotes, variables, and others.','ddl-layouts'),
+                            'description' => __('Bootstrap includes styling for different types of text quotes. This includes code, blockquotes, variables, and others.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-console ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Code','ddl-layouts')
+                            'name' => __('Code','wpv-views')
                         ),
                         'tables' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#tables',
-                            'description' => __('Bootstrap offers different styling options for tables, including different spacing of cells, contextual classes and responsive tables.','ddl-layouts'),
+                            'description' => __('Bootstrap offers different styling options for tables, including different spacing of cells, contextual classes and responsive tables.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-th-large ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Tables','ddl-layouts')
+                            'name' => __('Tables','wpv-views')
                         ),
                         'forms' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#forms',
-                            'description' => __('Bootstrap provides several form control styles, layout options, and custom components for creating a wide variety of forms.','ddl-layouts'),
+                            'description' => __('Bootstrap provides several form control styles, layout options, and custom components for creating a wide variety of forms.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-check ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Forms','ddl-layouts')
+                            'name' => __('Forms','wpv-views')
                         ),
                         'buttons' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#buttons',
-                            'description' => __('Bootstrap offers different classes for styling different types of buttons as well as to indicate the different states. ','ddl-layouts'),
+                            'description' => __('Bootstrap offers different classes for styling different types of buttons as well as to indicate the different states. ','wpv-views'),
                             'button_icon' => ' icon-buttons ',
                             'button_icon_size' => 'ont-icon-11',
                             'dialog_icon_size' => 'ont-icon-60',
-                            'name' => __('Buttons','ddl-layouts')
+                            'name' => __('Buttons','wpv-views')
                         ),
                         'images' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#images',
-                            'description' => __('Bootstrap provides classes to make your images responsive and adds lightweight styles to them.','ddl-layouts'),
+                            'description' => __('Bootstrap provides classes to make your images responsive and adds lightweight styles to them.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-picture ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Images','ddl-layouts')
+                            'name' => __('Images','wpv-views')
                         ),
                         'helper_classes' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#helper-classes',
-                            'description' => __('Bootstrap features a wide array of different helper classes to help you. These include clearfix, contextual colors and backgrounds, content showing and hiding, and others.','ddl-layouts'),
+                            'description' => __('Bootstrap features a wide array of different helper classes to help you. These include clearfix, contextual colors and backgrounds, content showing and hiding, and others.','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-question-sign ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Helper classes','ddl-layouts')
+                            'name' => __('Helper classes','wpv-views')
                         ),
                         'responsive_utilities' => array(
                             'url' => self::BOOTSTRAP_CSS_DOC_BASE.'#responsive-utilities',
-                            'description' => __('Bootstrap features additional responsive utilities for faster mobile-friendly development. These classes can be used for showing and hiding content by device via media query. ','ddl-layouts'),
+                            'description' => __('Bootstrap features additional responsive utilities for faster mobile-friendly development. These classes can be used for showing and hiding content by device via media query. ','wpv-views'),
                             'button_icon' => ' glyphicon glyphicon-phone ',
                             'button_icon_size' => 'ont-icon-18',
                             'dialog_icon_size' => 'ont-icon-72',
-                            'name' => __('Responsive utilities','ddl-layouts')
+                            'name' => __('Responsive utilities','wpv-views')
                         ),
                     ),
                 "other"=> $this->get_extra_editor_buttons()
@@ -699,7 +699,7 @@ if ( ! class_exists( 'Toolset_CssComponent' ) ) {
                                     <p class="toolset-bs-button-p">
                                         
                                         <a href="{{{url}}}" target="_blank" class="button toolset-bs-componenet-check-button" data-bs_category="{{{bs_component_category}}}" data-buttons_type="{{{buttons_type}}}" data-editor_instance="{{{editor_instance}}}" data-bs_key="{{{bs_component_key}}}" onclick="ToolsetCommon.BSComponentsEventsHandler.editor_notification(this);">
-                                            <?php _e('Get Bootstrap element','ddl-layouts');?>
+                                            <?php _e('Get Bootstrap element','wpv-views');?>
                                         </a>
                                         
                                         <br>
@@ -709,7 +709,7 @@ if ( ! class_exists( 'Toolset_CssComponent' ) ) {
                                 <div class="toolset-bs-components-dialog-sides-bottom">
                                     <hr>
                                     <p class="toolset-bs-button-p">
-                                        <a href="<?php _e('https://toolset.com/user-guides/using-bootstrap-css-elements-content?utm_source=layoutsplugin&utm_campaign=layouts&utm_medium=bootstrap-components&utm_term=help-link','ddl-layouts');?>" target="_blank"><?php _e('Learn how to use Bootstrap in layouts','ddl-layouts');?></a>
+                                        <a href="https://toolset.com/user-guides/using-bootstrap-css-elements-content?utm_source=layoutsplugin&utm_campaign=layouts&utm_medium=bootstrap-components&utm_term=help-link" target="_blank"><?php _e('Learn how to use Bootstrap in layouts','wpv-views');?></a>
                                     </p>
                                 </div>
                             </div>

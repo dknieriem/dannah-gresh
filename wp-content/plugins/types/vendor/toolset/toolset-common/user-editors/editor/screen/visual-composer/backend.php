@@ -20,18 +20,18 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 		$this->constants = $constants
 			? $constants
 			: new Toolset_Constants();
-
-		$this->constants->define( 'VC_SCREEN_ID', 'vc' );
 	}
 
 	public function initialize() {
+		parent::initialize();
+
 	    $shortcode_transformer = new Toolset_Shortcode_Transformer();
 
 		add_action( 'init',												array( $this, 'register_assets' ), 50 );
 		add_action( 'admin_enqueue_scripts',							array( $this, 'admin_enqueue_assets' ), 50 );
 		
 		add_filter( 'toolset_filter_toolset_registered_user_editors',	array( $this, 'register_user_editor' ) );
-		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes',	array( $this, 'layout_template_attribute' ), 10, 3 );
+		add_filter( 'wpv_filter_wpv_layout_template_extra_attributes',	array( $this, 'layout_template_attribute' ), 10, 2 );
 		add_action( 'wpv_action_wpv_ct_inline_user_editor_buttons',		array( $this, 'register_inline_editor_action_buttons' ) );
 
 		add_filter( 'wpcf_filter_wpcf_admin_get_current_edited_post', array( $this, 'get_current_ct_id_for_wpcf_admin' ), 11, 1 );
@@ -122,7 +122,7 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 	
 	public function register_assets() {
 		
-		$toolset_assets_manager = Toolset_Assets_Manager::getInstance();
+		$toolset_assets_manager = Toolset_Assets_Manager::get_instance();
 		
 		// Content Template as inline object assets
 		
@@ -166,7 +166,7 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 	}
 	
 	public function admin_enqueue_assets( $screen_id ) {
-		$content_template_has_vc = ( get_post_meta( wpv_getget( 'ct_id' ), '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'VC_SCREEN_ID' ) );
+		$content_template_has_vc = ( get_post_meta( wpv_getget( 'ct_id' ), '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Visual_Composer::VC_SCREEN_ID );
 		$ct_edit_page_screen_id = class_exists( 'WPV_Page_Slug' ) ? WPV_Page_Slug::CONTENT_TEMPLATES_EDIT_PAGE : 'toolset_page_ct-editor';
 
 		if ( $this->is_views_or_wpa_edit_page() ) {
@@ -274,11 +274,15 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 	* On a Content Template used inside a View or WPA loop output, we set which builder it is using
 	* so we can link to the CT edit page with the right builder instantiated.
 	*
+	* @param array   $attributes
+	* @param WP_POST $content_template
+	*
+	* @return array
+	*
 	* @since 2.3.0
 	*/
-	
-	public function layout_template_attribute( $attributes, $content_template, $view_id ) {
-		$content_template_has_vc = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'VC_SCREEN_ID' ) );
+	public function layout_template_attribute( $attributes, $content_template ) {
+		$content_template_has_vc = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Visual_Composer::VC_SCREEN_ID );
 		if ( $content_template_has_vc ) {
 			$attributes['builder'] = $this->editor->get_id();
 		}
@@ -286,7 +290,7 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 	}
 	
 	public function register_inline_editor_action_buttons( $content_template ) {
-		$content_template_has_vc = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'VC_SCREEN_ID' ) );
+		$content_template_has_vc = ( get_post_meta( $content_template->ID, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Visual_Composer::VC_SCREEN_ID );
 		?>
 		<button 
 			class="button button-secondary toolset-ct-button-logo js-wpv-ct-apply-user-editor js-wpv-ct-apply-user-editor-<?php echo esc_attr( $this->editor->get_id() ); ?>"
@@ -300,7 +304,7 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 		<?php
 	}
 
-	public function force_shortcode_generator_display( $register_section ) {
+	public function force_shortcode_generator_display() {
 		return true;
 	}
 
@@ -335,7 +339,7 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
             return;
         }
 
-		$content_template_has_vc = ( get_post_meta( $content_template_id, '_toolset_user_editors_editor_choice', true ) == $this->constants->constant( 'VC_SCREEN_ID' ) );
+		$content_template_has_vc = ( get_post_meta( $content_template_id, '_toolset_user_editors_editor_choice', true ) === Toolset_User_Editors_Editor_Visual_Composer::VC_SCREEN_ID );
 		if ( $content_template_has_vc ) {
 			foreach ( $_POST['properties'] as $property ) {
 				if ( 'template_extra_css' === $property['name'] ) {

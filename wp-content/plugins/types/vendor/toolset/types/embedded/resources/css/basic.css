@@ -12,6 +12,11 @@
 /* FORMS */
 .toolset-field-group-settings.toolset-postbox h3.toolset-postbox-title {
     cursor: pointer;
+    border-left: 3px solid #0085ba;
+}
+
+.toolset-field-group-settings.toolset-postbox .toolset-collapsible-inside {
+    border-left: 3px solid #0085ba;
 }
 
 .toolset-field-group-settings.toolset-postbox #wpcf-types-form-name-table {
@@ -248,7 +253,7 @@ input.disabled, input:disabled, select.disabled, select:disabled, textarea.disab
 body .ui-dialog .wpcf-ui-dialog-cancel
 {
     position: absolute;
-    left: 16px;
+    left: 8px;
     margin-left: 0;
 }
 
@@ -296,6 +301,28 @@ body.wp-admin .wpcf-ui-dialog .ui-dialog-titlebar
 body.wp-admin .wpcf-ui-dialog .ui-dialog-buttonpane
 {
     padding: 8px 16px;
+}
+
+.wpcf-filter-dialog {
+    height: auto !important;
+}
+
+.wpcf-filter-dialog table#wpcf-conditional {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.wpcf-filter-dialog table#wpcf-conditional td:nth-child(4) {
+    width: 10px;
+}
+
+.wpcf-filter-dialog table#wpcf-conditional .wpcf-form-select {
+    min-width: 0;
+    width: 100%;
+}
+
+.wpcf-filter-dialog table#wpcf-conditional input {
+    width: 100%;
 }
 
 .wpcf-filter-dialog h3
@@ -1591,4 +1618,9 @@ div.wpcf-types-menu-image {
 .toolset-types-intermediary-meta-box .toolset-subtext-right {
     text-align: right;
     margin-top: 1px;
+}
+
+.wpcf-form-label + .wpcf-form-radio {
+    margin-inline-start: 13px;
+    -webkit-margin-start: 13px;
 }

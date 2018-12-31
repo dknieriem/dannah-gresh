@@ -28,7 +28,9 @@ final class Types_Main {
 
 	private function __construct() {
 		add_action( 'after_setup_theme', array( $this, 'after_setup_theme' ), 10 );
-		add_action( 'init', array( $this, 'on_init' ) );
+
+		// important to be 11, because we register our post types on 10 (we should consider loading them earlier)
+		add_action( 'init', array( $this, 'on_init' ), 11 );
 
 		// attachment deletion
 		add_action( 'delete_attachment', function( $attachment_post_id ) {
@@ -62,6 +64,13 @@ final class Types_Main {
 
 		$m2m = new Types_M2M();
 		$m2m->initialize();
+
+		// Initialize the "types" shortcode in all contexts.
+		$factory = new Types_Shortcode_Factory();
+		$types_shortcode = $factory->get_shortcode( 'types' );
+		if ( $types_shortcode ) {
+			add_shortcode( 'types', array( $types_shortcode, 'render' ) );
+		};
 	}
 
 
@@ -137,9 +146,7 @@ final class Types_Main {
 		$toolset_common_bootstrap = Toolset_Common_Bootstrap::get_instance();
 
 		$this->setup_autoloader();
-
-		// This will initialize the DIC if it hasn't been done yet
-		types_dic();
+		$this->setup_auryn();
 
 		// If an AJAX callback handler needs other assets, it should initialize the asset manager by itself.
 		if( $this->get_plugin_mode() != self::MODE_AJAX ) {
@@ -152,9 +159,9 @@ final class Types_Main {
 		Types_Api::initialize();
 
 		Types_Interop_Mediator::initialize();
-		
-		// Load the shortcodes generator
-		$toolset_common_sections = array( 'toolset_shortcode_generator' );
+
+		// Load the shortcodes generator and the blocks section.
+		$toolset_common_sections = array( 'toolset_shortcode_generator', Toolset_Common_Bootstrap::TOOLSET_BLOCKS );
 		$toolset_common_bootstrap->load_sections( $toolset_common_sections );
 		$types_shortcode_generator = new Types_Shortcode_Generator();
 		$types_shortcode_generator->initialize();
@@ -183,5 +190,32 @@ final class Types_Main {
 	 */
 	public function require_legacy_functions() {
 		require_once WPCF_INC_ABSPATH . '/fields.php';
+	}
+
+
+	/**
+	 * Configure Auryn so that it is able to inject our singleton instances properly.
+	 *
+	 * @since 3.2.2
+	 */
+	private function setup_auryn() {
+		// This will initialize the DIC if it hasn't been done yet
+		$dic = types_dic();
+
+		// See utility/dic.php in Toolset Common for details. We're doing the same for Types here.
+		$singleton_delegates = array(
+			'\Types_Asset_Manager' => function() {
+				return Types_Asset_Manager::get_instance();
+			}
+		);
+
+		foreach( $singleton_delegates as $class_name => $callback ) {
+			/** @noinspection PhpUnhandledExceptionInspection */
+			$dic->delegate( $class_name, function() use( $callback, $dic ) {
+				$instance = $callback();
+				$dic->share( $instance );
+				return $instance;
+			});
+		}
 	}
 }

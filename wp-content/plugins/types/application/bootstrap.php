@@ -36,6 +36,12 @@ if ( !defined( 'EDITOR_ADDON_RELPATH' ) ) {
 // installer
 $installer = TYPES_ABSPATH . '/vendor/otgs/installer/loader.php';
 if ( file_exists( $installer ) ) {
+
+	// This is a required dependency for Installer, but we cannot use neither the composer autoloader
+	// (because of how Toolset Common is being loaded) nor our own autoloader (because this file doesn't contain
+	// a class).
+	require_once TYPES_ABSPATH . '/vendor/jakeasmith/http_build_url/src/http_build_url.php';
+
 	/** @noinspection PhpIncludeInspection */
 	include_once $installer;
 	if ( function_exists( 'WP_Installer_Setup' ) ) {
@@ -43,7 +49,6 @@ if ( file_exists( $installer ) ) {
 			$wp_installer_instance,
 			array(
 				'plugins_install_tab' => '1',
-				'high_priority'       => 1,
 				'repositories_include' => array('toolset', 'wpml'),
 			)
 		);
@@ -74,3 +79,76 @@ require_once( dirname( __FILE__ ) . '/functions_public.php' );
 
 // Jumpstart new Types
 Types_Main::initialize();
+
+// Screen Options Controller
+add_action( 'init', function() {
+	if( ! is_admin() ) {
+		// no screen options on front-end
+		return;
+	}
+
+	new \OTGS\Toolset\Types\Controller\ScreenOptions();
+} );
+
+// YOAST Comptability
+add_action( 'init', function() {
+	if( ! TOOLSET_TYPES_YOAST || ! is_admin() ) {
+		// this check is not required, but saves resources
+		return;
+	}
+
+	// load DIC
+	$dic = apply_filters( 'toolset_dic', false );
+
+	// load fields to YOAST Analysis on post edit screen
+	add_action( 'load-post.php', function() use ( $dic ) {
+		$yoast = $dic->make( '\OTGS\Toolset\Types\Controller\Compatibility\Yoast' );
+
+		if( $yoast->dependenciesLoaded() ) {
+			$dic->execute( array( $yoast, 'postEditScreen' ) );
+		}
+	} );
+
+	// function to add YOAST options to Fields creation GUI
+	$field_group_edit_page = function() use ( $dic ) {
+		$yoast = $dic->make( '\OTGS\Toolset\Types\Controller\Compatibility\Yoast' );
+
+		if( $yoast->dependenciesLoaded() ) {
+			$dic->execute( array( $yoast, 'groupEditScreen' ) );
+		}
+	};
+
+	// run GUI extension on field group edit page
+	add_action( 'load-toolset_page_wpcf-edit', function() use ( $field_group_edit_page ) { $field_group_edit_page(); } );
+
+	// run GUI extension when adding a new field via AJAX
+	if( defined( 'DOING_AJAX' )
+	    && DOING_AJAX
+	    && isset( $_REQUEST['action'] )
+		&& $_REQUEST['action'] == 'wpcf_edit_field_insert'
+	) {
+		$field_group_edit_page();
+	}
+} );
+
+/**
+ * Gutenberg Compatiblity
+ *
+ * @since 3.2
+ */
+function types_bootstrap_gutenberg_compatibility() {
+	// load DIC
+	$dic = apply_filters( 'toolset_dic', false );
+
+	/** @var \OTGS\Toolset\Types\Controller\Compatibility\Gutenberg $gutenberg */
+	$gutenberg = $dic->make( '\OTGS\Toolset\Types\Controller\Compatibility\Gutenberg' );
+	$gutenberg->initialize();
+
+	if ( $gutenberg->is_active_for_current_post_type() ) {
+		$dic->execute( array( $gutenberg, 'post_edit_screen' ) );
+	}
+}
+
+// load compatibililty on new post and edit post screen
+add_action( 'load-post.php', 'types_bootstrap_gutenberg_compatibility' );
+add_action( 'load-post-new.php', 'types_bootstrap_gutenberg_compatibility' );

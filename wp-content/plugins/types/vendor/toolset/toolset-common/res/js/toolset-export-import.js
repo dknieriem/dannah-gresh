@@ -26,6 +26,7 @@ ToolsetCommon.ToolsetExportImport = function( $ ) {
 		var thiz = $( this ),
 		target = thiz.data( 'target' ),
 		current = $( '.js-toolset-nav-tab.nav-tab-active' ).data( 'target' );
+        window.history.replaceState( {}, null, thiz.attr('href') );
 		if ( ! thiz.hasClass( 'nav-tab-active' ) ) {
 			$( '.js-toolset-nav-tab' ).removeClass( 'nav-tab-active' );
 			$( '.js-toolset-tabbed-section-item-' + current ).fadeOut( 'fast', function() {

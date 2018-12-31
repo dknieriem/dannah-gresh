@@ -21,7 +21,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	self.markers = {};
 	self.infowindows = {};
 	self.bounds = {};
-	
+
 	self.default_cluster_options = {
 		imagePath:			views_addon_maps_i10n.cluster_default_imagePath,
 		gridSize:			60,
@@ -29,12 +29,12 @@ WPViews.ViewAddonMaps = function( $ ) {
 		zoomOnClick:		true,
 		minimumClusterSize:	2
 	};
-	
+
 	self.cluster_options = {};
 	self.has_cluster_options = {};
-	
+
 	self.resize_queue = [];
-		
+
 	/**
 	* collect_maps_data
 	*
@@ -42,7 +42,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.collect_maps_data = function() {
 		$( '.js-wpv-addon-maps-render' ).each( function() {
 			self.collect_map_data( $( this ) );
@@ -65,12 +65,15 @@ WPViews.ViewAddonMaps = function( $ ) {
 
 			if ( status === google.maps.StreetViewStatus.OK ) {
 				var streetLatlon = streetViewPanoramaData.location.latLng;
-				var heading = google.maps.geometry.spherical.computeHeading( streetLatlon, latlon);
+				var heading = ( map.map_options.heading !== '' )
+					? map.map_options.heading
+					: google.maps.geometry.spherical.computeHeading( streetLatlon, latlon);
+				var pitch = ( map.map_options.pitch !== '' ) ? map.map_options.pitch : 0;
 
 				panorama.setPosition( streetLatlon );
 				panorama.setPov({
 					heading: heading,
-					pitch: 0
+					pitch: pitch
 				});
 				panorama.setVisible( true );
 			}
@@ -187,6 +190,8 @@ WPViews.ViewAddonMaps = function( $ ) {
 		thiz_map_options['spiderfy'] = thiz_map.data( 'spiderfy' );
 		thiz_map_options['lat'] = thiz_map.data( 'lat' );
 		thiz_map_options['long'] = thiz_map.data( 'long' );
+		thiz_map_options['heading'] = thiz_map.data( 'heading' );
+		thiz_map_options['pitch'] = thiz_map.data( 'pitch' );
 
 		var thiz_cluster_options = {
 			'cluster':				thiz_map.data( 'cluster' ),
@@ -195,7 +200,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			'zoomOnClick':			( thiz_map.data( 'clusterclickzoom' ) == 'off' ) ? false : true,
 			'minimumClusterSize':	parseInt( thiz_map.data( 'clusterminsize' ) )
 		};
-		
+
 		// As we might have cleared those options if we are on a reload event, we need to set them again with the data we saved in self.has_cluster_options
 		if ( _.has( self.has_cluster_options, thiz_map_id ) ) {
 			if ( _.has( self.has_cluster_options[ thiz_map_id ] , "styles" ) ) {
@@ -205,19 +210,19 @@ WPViews.ViewAddonMaps = function( $ ) {
 				thiz_cluster_options['calculator'] = self.has_cluster_options[ thiz_map_id ]['calculator'];
 			}
 		}
-		
+
 		var thiz_map_collected = {
-			'map':				thiz_map_id, 
-			'markers':			thiz_map_points, 
+			'map':				thiz_map_id,
+			'markers':			thiz_map_points,
 			'options':			thiz_map_options,
 			'cluster_options':	thiz_cluster_options
 		};
-		
+
 		self.maps_data.push( thiz_map_collected );
 		self.cluster_options[ thiz_map_id ] = thiz_cluster_options;
 
 		return thiz_map_collected;
-		
+
 	};
 
 	/**
@@ -404,7 +409,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.init_maps = function() {
 		self.maps_data.map( function( map ) {
 			// If there is a marker on the map with option for map rendering to wait until it's ready, do nothing.
@@ -420,13 +425,13 @@ WPViews.ViewAddonMaps = function( $ ) {
 			self.init_map_after_loading_styles( map );
 		});
 	};
-	
+
 	/**
 	* init_map
 	*
 	* @since 1.0
 	*/
-	
+
 	self.init_map = function( map ) {
 		var map_icon = '',
 		map_icon_hover = '',
@@ -536,8 +541,14 @@ WPViews.ViewAddonMaps = function( $ ) {
 				clickEvent = 'click';
 			}
 
+			// Helps SVG marker icons to have the same size as others and render properly in Internet Explorer
+			var scaledSize = new google.maps.Size(32, 32);
+
 			if ( marker_map_icon != '' ) {
-				marker_settings['icon'] = marker_map_icon;
+				marker_settings['icon'] = {
+					url: marker_map_icon,
+					scaledSize: scaledSize,
+				}
 			}
 			if ( marker.title != '' ) {
 				marker_settings['title'] = marker.title;
@@ -555,19 +566,29 @@ WPViews.ViewAddonMaps = function( $ ) {
 			) {
 				marker_map_icon = ( marker_map_icon == '' ) ? views_addon_maps_i10n.marker_default_url : marker_map_icon;
 				marker_map_icon_hover = ( marker_map_icon_hover == '' ) ? marker_map_icon : marker_map_icon_hover;
+
 				if ( marker_map_icon != marker_map_icon_hover ) {
+					var marker_icon_scaled = {
+						url: marker_map_icon,
+						scaledSize: scaledSize,
+					};
+					var marker_hover_icon_scaled = {
+						url: marker_map_icon_hover,
+						scaledSize: scaledSize,
+					};
+
 					self.api.event.addListener( self.markers[ map.map ][ marker.marker ], 'mouseover', function() {
-						self.markers[ map.map ][ marker.marker ].setIcon( marker_map_icon_hover );
+						self.markers[ map.map ][ marker.marker ].setIcon( marker_hover_icon_scaled );
 					});
 					self.api.event.addListener( self.markers[ map.map ][ marker.marker ], 'mouseout', function() {
-						self.markers[ map.map ][ marker.marker ].setIcon( marker_map_icon );
+						self.markers[ map.map ][ marker.marker ].setIcon( marker_icon_scaled );
 					});
 					// Add custom classnames to reproduce this hover effect from an HTML element
 					$( document ).on( 'mouseover', '.js-toolset-maps-hover-map-' + map.map + '-marker-' + marker.marker, function() {
-						self.markers[ map.map ][ marker.marker ].setIcon( marker_map_icon_hover );
+						self.markers[ map.map ][ marker.marker ].setIcon( marker_hover_icon_scaled );
 					});
 					$( document ).on( 'mouseout', '.js-toolset-maps-hover-map-' + map.map + '-marker-' + marker.marker, function() {
-						self.markers[ map.map ][ marker.marker ].setIcon( marker_map_icon );
+						self.markers[ map.map ][ marker.marker ].setIcon( marker_icon_scaled );
 					});
 				}
 			}
@@ -622,7 +643,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 				return item == map.map;
 			});
 		}
-		
+
 		$( document ).trigger( 'js_event_wpv_addon_maps_init_map_completed', [ event_settings ] );
 
 		// Init Street View overlay if lat and long are provided (coming from address)
@@ -655,26 +676,26 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.clean_map_data = function( map_id ) {
 		self.maps_data = _.filter( self.maps_data, function( map_data_unique ) {
 			return map_data_unique.map != map_id;
 		});
-		
+
 		self.maps				= _.omit( self.maps, map_id );
 		self.markers			= _.omit( self.markers, map_id );
 		self.infowindows		= _.omit( self.infowindows, map_id );
 		self.bounds				= _.omit( self.bounds, map_id );
 		self.cluster_options	= _.omit( self.cluster_options, map_id );
-		
+
 		var settings = {
 			map_id: map_id
 		};
-		
+
 		$( document ).trigger( 'js_event_wpv_addon_maps_clean_map_completed', [ settings ] );
-		
+
 	};
-	
+
 	/**
 	* keep_map_center_and_resize
 	*
@@ -682,12 +703,13 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.1
 	*/
-	
+
 	self.keep_map_center_and_resize = function( map ) {
 		var map_iter_center = map.getCenter();
 		self.api.event.trigger( map, "resize" );
 		map.setCenter( map_iter_center );
 	};
+
 	/**
 	 * Init all maps - Azure API version
 	 * @since 1.5
@@ -728,7 +750,10 @@ WPViews.ViewAddonMaps = function( $ ) {
 						map.markers[geoMarkerIndex].markerlat = position.coords.latitude;
 						map.markers[geoMarkerIndex].markerlon = position.coords.longitude;
 
-						if ( map.markers.length === 1 ) {
+						if (
+							map.markers.length === 1
+							&& map.options.single_center === "on"
+						) {
 							let mapCenter = [position.coords.longitude, position.coords.latitude];
 							renderedMap.setCamera( {center: mapCenter} );
 						}
@@ -800,6 +825,43 @@ WPViews.ViewAddonMaps = function( $ ) {
 	};
 
 	/**
+	 * Map type names are sometimes, but not always the same between Google and Azure.
+	 *
+	 * @since 1.5.3
+	 * @param {string} mapType
+	 * @return {string}
+	 */
+	self.translateMapTypesToAzure = function( mapType ) {
+		const translationTable = {
+			'roadmap': 'road',
+			'hybrid': 'satellite_road_labels',
+			'terrain': 'road' // 'terrain' type is not supported by Azure, so render the closest - 'road'
+		};
+
+		if ( mapType in translationTable ) return translationTable[mapType];
+		// 'satellite' type has the same name, so just falls through.
+		else return mapType;
+	};
+
+	/**
+	 * Returns value for marker icon set from marker, map, or default
+	 *
+	 * @since 1.5.3
+	 * @param {Object} marker
+	 * @param {Object} mapOptions
+	 * @return {string}
+	 */
+	self.getMarkerIconValue = function( marker, mapOptions ) {
+		if ( marker.markericon ) {
+			return marker.markericon;
+		} else if ( mapOptions.marker_icon ) {
+			return mapOptions.marker_icon;
+		} else {
+			return 'pin-red';
+		}
+	};
+
+	/**
 	 * Init a map with Azure API
 	 *
 	 * @since 1.5
@@ -822,18 +884,29 @@ WPViews.ViewAddonMaps = function( $ ) {
 
 		// 1 marker logic
 		if ( map.markers.length === 1 ) {
-			// Check for special case: only marker is visitor location, and has not been resolved yet, because of
-			// map_render="immediate".
-			if ( _.isNumber( map.markers[0].markerlon ) ) {
+			if (
+				// marker geolocated and rendered after map, handled in self.resolveGeolocatedMarkerThenInitMapAzure
+				_.isNumber( map.markers[0].markerlon )
+				&& map.options.single_center === "on"
+			) {
 				mapCenter = [map.markers[0].markerlon, map.markers[0].markerlat];
 			}
+
+			mapZoom = map.options.single_zoom;
 		}
+
+		// Remove possible map loading content. Google Maps does it by itself, Azure doesn't
+		$( '#js-wpv-addon-maps-render-' + map.map ).empty();
 
 		// Render map
 		let renderedMap = new atlas.Map( "js-wpv-addon-maps-render-" + map.map, {
 			"subscription-key": views_addon_maps_i10n.azure_api_key,
 			center: mapCenter,
 			zoom: mapZoom,
+			scrollZoomInteraction: ( map.options.scrollwheel === 'on' ),
+			dblClickZoomInteraction: ( map.options.double_click_zoom === 'on' ),
+			dragPanInteraction: ( map.options.draggable === 'on' ),
+			style: self.translateMapTypesToAzure( map.options.map_type ) // Ignored with API 1.1, but works with 1.2
 		} );
 
 		$( document ).trigger( 'js_event_wpv_addon_maps_init_map_inited', [ event_settings ] );
@@ -845,22 +918,47 @@ WPViews.ViewAddonMaps = function( $ ) {
 		let pins = _.map( map.markers, function( marker ) {
 			return new atlas.data.Feature(
 				new atlas.data.Point( [marker.markerlon, marker.markerlat] ),
-				{title: marker.title, popup: marker.markerinfowindow},
+				{
+					title: marker.title,
+					popup: marker.markerinfowindow,
+					icon: self.getMarkerIconValue( marker, map.options ),
+					iconhover: marker.markericonhover ? marker.markericonhover : map.options.marker_icon_hover,
+					id: marker.marker
+				},
 				marker.marker
 			);
 		} );
 
-		// Add markers to map (waiting for load event first, otherwise the library throws a style rendering warning)
+		// Create custom icons for pins (if any)
+		let icons = _.filter(
+			_.union(
+				_.pluck( map.markers, 'markericon' ),
+				_.pluck( map.markers, 'markericonhover' ),
+				[map.options.marker_icon, map.options.marker_icon_hover]
+			)
+		);
+
+		// Add markers and their events to map (waiting for load event first, otherwise the library throws a style
+		// rendering warning)
 		renderedMap.addEventListener('load', function() {
-			renderedMap.addPins(pins, {
-				fontColor: "#000",
-				fontSize: 14,
-				icon: "pin-red",
-				iconSize: 1,
-				name: "default-pin-layer",
-				cluster: cluster,
-				textOffset: [0, 20],
-			});
+			_.each( icons, function( icon ) {
+				var iconImg = document.getElementById( icon );
+
+				if ( iconImg ) {
+					renderedMap.addIcon( icon, iconImg );
+				}
+			} );
+
+			self.addPins( renderedMap, pins, cluster );
+
+			// FUTURE: this needs Azure Maps API 1.2, which is buggy at the moment and kills some other things. Revisit.
+			// Add controls
+			/*if ( map.options.zoom_control === 'on' ) {
+				renderedMap.addControl(new atlas.control.ZoomControl, {});
+			}
+			if ( map.options.map_type_control === 'on' ) {
+				renderedMap.addControl(new atlas.control.StyleControl, {});
+			}*/
 
 			// Add an event listener for click (popup)
 			renderedMap.addEventListener( 'click', "default-pin-layer", function( event ) {
@@ -871,7 +969,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 				let popupContentElement = document.createElement("div");
 				popupContentElement.style.padding = "8px";
 				let popupNameElement = document.createElement("div");
-				popupNameElement.innerText = event.features[0].properties.popup;
+				popupNameElement.innerHTML = event.features[0].properties.popup;
 				popupContentElement.appendChild(popupNameElement);
 
 				// Create a popup
@@ -883,16 +981,65 @@ WPViews.ViewAddonMaps = function( $ ) {
 
 				popup.open( renderedMap );
 			} );
+
+			// Add event listeners for hover (possible marker icon change)
+			let originalIcon = '';
+			let hoveredPinIndex = 0;
+			renderedMap.addEventListener( 'mouseover', "default-pin-layer", function( event ) {
+				if ( ! event.features[0].properties.iconhover ) return;
+
+				let id = event.features[0].properties.id;
+				let pin = _.findWhere( pins, {id: id} );
+
+				originalIcon = event.features[0].properties.icon;
+				hoveredPinIndex = _.indexOf( pins, pin );
+
+				pin.properties.icon = pin.properties.iconhover;
+				pins[hoveredPinIndex] = pin;
+
+				self.addPins( renderedMap, pins, cluster );
+			} );
+			renderedMap.addEventListener( 'mouseout', "default-pin-layer", function( event ) {
+				if ( ! originalIcon ) return;
+
+				pins[hoveredPinIndex].properties.icon = originalIcon;
+
+				self.addPins( renderedMap, pins, cluster );
+
+				originalIcon = '';
+			} );
 		} );
 
 		$( document ).trigger( 'js_event_wpv_addon_maps_init_map_completed', [ event_settings ] );
 
 		return renderedMap;
 	};
+
+	/**
+	 * Adds (or changes) all the pins for the given map on default pin layer.
+	 *
+	 * (Because you cannot simply change one pin with Azure, you have to change the layer).
+	 *
+	 * @since 1.5.3
+	 * @param atlas.Map map
+	 * @param {array} pins
+	 * @param {bool} cluster
+	 */
+	self.addPins = function( map, pins, cluster ) {
+		map.addPins( pins, {
+			fontColor: "#000",
+			fontSize: 14,
+			name: "default-pin-layer",
+			cluster: cluster,
+			textOffset: [0, 20],
+			overwrite: true
+		} );
+	};
+
 	// ------------------------------------
 	// API
 	// ------------------------------------
-	
+
 	/**
 	* WPViews.view_addon_maps.reload_map
 	*
@@ -900,7 +1047,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.reload_map = function( map_id ) {
 		var settings = {
 			map_id: map_id
@@ -909,7 +1056,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 		$( document ).trigger( 'js_event_wpv_addon_maps_reload_map_triggered', [ settings ] );
 		$( document ).trigger( 'js_event_wpv_addon_maps_reload_map_completed', [ settings ] );
 	};
-	
+
 	/**
 	* document.js_event_wpv_addon_maps_reload_map_triggered
 	*
@@ -921,12 +1068,12 @@ WPViews.ViewAddonMaps = function( $ ) {
 	* @since 1.5 supports Azure API
 	*/
 	$( document ).on( 'js_event_wpv_addon_maps_reload_map_triggered', function( event, data ) {
-		var defaults = { 
+		var defaults = {
 			map_id: false
 		},
 		settings = $.extend( {}, defaults, data );
-		if ( 
-			settings.map_id == false 
+		if (
+			settings.map_id == false
 			|| $( '#js-wpv-addon-maps-render-' + settings.map_id ).length != 1
 		) {
 			return;
@@ -951,7 +1098,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.get_map = function( map_id ) {
 		if ( map_id in self.maps ) {
 			return self.maps[ map_id ];
@@ -959,7 +1106,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			return false;
 		}
 	};
-	
+
 	/**
 	* WPViews.view_addon_maps.get_map_marker
 	*
@@ -970,7 +1117,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.get_map_marker = function( marker_id, map_id ) {
 		if (
 			map_id in self.markers
@@ -981,17 +1128,17 @@ WPViews.ViewAddonMaps = function( $ ) {
 			return false;
 		}
 	};
-	
+
 	// ------------------------------------
 	// Interaction
 	// ------------------------------------
-	
+
 	/**
 	* Reload on js-wpv-addon-maps-reload-map.click
 	*
 	* @since 1.0
 	*/
-	
+
 	$( document ).on( 'click', '.js-wpv-addon-maps-reload-map', function( e ) {
 		e.preventDefault();
 		var thiz = $( this );
@@ -999,7 +1146,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			self.reload_map( thiz.data( 'map' ) );
 		}
 	});
-	
+
 	/**
 	* Center on a marker on js-wpv-addon-maps-center-map.click
 	*
@@ -1013,7 +1160,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 		thiz_marker,
 		thiz_zoom;
 		if (
-			thiz.attr( 'data-map' ) 
+			thiz.attr( 'data-map' )
 			&& thiz.attr( 'data-marker' )
 		) {
 			thiz_map = thiz.data( 'map' );
@@ -1048,7 +1195,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			}
 		}
 	});
-	
+
 	/**
 	* Center map on fitbounds on js-wpv-addon-maps-center-map-fitbounds.click
 	*
@@ -1056,7 +1203,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	$( document ).on( 'click', '.js-wpv-addon-maps-restore-map', function( e ) {
 		e.preventDefault();
 		var thiz = $( this ),
@@ -1071,7 +1218,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			) {
 				self.maps[ thiz_map ].fitBounds( self.bounds[ thiz_map ] );
 			}
-			
+
 			if ( _.size( self.markers[ thiz_map ] ) == 1 ) {
 				current_map_data_array = _.filter( self.maps_data, function( map_data_unique ) {
 					return map_data_unique.map == thiz_map;
@@ -1111,33 +1258,33 @@ WPViews.ViewAddonMaps = function( $ ) {
 			}
 		}
 	});
-	
+
 	// ------------------------------------
 	// Views compatibility
 	// ------------------------------------
-	
+
 	/**
 	* Reload the maps contained on the parametric search results loaded via AJAX
 	*
 	* @since 1.0
 	*/
-	
+
 	$( document ).on( 'js_event_wpv_parametric_search_results_updated', function( event, data ) {
 		var affected_maps = self.get_affected_maps( data.layout );
 		_.each( affected_maps, self.reload_map );
 	});
-	
+
 	/**
 	* Reload the maps contained on the pagination results loaded via AJAX
 	*
 	* @since 1.0
 	*/
-	
+
 	$( document ).on( 'js_event_wpv_pagination_completed', function( event, data ) {
 		var affected_maps = self.get_affected_maps( data.layout );
 		_.each( affected_maps, self.reload_map );
 	});
-	
+
 	/**
 	* get_affected_maps
 	*
@@ -1149,7 +1296,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.1
 	*/
-	
+
 	self.get_affected_maps = function( container ) {
 		var affected_maps = [];
 		container.find( '.js-wpv-addon-maps-render' ).each( function() {
@@ -1161,11 +1308,11 @@ WPViews.ViewAddonMaps = function( $ ) {
 		affected_maps = _.uniq( affected_maps );
 		return affected_maps;
 	};
-	
+
 	// ------------------------------------
 	// Clusters definitions and interactions
 	// ------------------------------------
-	
+
 	/**
 	* WPViews.view_addon_maps.set_cluster_options
 	*
@@ -1198,7 +1345,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.set_cluster_options = function( options, map_id ) {
 		if ( typeof map_id === 'undefined' ) {
 			// If map_id is undefined, set global options
@@ -1221,7 +1368,7 @@ WPViews.ViewAddonMaps = function( $ ) {
 			self.has_cluster_options[ map_id ] = options;
 		}
 	};
-	
+
 	/**
 	* WPViews.view_addon_maps.get_cluster_options
 	*
@@ -1233,18 +1380,18 @@ WPViews.ViewAddonMaps = function( $ ) {
 	*
 	* @since 1.0
 	*/
-	
+
 	self.get_cluster_options = function( map_id ) {
 		var options = self.default_cluster_options;
-		if ( 
+		if (
 			typeof map_id !== 'undefined'
-			&& _.has( self.cluster_options, map_id ) 
+			&& _.has( self.cluster_options, map_id )
 		) {
 			options = self.cluster_options[ map_id ];
 		}
 		return options;
 	};
-	
+
 	// ------------------------------------
 	// Init
 	// ------------------------------------
@@ -1274,6 +1421,8 @@ WPViews.ViewAddonMaps = function( $ ) {
 				}
 			});
 		});
+
+		self.maybeInitElementorEditorPreviewFix( self.init_maps );
 	};
 
 	/**
@@ -1282,6 +1431,50 @@ WPViews.ViewAddonMaps = function( $ ) {
 	 */
 	self.initAzure = function() {
 		self.initMapsAzure();
+		self.maybeInitElementorEditorPreviewFix( self.initMapsAzure );
+	};
+
+	/**
+	 * Initialize maps on Elementor widget ready so it works when previewing an Elementor design.
+	 *
+	 * @since 1.5.3
+	 *
+	 * @param {Function} mapInitCallback
+	 */
+	self.maybeInitElementorEditorPreviewFix = function( mapInitCallback ) {
+		if (typeof elementor === 'object' && typeof elementorFrontend === 'object') {
+			elementorFrontend.hooks.addAction('frontend/element_ready/widget', function ($scope) {
+				var mapInScope = $scope.find('div.js-wpv-addon-maps-render');
+				if (mapInScope.length) {
+					self.collect_maps_data();
+					mapInitCallback();
+				}
+			});
+		}
+	};
+
+	/**
+	 * Initializes a single map by given id, and also cleans up if map with same id was already initialized.
+	 *
+	 * API agnostic.
+	 *
+	 * @since 1.7
+	 * @param {string} id
+	 */
+	self.initMapById = function( id ) {
+		self.clean_map_data( id );
+
+		const mapData = self.collect_map_data( $( 'div#js-wpv-addon-maps-render-' + id ) );
+
+		if ( API_GOOGLE === views_addon_maps_i10n.api_used ) {
+			self.init_map_after_loading_styles( mapData );
+			// This is emitted only by collect_maps_data, not by the single map data collector that's used here, and is
+			// needed by add_current_visitor_location_after_geolocation in order to run at the right time. (Google API
+			// only).
+			$( document ).trigger('js_event_wpv_addon_maps_map_data_collected');
+		} else {
+			self.maps[id] = self.resolveGeolocatedMarkerThenInitMapAzure( mapData );
+		}
 	};
 
 	self.init = function() {
@@ -1291,17 +1484,6 @@ WPViews.ViewAddonMaps = function( $ ) {
 			self.initGoogle();
 		} else {
 			self.initAzure();
-		}
-
-		// Elementor editor preview fix
-		if ( typeof elementor === 'object' && typeof elementorFrontend === 'object' ) {
-			elementorFrontend.hooks.addAction( 'frontend/element_ready/widget', function( $scope ) {
-				var mapInScope = $scope.find('div.js-wpv-addon-maps-render');
-				if ( mapInScope.length ) {
-					self.collect_maps_data();
-					self.init_maps();
-				}
-			} );
 		}
 	};
 

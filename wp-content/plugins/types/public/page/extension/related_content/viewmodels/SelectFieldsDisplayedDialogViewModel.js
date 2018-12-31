@@ -138,7 +138,7 @@ Types.page.extension.relatedContent.viewmodels.SelectFieldsDisplayedDialogViewMo
 		self.dialog_id = 'types-select-fields-related-content-dialog-' + relatedContentModel.relationship_slug;
 
 		var buttons = [];
-		var thereAreFields = relatedContentModel.relatedContent.columns.post.length || relatedContentModel.relatedContent.columns.relationship.length || relatedContentModel.relatedContent.columns.relatedPosts.length;
+        var thereAreFields = relatedContentModel.relatedContent.columns.post.length || relatedContentModel.relatedContent.columns.relationship.length || relatedContentModel.relatedContent.columns.relatedPosts.length;
 		if ( thereAreFields ) {
 			buttons.push( {
 				text: relatedContentModel.strings.button['apply'],
@@ -158,11 +158,14 @@ Types.page.extension.relatedContent.viewmodels.SelectFieldsDisplayedDialogViewMo
 		} );
 
 		self.dialog = Types.page.extension.relatedContent.main.createDialog(
-			self.dialog_id,
-			relatedContentModel.strings.misc.selectFieldsTitle,
-			{},
-			buttons
-		);
+            self.dialog_id,
+            relatedContentModel.strings.misc.selectFieldsTitle,
+            {},
+            buttons,
+			{
+				dialogClass: 'toolset-dialog-columns-to-be-displayed'
+			}
+        );
 
 		// Needs to be called after open it in order to update "select all".
 		self.updateSelectAll = function() {

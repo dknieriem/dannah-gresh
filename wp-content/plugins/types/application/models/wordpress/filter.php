@@ -91,6 +91,17 @@ class Types_Wordpress_Filter implements Types_Wordpress_Filter_Interface {
 	}
 
 	/**
+	 * Filter for slug
+	 *
+	 * @param $slug
+	 *
+	 * @return string
+	 */
+	public function filter_slug( $slug ) {
+		return sanitize_title( $slug );
+	}
+
+	/**
 	 * @return bool
 	 *
 	 * @codeCoverageIgnore will never be touched again as it's only used for WP < 4.7

@@ -1,5 +1,7 @@
 <?php
 
+use OTGS\Toolset\Common\PostType\EditorMode;
+
 /**
  * Model of a WordPress post.
  *
@@ -14,6 +16,13 @@ class Toolset_Post extends Toolset_Element implements IToolset_Post {
 
 	// FIXME document this
 	const SORTORDER_META_KEY = 'toolset-post-sortorder';
+
+	// Meta key where the EditorMode value is stored.
+	const EDITOR_MODE_META_KEY = 'toolset_post_editor_mode';
+
+	// Meta key where we store a base64-encoded content of the post content before switching to the Gutenberg/block editor.
+	const POST_CONTENT_BEFORE_GUTENBERG_META_KEY = 'toolset_post_content_before_gutenberg';
+
 
 
 	/** @var WP_Post */
@@ -211,6 +220,7 @@ class Toolset_Post extends Toolset_Element implements IToolset_Post {
 	 * @param bool $exact_match_only
 	 *
 	 * @return IToolset_Element|null
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
 	public function translate( $language_code, $exact_match_only = false ) {
 		if( ! $this->is_translatable() ) {
@@ -231,6 +241,7 @@ class Toolset_Post extends Toolset_Element implements IToolset_Post {
 	 *
 	 * @return int
 	 * @since 2.5.10
+	 * @throws Toolset_Element_Exception_Element_Doesnt_Exist
 	 */
 	public function get_default_language_id() {
 		if( ! $this->is_translatable() ) {
@@ -275,4 +286,97 @@ class Toolset_Post extends Toolset_Element implements IToolset_Post {
 	public function get_trid() {
 		return $this->wpml_service->get_post_trid( $this->get_id() );
 	}
+
+
+	/**
+	 * @inheritdoc
+	 *
+	 * @return string
+	 * @since Types 3.2
+	 */
+	public function get_status() {
+		return $this->post->post_status;
+	}
+
+
+	/**
+	 * Preferred editor mode for the current post.
+	 *
+	 * @return string
+	 * @since Types 3.2.2
+	 */
+	public function get_editor_mode() {
+		$meta_value = get_post_meta( $this->get_id(), self::EDITOR_MODE_META_KEY, true );
+
+		if( ! EditorMode::is_valid( $meta_value ) ) {
+			return EditorMode::CLASSIC;
+		}
+
+		return $meta_value;
+	}
+
+
+	/**
+	 * @return string Raw post content
+	 * @since Types 3.2.2
+	 */
+	public function get_content() {
+		return $this->post->post_content;
+	}
+
+
+	/**
+	 * Set a specific editor mode for a particular post.
+	 *
+	 * @param string $editor_mode Valid constant from EditorMode.
+	 */
+	public function set_post_editor_mode( $editor_mode ) {
+		if( ! EditorMode::is_valid( $editor_mode ) ) {
+			throw new InvalidArgumentException();
+		}
+
+		update_post_meta( $this->get_id(), \Toolset_Post::EDITOR_MODE_META_KEY, $editor_mode );
+	}
+
+
+
+	/**
+	 * Switch a particular post to use the block editor.
+	 *
+	 * Save the post content in case the user wants to restore it later.
+	 */
+	public function switch_to_block_editor() {
+		$this->set_post_editor_mode( EditorMode::BLOCK );
+
+		// Use base64 to prevent postmeta sanitization which might break things.
+		$safe_content = base64_encode( $this->get_content() );
+
+		update_post_meta( $this->get_id(), self::POST_CONTENT_BEFORE_GUTENBERG_META_KEY, $safe_content );
+	}
+
+
+	/**
+	 * Switch a particular post to use the classic editor.
+	 *
+	 * Allow to (optionally) restore the post content from before the block editor was used (if there is any).
+	 *
+	 * @param bool $restore_previous_content
+	 */
+	public function switch_to_classic_editor( $restore_previous_content ) {
+		$this->set_post_editor_mode( EditorMode::CLASSIC );
+
+		if( $restore_previous_content ) {
+			$encoded_content = get_post_meta( $this->get_id(), self::POST_CONTENT_BEFORE_GUTENBERG_META_KEY, true );
+
+			if( ! empty( $encoded_content ) ) {
+				wp_update_post( array(
+					'ID' => $this->get_id(),
+					'post_content' => base64_decode( $encoded_content ),
+				) );
+			}
+		}
+
+		delete_post_meta( $this->get_id(), self::POST_CONTENT_BEFORE_GUTENBERG_META_KEY );
+	}
+
 }

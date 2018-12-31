@@ -80,6 +80,10 @@ class Toolset_Gutenberg_Block_REST_Helper {
 			'posts_per_page' => $posts_per_page,
 		);
 
+		if ( isset( $params['post_type'] ) ) {
+			$query_args['post_type'] = sanitize_text_field( $params['post_type'] );
+		}
+
 		$search_results = new WP_Query( $query_args );
 
 		if ( $search_results->have_posts() ) {

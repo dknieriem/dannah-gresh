@@ -78,6 +78,7 @@ Types.page.extension.relatedContent.Class = function() {
 
 			var ajaxData = {
 				action: Types.page.extension.relatedContent.ajaxInfo.actionName,
+                skip_capability_check: true,
 				related_content_action: relatedContentAction,
 				wpnonce: nonce
 			};
@@ -142,8 +143,6 @@ Types.page.extension.relatedContent.Class = function() {
 
 	self.beforeInit = function () {
 		self.modelData = self.getModelData();
-		//noinspection JSUnresolvedVariable
-		Types.page.extension.relatedContent.jsPath = self.modelData[0].jsIncludePath;
 
 		self.initStaticData(self.modelData);
 		self.initAjax();
@@ -152,16 +151,17 @@ Types.page.extension.relatedContent.Class = function() {
 
 
 	self.loadDependencies = function (nextStep) {
+	    var typesVersion = Types.page.extension.relatedContent.typesVersion;
 		// Continue after loading the view of the listing table.
 		Types.head.load(
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/ListingViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/RelatedContentViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/DisconnectDialogViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/DeleteDialogViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/AddNewDialogViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/ConnectExistingDialogViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/TranslatableContentDialogViewModel.js',
-			Types.page.extension.relatedContent.jsPath + '/viewmodels/SelectFieldsDisplayedDialogViewModel.js',
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/ListingViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/RelatedContentViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/DisconnectDialogViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/DeleteDialogViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/AddNewDialogViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/ConnectExistingDialogViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/TranslatableContentDialogViewModel.js?ver=' + typesVersion,
+			Types.page.extension.relatedContent.jsPath + '/viewmodels/SelectFieldsDisplayedDialogViewModel.js?ver=' + typesVersion,
 			nextStep
 		);
 	};
@@ -245,6 +245,9 @@ Types.page.extension.relatedContent.Class = function() {
 		Types.page.extension.relatedContent.itemsPerPage = modelData[0].itemsPerPage || {};
 		Types.page.extension.relatedContent.strings = modelData[0].strings || {};
 		Types.page.extension.relatedContent.ajaxInfo = modelData[0].ajaxInfo || {};
+        // noinspection JSUnresolvedVariable
+        Types.page.extension.relatedContent.jsPath = modelData[0].jsIncludePath || '';
+        Types.page.extension.relatedContent.typesVersion = modelData[0].typesVersion || 'unset';
 	};
 
 

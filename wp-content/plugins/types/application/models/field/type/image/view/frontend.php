@@ -9,30 +9,23 @@
  */
 class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Frontend_Abstract {
 
-	/**
-	 * @var Types_Wordpress_Media_Interface
-	 */
+	/** @var Types_Wordpress_Media_Interface */
 	private $wordpress_media;
 
-	/**
-	 * @var Types_Media_Service
-	 */
+	/** @var Types_Media_Service */
 	private $media_service;
 
-	/**
-	 * @var Types_Site_Domain
-	 */
+	/** @var Types_Site_Domain */
 	private $site_domain;
 
-	/**
-	 * @var Types_View_Placeholder_Interface
-	 */
+	/** @var Types_View_Placeholder_Interface */
 	private $view_placeholder;
 
-	/**
-	 * @var Types_View_Decorator_Image
-	 */
+	/** @var Types_View_Decorator_Image */
 	private $decorator_image;
+
+	/** @var Types_View_Decorator_Index */
+	private $decorator_index;
 
 	/**
 	 * Types_Field_Type_Single_Line_View_Frontend constructor.
@@ -43,6 +36,7 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 	 * @param Types_Site_Domain $site_domain
 	 * @param Types_View_Placeholder_Media $view_placeholder_media
 	 * @param Types_View_Decorator_Image $decorator_image
+	 * @param Types_View_Decorator_Index $decorator_index
 	 * @param array $params
 	 */
 	public function __construct(
@@ -52,6 +46,7 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 		Types_Site_Domain $site_domain,
 		Types_View_Placeholder_Media $view_placeholder_media,
 		Types_View_Decorator_Image $decorator_image,
+		Types_View_Decorator_Index $decorator_index,
 		$params = array()
 	) {
 		$this->entity           = $entity;
@@ -60,6 +55,7 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 		$this->site_domain      = $site_domain;
 		$this->view_placeholder = $view_placeholder_media;
 		$this->decorator_image  = $decorator_image;
+		$this->decorator_index  = $decorator_index;
 
 		$this->prepare_params( $this->normalise_user_values( $params ) );
 	}
@@ -70,8 +66,7 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 	 * @return string
 	 */
 	public function get_value() {
-		$is_html_output = $this->is_html_output();
-		$decorator_html = new Types_View_Decorator_Output_HTML( false );
+
 
 		if ( $this->is_raw_output() ) {
 			// raw value
@@ -97,27 +92,78 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 	private function get_images() {
 		$rendered_value = array();
 
-		foreach ( (array) $this->entity->get_value() as $value ) {
-			$media = $this->media_service->find_by_url( $value );
+		// user settings via shortcode
+		$output_registered_image_size = $this->output_registered_image_size();
+		$output_custom_image_size = $this->output_custom_image_size();
+
+		$values = $this->entity->get_value();
+
+		// check if a specific image of a repeatable image field is requested
+		if( isset( $this->params['index'] ) && ( ! empty( $this->params['index'] ) || $this->params['index'] == 0 ) ) {
+			$values = $this->decorator_index->get_value( $values, $this->params );
+
+			// normally the index attribute will be considered as last step pre-rendering a field
+			// but as image loading is not only reading the db value of the field we apply it before loading the data
+			// to prevent another run through the Types_View_Decorator_Index we need to null the 'index' attribute
+			$this->params['index'] = null;
+		}
+
+		// loop over images (maybe more images due to repetitive option)
+		foreach ( (array) $values as $url ) {
+			$media = null;
+			$final_url = $url;
 
 			$view_params          = $this->params;
-			$view_params['title'] = $this->view_placeholder->replace( $this->params['title'], $media );
-			$view_params['alt']   = $this->view_placeholder->replace( $this->params['alt'], $media );
+			$view_params['title'] = $this->view_placeholder->replace( $this->params['title'], $url, $this->media_service );
+			$view_params['alt']   = $this->view_placeholder->replace( $this->params['alt'], $url, $this->media_service );
 			$view_params['class'] = implode( ' ', (array) $this->params['class'] );
 			$view_params['style'] = implode( ' ', (array) $this->params['style'] );
 
-			if ( $modified_url = $this->handle_registered_image( $media ) ) {
-				$rendered = $this->decorator_image->get_value( $modified_url, $view_params );
-			} else if ( $modified_url = $this->handle_resized_image( $media ) ) {
-				$rendered = $this->decorator_image->get_value( $modified_url, $view_params );
-			} else {
-				$rendered = $this->decorator_image->get_value( $media->get_url(), $view_params );
+			// change $final_url if user wants a registered image size
+			if( $output_registered_image_size ) {
+				$media = $media ?: $this->media_service->find_by_url( $url );
+				$final_url = $this->get_registered_image_size( $media );
+				if( empty( $final_url ) && $output_custom_image_size ){
+					// registered size not available, get custom if possible
+					$final_url = $this->get_custom_image_size( $media );
+				}
+
+			// change $final_url if user wants a custom image size
+			} else if( $output_custom_image_size ) {
+				$media = $media ?: $this->media_service->find_by_url( $url );
+				$final_url = $this->get_custom_image_size( $media );
 			}
 
-			$rendered_value[] = $this->filter_field_value_after_decorators( $rendered, $value );
+			$rendered = $this->decorator_image->get_value( $final_url, $view_params );
+			$rendered_value[] = $this->filter_field_value_after_decorators( $rendered, $url );
 		}
 
 		return $rendered_value;
+	}
+
+	/**
+	 * Check if user wants to output a registered image size
+	 *
+	 * @return bool
+	 */
+	private function output_registered_image_size() {
+		if( empty( $this->params['size'] )
+		    || $this->params['size'] == 'custom'
+		    || $this->params['resize'] == 'crop' )
+		{
+			// no size given or explicit set to custom or resize method is crop
+			return false;
+		}
+
+		// check for registered size
+		$registered_image_sizes = get_intermediate_image_sizes();
+		if( in_array( $this->params['size'], $registered_image_sizes ) ) {
+			// registered size requested
+			return true;
+		}
+
+		// the requested size is not an registered size
+		return false;
 	}
 
 	/**
@@ -127,16 +173,10 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 	 *
 	 * @return false|string
 	 */
-	private function handle_registered_image( Types_Interface_Media $media ) {
-		if ( ! $media->get_id() ) {
-			return false;
-		}
-
-		if ( $this->params['url'] == 'true' ) {
+	private function get_registered_image_size( Types_Interface_Media $media ) {
+		if ( $this->params['url'] ) {
 			// user wants blank url
-			if ( ! empty( $this->params['size'] )
-			     && $image = wp_get_attachment_image_src( $media->get_id(), $this->params['size'] )
-			) {
+			if ( $image = wp_get_attachment_image_src( $media->get_id(), $this->params['size'] ) ) {
 				// specific size wanted and available
 				return $image[0];
 			}
@@ -144,18 +184,27 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 			return $media->get_url();
 		}
 
-		if ( ! empty( $params['size'] ) && $params['resize'] == 'crop' ) {
-			return wp_get_attachment_image(
-				$media->get_id(),
-				$this->params['size'],
-				false,
-				array(
-					'title' => $this->view_placeholder->replace( $this->params['title'], $media ),
-					'alt'   => $this->view_placeholder->replace( $this->params['alt'], $media ),
-					'class' => implode( ' ', (array) $this->params['class'] ),
-					'style' => implode( ' ', (array) $this->params['style'] ),
-				)
-			);
+		// image
+		return wp_get_attachment_image(
+			$media->get_id(),
+			$this->params['size'],
+			false,
+			array(
+				'title' => $this->view_placeholder->replace( $this->params['title'], $media ),
+				'alt'   => $this->view_placeholder->replace( $this->params['alt'], $media ),
+				'class' => implode( ' ', (array) $this->params['class'] ),
+				'style' => implode( ' ', (array) $this->params['style'] ),
+			)
+		);
+	}
+
+	/**
+	 * Check if User wants to output custom image size
+	 * @return bool
+	 */
+	private function output_custom_image_size() {
+		if ( ! empty( $this->params['width'] ) || ! empty( $this->params['height'] ) ) {
+			return true;
 		}
 
 		return false;
@@ -166,19 +215,19 @@ class Types_Field_Type_Image_View_Frontend extends Types_Field_Type_View_Fronten
 	 *
 	 * @return bool
 	 */
-	private function handle_resized_image( Types_Interface_Media $media ) {
-		if ( ! empty( $this->params['width'] ) || ! empty( $this->params['height'] ) ) {
-			$args = array(
-				'resize'        => $this->params['resize'],
-				'padding_color' => $this->params['padding_color'],
-				'width'         => $this->params['width'],
-				'height'        => $this->params['height'],
-			);
-
-			return $this->media_service->resize_image( $media, $args, $this->site_domain->contains( $media ) );
+	private function get_custom_image_size( Types_Interface_Media $media ) {
+		if( ! $this->output_custom_image_size() ) {
+			return false;
 		}
 
-		return false;
+		$args = array(
+			'resize'        => $this->params['resize'],
+			'padding_color' => $this->params['padding_color'],
+			'width'         => $this->params['width'],
+			'height'        => $this->params['height'],
+		);
+
+		return $this->media_service->resize_image( $media, $args, $this->site_domain->contains( $media ) );
 	}
 
 

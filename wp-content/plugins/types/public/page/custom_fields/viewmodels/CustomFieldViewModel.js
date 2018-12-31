@@ -78,31 +78,4 @@ Types.page.customFields.viewmodels.CustomFieldViewModel = function(model, fieldA
     });
 
 
-    /**
-     * Handle the status of the bulk action checkbox.
-     *
-     * We need to act as if the checkbox is not selected if the bulk action is not allowed, and also properly
-     * update the isSelectedForBulkAction property which is used by the listing viewmodel when querying items
-     * to perform the bulk action.
-     *
-     * @since 3.0
-     */
-    self.isCheckedForBulkAction = ko.computed({
-        read: function() {
-            var isSelected = self.isSelectedForBulkAction();
-            if(isSelected && ! self.isBulkActionAllowed()) {
-                self.isSelectedForBulkAction(false);
-                return false;
-            }
-            return  isSelected;
-        },
-        write: function(val) {
-            if(self.isBulkActionAllowed()) {
-                self.isSelectedForBulkAction(val);
-            } else {
-                self.isSelectedForBulkAction(false);
-            }
-        }
-    });
-
 };

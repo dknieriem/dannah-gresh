@@ -126,6 +126,7 @@ class Types_Viewmodel_Relationship_Definition {
 				),
 			),
 			'isActive' => $this->relationship->is_active(),
+			'isAutodeletingIntermediaryPosts' => $this->relationship->is_autodeleting_intermediary_posts(),
 			'postTypeDisabledNames' => $this->get_post_type_disabled_names(),
 			'associationFields' => $this->get_association_fields(),
 			'needsLegacySupport' => $this->relationship->needs_legacy_support(),
@@ -276,6 +277,12 @@ class Types_Viewmodel_Relationship_Definition {
 
 		if ( array_key_exists( 'isActive', $updated_values ) ) {
 			$relationship->is_active( 'true' === $updated_values['isActive'] ? true : false );
+		}
+
+		if ( array_key_exists( 'isAutodeletingIntermediaryPosts', $updated_values ) ) {
+			$relationship->is_autodeleting_intermediary_posts(
+				'true' === $updated_values['isAutodeletingIntermediaryPosts'] ? true : false
+			);
 		}
 
 		// Complex or potentially destructive operations

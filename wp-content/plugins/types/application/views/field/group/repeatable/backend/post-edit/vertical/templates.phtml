@@ -121,6 +121,10 @@
                 </div>
             </div>
             <div class="c-rgy__item--fields" data-bind="visible: $data.visible">
+	            <?php /* This field won't be stored. It's here to make sure the RFG is in $_POST for sorting */ ?>
+                <input type="hidden" data-bind="attr: { name: 'types-repeatable-group['+ $data.id +'][_id]', value: $data.id }" />
+
+	            <?php /* List RFG fields */ ?>
                 <!-- ko foreach: $data.fields -->
                 <!-- ko template: $data.repeatableGroup ? 'tplItemGroupToggle' : 'tplItem' --><!-- /ko -->
                 <!-- /ko -->

@@ -197,43 +197,43 @@ final class Types_Ajax_Handler_Custom_Fields_Action extends Toolset_Ajax_Handler
 	 * @return bool|WP_Error True for success, false or WP_Error on error.
 	 */
 	public function delete_group( $group_id, $domain ) {
-		$group = $this->check_post_domain( $group_id, $domain );
-		if ( is_wp_error( $group ) ) {
-			return $group;
+		/** @var \OTGS\Toolset\Common\Auryn\Injector $dic */
+		if( ! $dic = apply_filters( 'toolset_dic', false ) ) {
+			return new WP_Error( 42, __( 'Technical error. Please contact our support.', 'wpcf' ) );
 		}
 
-		// Deletes RFG and PRF relationships.
-		// This section is hard to test due to static methos everywhere.
-		if ( $this->check_fields ) {
-			$field_group_service = new Types_Field_Group_Repeatable_Service();
-			$convert_rfg_into_relationship = toolset_getget( 'wpcf_convert_rfg', false );
-			$relationship_repository = Toolset_Relationship_Definition_Repository::get_instance();
+		if( ! $field_group_post = get_post( $group_id ) ) {
+			return new WP_Error( 42, __( 'Technical error. Please contact our support.', 'wpcf' ) );
+		}
 
-			$field_group_post_factory = Toolset_Field_Group_Factory::get_factory_by_domain( toolset_getpost( 'domain' ) );
-			$field_group = $field_group_post_factory->load( $group_id );
-
-			foreach ( $field_group->get_field_slugs() as $field_slug ) {
-				$repeatable_group = $field_group_service->get_object_from_prefixed_string( $field_slug );
-				// delete repeatable group.
-				if ( $repeatable_group ) {
-					$field_group_service->delete( $repeatable_group, false !== $convert_rfg_into_relationship );
-				}
-
-				$post_reference_definition = $relationship_repository->get_definition( $field_slug );
-				if ( $post_reference_definition ) {
-					$relationship_repository->remove_definition( $post_reference_definition );
-					$field_definition_factory = Toolset_Field_Definition_Factory::get_factory_by_domain( Toolset_Element_Domain::POSTS );
-					$field_definition = $field_definition_factory->load_field_definition( $field_slug );
-					if ( ! $field_definition ) {
-						$field_definition_factory->delete_definition( $definition );
-					}
-				}
+		try {
+			switch ( $domain ) {
+				case Toolset_Field_Utils::DOMAIN_POSTS:
+					/** @var \OTGS\Toolset\Types\Controller\Field\Group\Post\Deletion $deletion_controller */
+					$deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\Post\Deletion' );
+					$group = new Toolset_Field_Group_Post( $field_group_post );
+					break;
+				case Toolset_Field_Utils::DOMAIN_USERS:
+					$deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\User\Deletion' );
+					$group = new Toolset_Field_Group_User( $field_group_post );
+					break;
+				case Toolset_Field_Utils::DOMAIN_TERMS:
+					$deletion_controller = $dic->make( '\OTGS\Toolset\Types\Controller\Field\Group\Term\Deletion' );
+					$group = new Toolset_Field_Group_Term( $field_group_post );
+					break;
+				default:
+					return new WP_Error( 42, __( 'Technical error.  Please contact our support.', 'wpcf' ) );
 			}
-		}
 
-		// Deletes post.
-		if ( false === wp_delete_post( $group_id, true ) ) {
-			return new WP_Error( 0, __( 'An unexpected error happened while processing the request.', 'wpcf' ) );
+			$deletion_controller->delete( $group );
+
+		} catch( \OTGS\Toolset\Types\Access\Exception $e ) {
+			// User has no access
+			return new WP_Error( 42, __( 'You do not have permissions for that.', 'wpcf' ) );
+
+		} catch( Exception $e ) {
+			// Something else went wrong (probably class resolving).
+			return new WP_Error( 42, __( 'Technical error. Please contact our support.', 'wpcf' ) );
 		}
 
 		return true;

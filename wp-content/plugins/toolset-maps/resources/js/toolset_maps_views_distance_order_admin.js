@@ -14,6 +14,7 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 	const API_GOOGLE = 'google';
 
 	self.centerSelector = '.js-wpv-posts-distance-order-center';
+	self.centerURLParameterSelector = '.js-wpv-posts-distance-order-center-url-parameter';
 	self.sourceSelector = '.js-wpv-posts-distance-order-source';
 	self.postOrderByAsSelector = '#wpv-settings-orderby-as';
 	self.userOrderByAsSelector = '#wpv-settings-user-orderby-as';
@@ -42,7 +43,12 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 
 		// Trigger ajax saving on our added fields changes
 		$( self.sourceSelector ).change( WPViews.view_edit_screen.sorting_debounce_update );
-		$( self.centerSelector ).on('geocode:result', WPViews.view_edit_screen.sorting_debounce_update );
+		if ( API_GOOGLE === WPViews.distanceOrderAdmin.apiUsed ) {
+			$( self.centerSelector ).on( 'geocode:result', WPViews.view_edit_screen.sorting_debounce_update );
+		} else {
+			$( self.centerSelector ).change( WPViews.view_edit_screen.sorting_debounce_update );
+		}
+		$( self.centerURLParameterSelector ).change( WPViews.view_edit_screen.sorting_debounce_update );
 
 		// React on Order by change (but only for users and taxonomy, posts are covered with
 		// js_event_wpv_sorting_update_order_availability
@@ -65,10 +71,24 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 	};
 
 	/**
+	 * Disable 'As a distance from' option from custom fields which are not of type address
+	 * @param {string} orderby
+	 */
+	const enableOrDisableAsADistanceFromDependingOnCustomFieldType = function( orderby ) {
+		if ( _.contains( self.addressFieldNames, orderby ) ) {
+			$( self.orderByAsSelectors ).children( 'option[value="DISTANCE"]' ).attr('disabled', false);
+		} else {
+			$( self.orderByAsSelectors ).children( 'option[value="DISTANCE"]' ).attr('disabled', true);
+		}
+	};
+
+	/**
 	 * Disables secondary order option when ordering by location is used - it couldn't work because ordering by address
 	 * is done in postprocessing. (Secondary order would actually be executed first on db query, and then reordered
 	 * by postprocessing.)
 	 *
+	 * @since 1.5
+	 * @since 1.5.3 Also disables 'As a distance from' on custom fields which are not address
 	 * @listens js_event_wpv_sorting_posts_update_order_availability
 	 * @param {Event} event
 	 * @param {Object} orderbys
@@ -85,19 +105,24 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 		toggleSecondarySorting( toggle );
 		toggleSourceSelect( toggle );
 		toggleDistanceOrderCenterField( getSource(), getOrderByAs() );
+		enableOrDisableAsADistanceFromDependingOnCustomFieldType( orderbys.orderby );
 	};
 
 	/**
+	 * @since 1.5
+	 * @since 1.5.3 Also disables 'As a distance from' on custom fields which are not address
 	 * @param {Event} event
 	 */
 	self.onOrderByChangeForUsersAndTaxonomy = function( event ) {
+		var fieldName = event.target.value.replace( 'user-', '' ).replace( 'taxonomy-', '' );
 		var toggle = (
-			_.contains( self.addressFieldNames, event.target.value )
+			_.contains( self.addressFieldNames, fieldName )
 			&& getOrderByAs() === 'DISTANCE'
 		);
 
 		toggleSourceSelect( toggle );
 		toggleDistanceOrderCenterField( getSource(), getOrderByAs() );
+		enableOrDisableAsADistanceFromDependingOnCustomFieldType( fieldName );
 	};
 
 	/**
@@ -124,6 +149,7 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 		data.distance_order = {};
 		data.distance_order.source = getSource();
 		data.distance_order.center = getCenter();
+		data.distance_order.url_parameter = getURLParameter();
 	};
 
 	/**
@@ -138,23 +164,24 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 	 * @param {String} distanceOrderSource
 	 */
 	const toggleDistanceOrderCenterField = function( distanceOrderSource, orderByAs ) {
-		if (
-			distanceOrderSource === 'fixed'
-			&& orderByAs === 'DISTANCE'
-		) {
-			let $centerAutocompleteField = $( self.centerSelector );
+		$( self.centerSelector+', '+self.centerURLParameterSelector ).hide();
+
+		if ( orderByAs !== 'DISTANCE' ) return;
+
+		if ( distanceOrderSource === 'fixed' ) {
+			let $centerAutocompleteField = $(self.centerSelector);
 
 			$centerAutocompleteField.show();
-			if ( API_GOOGLE === WPViews.distanceOrderAdmin.apiUsed ) {
+			if (API_GOOGLE === WPViews.distanceOrderAdmin.apiUsed) {
 				$centerAutocompleteField.geocomplete({types: []});
 			} else {
 				// This object might still be uninstantiated on early init, so instantiate it in that case.
-				if ( typeof WPViews.mapsAddressAutocomplete === 'undefined' ) {
-					WPViews.mapsAddressAutocomplete = new WPViews.MapsAddressAutocomplete( $ );
+				if (typeof WPViews.mapsAddressAutocomplete === 'undefined') {
+					WPViews.mapsAddressAutocomplete = new WPViews.MapsAddressAutocomplete($);
 				}
 			}
-		} else {
-			$( self.centerSelector ).hide();
+		} else if ( distanceOrderSource === 'url_parameter' ) {
+			$( self.centerURLParameterSelector ).show();
 		}
 	};
 
@@ -196,6 +223,14 @@ WPViews.DistanceOrderAdmin = function( $ ) {
 		var center = value ? value : '';
 
 		return center;
+	};
+
+	/**
+	 * @since 1.6
+	 * @return {String}
+	 */
+	const getURLParameter = function() {
+		return String( $( self.centerURLParameterSelector+':visible' ).val() );
 	};
 
 	/**

@@ -23,6 +23,8 @@ function wpcf_admin_fields_get_active_fields_by_post_type($post_type)
 /**
  * Gets all groups.
  *
+ * Important: This function is used by the Elementor Pro plugin.
+ *
  * @param string $post_type
  * @param boolean|string $only_active
  * @param boolean|string $add_fields - 'field_active', 'field_all', false (to omitt fields)
@@ -631,6 +633,14 @@ function wpcf_admin_get_groups_by_template( $templates = array('default'),
             'relation' => 'OR');
     }
     foreach ( $templates as $template ) {
+    	if( $template_post = get_post( $template ) ) {
+    		// support new format, which stores the slug
+		    $args['meta_query'][] = array(
+			    'key' => '_wp_types_group_templates',
+			    'value' => ',' . $template_post->post_name . ',',
+			    'compare' => 'LIKE',
+		    );
+	    }
         $args['meta_query'][] = array(
             'key' => '_wp_types_group_templates',
             'value' => ',' . $template . ',',
