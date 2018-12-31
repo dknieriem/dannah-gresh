@@ -5,7 +5,7 @@ $container   = get_theme_mod( 'understrap_container_type' );
 ?>
 
 <div class="wrapper" id="single-wrapper">
-    <div class="hero" style="background-image: url('<?php echo get_site_url();?>/wp-content/uploads/2018/08/home-hero.jpg'); background-repeat: no-repeat; background-size: cover;">
+    <div class="hero" style="background-image: url('<?php echo get_stylesheet_directory_uri(); ?>/img/home-hero-dannah-cropped.jpg'); background-repeat: no-repeat; background-size: cover;">
         <div class="container">
             <h1 class="hero__header hero__header--single-word-lines">Setting <span class="hero__typed">Tweens</span><span class="hero__spacer">aaaa</span> Free</h1>
             <p class="hero__lead">Let me encourage and equip you to experience Pure Freedom</p>

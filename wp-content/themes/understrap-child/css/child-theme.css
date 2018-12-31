@@ -11083,7 +11083,10 @@ ol li::before {
   background-position: center center; }
   @media (max-width: 767.98px) {
     .hero {
-      background-position: 65% center; } }
+      background-position: 75% center; } }
+  @media (min-width: 1300px) {
+    .hero {
+      background-position: 75% 25%; } }
   .hero__header {
     color: white;
     font-family: "Prata";
