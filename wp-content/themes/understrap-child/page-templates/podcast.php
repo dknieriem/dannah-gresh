@@ -18,18 +18,24 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
 <div class="wrapper" id="single-wrapper">
     <!-- Page header -->
     <div class="<?php echo esc_attr( $container ); ?>" id="content" tabindex="-1">
-        <div class="podcast-intro">
-                <div class="podcast-intro__post-image-wrapper">
-                    <img class="podcast-intro__post-image" src="<?php echo $featuredImage;?>" alt="Featured image" />
-                </div>
-                <div class="podcast-intro__post-meta">
-                    <p class="podcast-intro__subtitle">Podcast</p>
-                    <h1 class="podcast-intro__title"><?php the_title(); ?></h1>
-                    <div class="podcast-intro__description-wrapper">
-                        <p class="podcast-intro__description"><?php echo  types_render_field( "podcast-description", array( "output" => "raw"));?></p>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="podcast-intro">
+                    <div class="podcast-intro__post-image-wrapper">
+                        <img class="podcast-intro__post-image" src="<?php echo $featuredImage;?>" alt="Featured image" />
+                    </div>
+                    <div class="podcast-intro__post-meta">
+                        <p class="podcast-intro__subtitle">Podcast</p>
+                        <h1 class="podcast-intro__title"><?php the_title(); ?></h1>
+                        <div class="podcast-intro__description-wrapper">
+                            <p class="podcast-intro__description"><?php echo  types_render_field( "podcast-description", array( "output" => "raw"));?></p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+        
     <!-- End page header -->
     <section class="page-section">
         <div class="page-section__content-wrapper">
@@ -40,7 +46,7 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
                         while (have_posts()) {
                             the_post();
                             ?>
-                            <p><?php the_content(); ?></p> 
+                             
                         <?php 
                     } // end while
                     }
