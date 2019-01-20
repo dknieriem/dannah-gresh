@@ -1,9 +1,13 @@
 # Toolset Common Library
 
+## 3.3.4
+* [views-1650] Repair the integration with the page builders as Content Template builders after the merging of Gutenberg into the core.
+
 ## 3.3.3
 * Included a shared styling library for all OTGS assets.
 * [types-1859] Handle a missing element when transforming results from the association query.
 * [types-1856] Adjustments in IToolset_Post and IToolset_Post_Type and their implementations in order to support editor mode settings.
+* [layouts-1925] Added a Lock Overlay module to programmatically add a lock overlay to any HTML element given as a container.
 
 ## 3.3.2
 * Included shared methods to check whether we are on a Gutenberg edit page.

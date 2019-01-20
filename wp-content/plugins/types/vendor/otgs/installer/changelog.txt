@@ -1,3 +1,6 @@
+= 1.8.27 =
+* Fixed a bug causing changelog info for Toolset plugins in WP admin is not updated
+
 = 1.8.26 =
 * Fixed fatal error in plugins page when Forms Commerce is installed
 * Added Installer version in debug information

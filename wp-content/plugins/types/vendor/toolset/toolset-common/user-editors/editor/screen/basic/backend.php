@@ -7,34 +7,6 @@ class Toolset_User_Editors_Editor_Screen_Basic_Backend
 
 	const USER_EDITORS_COMMON_STYLE_RELATIVE_PATH = '/user-editors/editor/screen/common/backend.css';
 
-	/**
-	 * @var Toolset_Constants
-	 */
-	protected $constants;
-
-	/**
-	 * @var Toolset_Renderer
-	 */
-	protected $toolset_renderer;
-
-	/**
-	 * Toolset_User_Editors_Editor_Screen_Basic_Backend constructor.
-	 *
-	 * @param Toolset_Constants|null $constants
-	 */
-	public function __construct(
-		Toolset_Constants $constants = null,
-		\Toolset_Renderer $toolset_renderer = null
-	) {
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-
-		$this->toolset_renderer = $toolset_renderer
-			? $toolset_renderer
-			: \Toolset_Renderer::get_instance();
-	}
-
 	public function initialize() {
 		add_action( 'init', array( $this, 'register_assets' ), 50 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_assets' ), 50 );

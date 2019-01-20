@@ -15,16 +15,6 @@ class Toolset_User_Editors_Editor_Divi
 	const DIVI_BUILDER_OPTION_VALUE = 'on';
 
 	/**
-	 * @var Toolset_Constants
-	 */
-	private $constants;
-
-	/**
-	 * @var Toolset_Common_Bootstrap
-	 */
-	private $tc_bootstrap;
-
-	/**
 	 * @var string
 	 */
 	protected $id = self::DIVI_SCREEN_ID;
@@ -43,18 +33,6 @@ class Toolset_User_Editors_Editor_Divi
 	 * @var string
 	 */
 	protected $logo_class = 'toolset-divi-logo-for-ct-button';
-
-	public function __construct( Toolset_User_Editors_Medium_Interface $medium, Toolset_Common_Bootstrap $tc_bootstrap = null, Toolset_Constants $constants = null ) {
-		parent::__construct( $medium );
-
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-
-		$this->tc_bootstrap = $tc_bootstrap
-			? $tc_bootstrap
-			: Toolset_Common_Bootstrap::get_instance();
-	}
 
 	public function initialize() {
 		if ( apply_filters( 'wpv_filter_is_native_editor_for_cts', false ) ) {

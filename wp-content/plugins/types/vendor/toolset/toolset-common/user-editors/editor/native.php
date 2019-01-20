@@ -47,12 +47,7 @@ class Toolset_User_Editors_Editor_Native
 	}
 
 	public function required_plugin_active() {
-
-		if ( ! apply_filters( 'toolset_is_views_available', false ) ) {
-			return false;
-		}
-
-		return true;
+		return $this->is_views_active->is_met();
 	}
 
 	public function run() {}
@@ -74,19 +69,20 @@ class Toolset_User_Editors_Editor_Native
 	 */
 	public function is_native_editor_for_cts() {
 		global $pagenow;
+		
+		if ( 'post.php' !== $pagenow ) {
+			return false;
+		}
 
-		$action = wpv_getget( 'action', null );
-		$action = null === $action ? wpv_getpost( 'action', null ) : $action;
+		$action = sanitize_text_field( toolset_getget( 'action', '' ) );
+		$action = '' === $action ? sanitize_text_field( toolset_getpost( 'action', '' ) ) : $action;
 
-		$post_id = (int) wpv_getget( 'post', 0 );
-		$post_id = ( 0 === $post_id ? (int) wpv_getpost( 'post_ID', 0 ) : $post_id );
+		$post_id = (int) sanitize_text_field( toolset_getget( 'post', 0 ) );
+		$post_id = ( 0 === $post_id ? (int) sanitize_text_field( toolset_getpost( 'post_ID', 0 ) ) : $post_id );
 
-		$post = get_post( $post_id );
 		if (
-			'post.php' === $pagenow
-			&& ( 'edit' === $action || 'editpost' == $action )
-			&& null !== $post
-			&& 'view-template' === $post->post_type
+			in_array( $action, array( 'edit', 'editpost' ), true )
+			&& 'view-template' === get_post_type( $post_id )
 		) {
 			return true;
 		}
@@ -96,6 +92,12 @@ class Toolset_User_Editors_Editor_Native
 
 	public function add_support_for_ct_edit_by_native_editor() {
 		add_filter( 'register_post_type_args', array( $this, 'make_ct_editable_by_native_editor' ), 10, 2 );
+
+		// This filter is only included in the Gutenberg plugin.
+		add_filter( 'gutenberg_can_edit_post_type', array( $this, 'disable_gutenberg_for_content_templates' ), 10, 2 );
+
+		// This filter is only included in the core.
+		add_filter( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg_for_content_templates' ), 10, 2 );
 	}
 
 	/**
@@ -117,6 +119,23 @@ class Toolset_User_Editors_Editor_Native
 	}
 
 	/**
+	 * Disable the new editor (Gutenberg) for Content Templates, to repair the integrations with page builder that is
+	 * achieved through the classic editor.
+	 *
+	 * @param bool   $is_enabled The status of the new editor (Gutenberg) for the selected post type.
+	 * @param string $post_type  The selected post type.
+	 *
+	 * @return bool
+	 */
+	public function disable_gutenberg_for_content_templates( $is_enabled, $post_type ) {
+		if ( 'view-template' === $post_type ) {
+			return false;
+		}
+
+		return $is_enabled;
+	}
+
+	/**
 	 * The "view-template" custom post type supports "author" and "slug" by design. In the native post editor,
 	 * when editing a Content Template, we need to hide the meta-boxes.
 	 *
@@ -125,6 +144,7 @@ class Toolset_User_Editors_Editor_Native
 	public function remove_native_editor_meta_boxes() {
 		remove_meta_box( 'authordiv', 'view-template', 'normal' );
 		remove_meta_box( 'slugdiv', 'view-template', 'normal' );
+		remove_meta_box( 'postcustom', 'view-template', 'normal' );
 	}
 
 	/**
@@ -138,7 +158,7 @@ class Toolset_User_Editors_Editor_Native
 		$notice = new Toolset_Admin_Notice_Success( 'return-to-toolset-ct-editor-page-notice' );
 
 		$notice_content = sprintf(
-			__( 'Done editing here? Return to the %1$sToolset Content Template editor%2$s.', 'wpv-views' ),
+			__( 'Done editing here? Return to the %1$sToolset Content Template editor.%2$s', 'wpv-views' ),
 			'<a href="' . admin_url( 'admin.php?page=ct-editor&ct_id=' . $ct_id ) . '">',
 			'</a>'
 		);

@@ -12,61 +12,6 @@ class Toolset_User_Editors_Editor_Screen_Layouts_Backend
 
 	const LAYOUT_TEMPLATE_SCRIPT_HANDLE = 'toolset-user-editors-layouts-layout-template-script';
 
-	/**
-	 * @var Toolset_Constants
-	 */
-	protected $constants;
-
-	/**
-	 * @var Toolset_Renderer
-	 */
-	protected $toolset_renderer;
-
-	/**
-	 * @var Toolset_Output_Template_Repository
-	 */
-	protected $template_repository;
-
-	/**
-	 * @var null|Toolset_Assets_Manager
-	 */
-	protected $asset_manager;
-
-	/**
-	 * Toolset_User_Editors_Editor_Screen_Layouts_Backend constructor.
-	 *
-	 * @param Toolset_Constants|null $constants
-	 * @param Toolset_Renderer|null $toolset_renderer
-	 * @param Toolset_Output_Template_Repository|null $template_repository
-	 * @param Toolset_User_Editors_Editor_Abstract|null $editor
-	 * @param Toolset_User_Editors_Medium_Interface|null $medium
-	 * @param Toolset_Assets_Manager|null $asset_manager
-	 */
-	public function __construct(
-			\Toolset_Constants $constants = null,
-			\Toolset_Renderer $toolset_renderer = null,
-			\Toolset_Output_Template_Repository $template_repository = null,
-			\Toolset_User_Editors_Editor_Abstract $editor = null,
-			\Toolset_User_Editors_Medium_Interface $medium = null,
-			\Toolset_Assets_Manager $asset_manager = null
-	) {
-		parent::__construct( $editor, $medium );
-
-		$this->constants = $constants
-			? $constants
-			: new \Toolset_Constants();
-
-		$this->toolset_renderer = $toolset_renderer
-			? $toolset_renderer
-			: \Toolset_Renderer::get_instance();
-
-		$this->template_repository = $template_repository
-			? $template_repository
-			: \Toolset_Output_Template_Repository::get_instance();
-
-		$this->asset_manager = $asset_manager;
-	}
-
 	public function initialize() {
 		parent::initialize();
 
@@ -104,12 +49,8 @@ class Toolset_User_Editors_Editor_Screen_Layouts_Backend
 	}
 
 	public function register_assets() {
-		$this->asset_manager = null === $this->asset_manager ?
-			\Toolset_Assets_Manager::get_instance() :
-			$this->asset_manager;
-
 		// Content Template own edit screen assets
-		$this->asset_manager->register_style(
+		$this->assets_manager->register_style(
 			Toolset_User_Editors_Editor_Screen_Basic_Backend::USER_EDITORS_COMMON_STYLE_HANDLE,
 			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . Toolset_User_Editors_Editor_Screen_Basic_Backend::USER_EDITORS_COMMON_STYLE_RELATIVE_PATH,
 			array(),
@@ -117,7 +58,7 @@ class Toolset_User_Editors_Editor_Screen_Layouts_Backend
 		);
 
 		// Content Template as inline object assets
-		$this->asset_manager->register_script(
+		$this->assets_manager->register_script(
 			self::LAYOUT_TEMPLATE_SCRIPT_HANDLE,
 			$this->constants->constant( 'TOOLSET_COMMON_URL' ) . '/user-editors/editor/screen/layouts/backend_layout_template.js',
 			array( 'jquery', 'views-layout-template-js', 'underscore' ),
@@ -142,7 +83,7 @@ class Toolset_User_Editors_Editor_Screen_Layouts_Backend
 			),
 		);
 
-		$this->asset_manager->localize_script(
+		$this->assets_manager->localize_script(
 			self::LAYOUT_TEMPLATE_SCRIPT_HANDLE,
 			'toolset_user_editors_layouts_layout_template_i18n',
 			$layouts_layout_template_i18n

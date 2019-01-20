@@ -16,16 +16,6 @@ class Toolset_User_Editors_Editor_Layouts
 	const LAYOUTS_BUILDER_PRIVATE_LAYOUT_SETTINGS_OPTION_NAME = '_dd_layouts_settings';
 
 	/**
-	 * @var Toolset_Constants
-	 */
-	private $constants;
-
-	/**
-	 * @var Toolset_Common_Bootstrap
-	 */
-	private $tc_bootstrap;
-
-	/**
 	 * @var WPDD_Layouts
 	 */
 	private $layouts;
@@ -55,35 +45,18 @@ class Toolset_User_Editors_Editor_Layouts
 	 */
 	protected $logo_class = 'icon-layouts-logo';
 
-	public function __construct(
-		Toolset_User_Editors_Medium_Interface $medium,
-		Toolset_Common_Bootstrap $tc_bootstrap = null,
-		Toolset_Constants $constants = null,
-		WPDD_Layouts $layouts = null,
-		Toolset_Condition_Plugin_Layouts_Active $layouts_is_active = null
-	) {
-		parent::__construct( $medium );
+	public function set_layouts_is_active( \Toolset_Condition_Plugin_Layouts_Active $is_layouts_active ) {
+		$this->layouts_is_active = $is_layouts_active;
+	}
 
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-
-		$this->tc_bootstrap = $tc_bootstrap
-			? $tc_bootstrap
-			: Toolset_Common_Bootstrap::get_instance();
-
-		$this->layouts_is_active = $layouts_is_active
-			? $layouts_is_active
-			: new Toolset_Condition_Plugin_Layouts_Active();
-
-		if ( $layouts ) {
-			$this->layouts = $layouts;
-		} else {
-			$this->layouts = $this->layouts_is_active->is_met() ? WPDD_Layouts::getInstance() : null;
-		}
+	public function set_layouts( \WPDD_Layouts $layouts ) {
+		$this->layouts = $layouts;
 	}
 
 	public function initialize() {
+		$this->layouts_is_active = new Toolset_Condition_Plugin_Layouts_Active();
+		$this->layouts = $this->layouts_is_active->is_met() ? WPDD_Layouts::getInstance() : null;
+
 		add_action( 'toolset_update_layouts_builder_post_meta', array( $this, 'update_layouts_builder_post_meta' ), 10, 2 );
 
 		if (

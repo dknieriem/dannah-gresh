@@ -12,28 +12,49 @@ abstract class Toolset_User_Editors_Editor_Abstract
 	protected $id;
 	protected $name;
 	protected $option_name = '_toolset_user_editors_editor_default';
-
 	protected $logo_class;
 	protected $logo_image_svg;
 
 	/**
 	 * All possible screens.
+	 *
 	 * @var Toolset_User_Editors_Editor_Screen_Interface[]
 	 */
 	protected $screens;
 
-	/**
-	 * @var Toolset_User_Editors_Medium_Interface
-	 */
+	/** @var Toolset_User_Editors_Medium_Interface */
 	protected $medium;
+
+	/** @var Toolset_Constants */
+	protected $constants;
+
+	/** @var Toolset_Common_Bootstrap */
+	protected $tc_bootstrap;
+
+	/** @var Toolset_Condition_Plugin_Views_Active */
+	protected $is_views_active;
 
 	/**
 	 * Toolset_User_Editors_Editor_Abstract constructor.
 	 *
-	 * @param Toolset_User_Editors_Medium_Interface $medium
+	 * @param \Toolset_User_Editors_Medium_Interface $medium
+	 * @param \Toolset_Common_Bootstrap              $tc_bootstrap
+	 * @param \Toolset_Constants                     $constants
+	 * @param \Toolset_Condition_Plugin_Views_Active $is_views_active
 	 */
-	public function __construct( Toolset_User_Editors_Medium_Interface $medium ) {
+	public function __construct(
+		\Toolset_User_Editors_Medium_Interface $medium,
+		\Toolset_Common_Bootstrap $tc_bootstrap,
+		\Toolset_Constants $constants,
+		\Toolset_Condition_Plugin_Views_Active $is_views_active
+	) {
 		$this->medium = $medium;
+
+		$this->constants = $constants;
+
+		$this->tc_bootstrap = $tc_bootstrap;
+
+		$this->is_views_active = $is_views_active;
 	}
 
 	public function get_id() {

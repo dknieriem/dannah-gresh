@@ -20,6 +20,14 @@ ToolsetCommon.UserEditor.DiviEditor = function( $ ) {
     self.init = function() {
 		$( '#et_pb_toggle_builder' ).remove();
 
+		// Remove the wrapper DIV that contains the "Build On The Front End" button when editing a Content Template
+		// using Divi on the classic editor.
+		$( '.et_pb_toggle_builder_wrapper' ).remove();
+
+		// Remove the wrapper DIV that contains the "A New And Improved Divi Builder Experience Is Available! Switch
+		// To The New Divi Builder" opt-in message.
+		$( '.et-bfb-optin-cta' ).remove();
+
         /**
          * When Content Templates are edited using either the native post editor or a page builder, WordPress keeps autosave
          * data in the browser's local storage even though revisions are off for this post type. In order to prevent relevant

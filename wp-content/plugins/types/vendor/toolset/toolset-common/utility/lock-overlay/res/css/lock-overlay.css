@@ -68,6 +68,7 @@
 	z-index: 8889;
 	text-align: center;
 	border-radius: 2px;
+	width:100%;
 	/* display:none;*/
 }
 
@@ -133,4 +134,19 @@
 
 .toolset-alert {
 	font-size: 14px;
+}
+/** Target only elements inside the overlay (.toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent) and force elements in the overlay inside Gutenberg editor page (#wpwrap .edit-post-visual-editor .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent) to take our styles */
+#wpwrap .edit-post-visual-editor .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button, .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button {
+	padding: 0 10px 1px;
+}
+#wpwrap .edit-post-visual-editor .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button.button-secondary, .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button.button-secondary {
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	box-shadow: 0 1px 0 #cccccc;
+}
+#wpwrap .edit-post-visual-editor .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button.button-primary-toolset, .toolset-lock-overlay-dummy-container .toolset-overlay-non-transparent .button.button-primary-toolset {
+	border: 1px solid #EF6223;
+	border-radius: 3px;
+	box-shadow: inset 0 1px 0 rgba(239, 239, 239, 0.5), 0 1px 0 rgba(0,0,0,.15);
+	text-shadow: 0 -1px 1px #EF6223, 1px 0 1px #EF6223, 0 1px 1px #EF6223, -1px 0 1px #EF6223;
 }

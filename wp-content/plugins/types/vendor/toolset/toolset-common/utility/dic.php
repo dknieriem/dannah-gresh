@@ -84,6 +84,9 @@ namespace OTGS\Toolset\Common\DicSetup {
 		'\Toolset_Renderer' => function() {
 			return \Toolset_Renderer::get_instance();
 		},
+		'\Toolset_Constants' => function() {
+			return new \Toolset_Constants();
+		},
 		'\Toolset_WPML_Compatibility' => function() {
 			return \Toolset_WPML_Compatibility::get_instance();
 		},
@@ -106,6 +109,15 @@ namespace OTGS\Toolset\Common\DicSetup {
 		},
 		'\Toolset_Field_Definition_Factory_Term' => function() {
 			return \Toolset_Field_Definition_Factory_Term::get_instance();
+		},
+		'\Toolset_Condition_Plugin_Views_Active' => function() {
+			return new \Toolset_Condition_Plugin_Views_Active();
+		},
+		'\Toolset_Condition_Plugin_Layouts_Active' => function() {
+			return new \Toolset_Condition_Plugin_Layouts_Active();
+		},
+		'\Toolset_Common_Bootstrap' => function() {
+			return \Toolset_Common_Bootstrap::get_instance();
 		},
 		'\WPCF_Roles' => function() {
 			return \WPCF_Roles::getInstance();

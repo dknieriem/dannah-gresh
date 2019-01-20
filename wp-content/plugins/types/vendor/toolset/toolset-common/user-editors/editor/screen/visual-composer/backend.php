@@ -6,22 +6,6 @@ class Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend
 	private $post;
 	public $editor;
 
-	/**
-	 * @var Toolset_Constants
-	 */
-	protected $constants;
-
-	/**
-	 * Toolset_User_Editors_Editor_Screen_Visual_Composer_Backend constructor.
-	 *
-	 * @param Toolset_Constants|null $constants
-	 */
-	public function __construct( Toolset_Constants $constants = null ) {
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-	}
-
 	public function initialize() {
 		parent::initialize();
 

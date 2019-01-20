@@ -35,7 +35,6 @@ $query = new WP_Query( $args );
         <div class="page-section__content-wrapper">
             <div class="row">
                 <div class="page-section__two-third-column text-center">
-                    <?php the_content(); ?>
                     <?php while ( $query->have_posts() ) : the_post(); ?>
                         <?php $query->the_post(); ?>
                         <div class="event-summary">
@@ -48,7 +47,7 @@ $query = new WP_Query( $args );
                                 </div>
                             <h2 class="event-summary__title"><?php the_title(); ?></h2>
                             <p class="event-summary__location"><?php echo types_render_field( "event-location", array( ) ); ?></p>
-                            <p class="event-sumary__description"><?php the_content(); ?></p>
+                            <p class="event-summary__description"><?php the_content(); ?></p>
                             <a href="<?php echo types_render_field( "event-website", array("output" => "raw") ); ?>" class="button button--white" target="_blank">Event details & tickets</a>
                         </div>  
                         </div>                      

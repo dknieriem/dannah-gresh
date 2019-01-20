@@ -17,15 +17,24 @@ ToolsetCommon.UserEditor.GutenbergEditor = function( $ ) {
 
 	var self = this;
 
+	self.i18n = window.toolset_user_editors_gutenberg_script_i18n;
+
 	self.init = function() {
-		// The following two lines are a fix for the Gutenberg issue where the admin notices are hidden behind the Editor
-		// toolbar. They can be removed when https://github.com/WordPress/gutenberg/issues/3395 is fixed.
-		$( '.toolset-notice-wp' ).appendTo( '.components-notice-list' );
-		$( '.components-notice-list' ).css( 'position', 'initial' );
+		window.wp.data.dispatch( 'core/notices' ).createInfoNotice (
+			self.i18n.doneEditingNoticeText,
+			{
+				isDismissible: false,
+				actions: [
+					{
+						label: self.i18n.doneEditingNoticeActionText,
+						url: self.i18n.doneEditingNoticeActionUrl
+					}
+				]
+			}
+		);
 	};
-	
+
 	self.init();
-	
 };
 
 jQuery( document ).ready( function( $ ) {

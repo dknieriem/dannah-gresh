@@ -33,6 +33,14 @@ function add_child_theme_textdomain() {
 }
 add_action( 'after_setup_theme', 'add_child_theme_textdomain' );
 
+// Exclude images from search results - WordPress
+add_action( 'init', 'exclude_images_from_search_results' );
+function exclude_images_from_search_results() {
+	global $wp_post_types;
+ 
+	$wp_post_types['attachment']->exclude_from_search = true;
+}
+
 /* CUSTOMIZE EXCERPT READ MORE CONTENT
 ================================================== */
 
@@ -52,7 +60,7 @@ function custom_class( $classes ) {
     elseif (is_archive() || is_page('calendar') || is_singular('event') || is_page_template('page-templates/no-hero.php') || is_page_template('page-templates/no-hero-advanced.php')){
         $classes[] = 'peach';
     }
-    elseif (is_page_template('page-templates/storefront.php') || is_singular('post') || is_page_template('page-templates/no-hero-advanced-white.php') ) {
+    elseif (is_page_template('page-templates/storefront.php') || is_page_template('page-templates/podcast.php') || is_singular('post') || is_page_template('page-templates/no-hero-advanced-white.php') ) {
         $classes[] = 'white-flourish';
     }
     return $classes;

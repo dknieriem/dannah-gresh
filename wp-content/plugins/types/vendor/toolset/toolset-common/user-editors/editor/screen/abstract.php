@@ -19,17 +19,40 @@ abstract class Toolset_User_Editors_Editor_Screen_Abstract
 	 */
 	protected $editor;
 
-	public function __construct(
-		Toolset_User_Editors_Editor_Abstract $editor = null,
-		Toolset_User_Editors_Medium_Interface $medium = null
-	) {
-		if ( null !== $editor ) {
-			$this->editor = $editor;
-		}
+	/**
+	 * @var Toolset_Constants
+	 */
+	protected $constants;
 
-		if ( null !== $medium ) {
-			$this->medium = $medium;
-		}
+	/**
+	 * @var Toolset_Renderer
+	 */
+	protected $toolset_renderer;
+
+	/**
+	 * @var Toolset_Output_Template_Repository
+	 */
+	protected $template_repository;
+
+	/**
+	 * @var null|Toolset_Assets_Manager
+	 */
+	protected $assets_manager;
+
+	public function __construct(
+		\Toolset_User_Editors_Editor_Abstract $editor,
+		\Toolset_User_Editors_Medium_Interface $medium,
+		\Toolset_Constants $constants,
+		\Toolset_Renderer $toolset_renderer,
+		\Toolset_Output_Template_Repository $template_repository,
+		\Toolset_Assets_Manager $assets_manager
+	) {
+		$this->editor = $editor;
+		$this->medium = $medium;
+		$this->constants = $constants;
+		$this->toolset_renderer = $toolset_renderer;
+		$this->template_repository = $template_repository;
+		$this->assets_manager = $assets_manager;
 	}
 
 	/**

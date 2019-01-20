@@ -176,12 +176,12 @@
     },
     {
         "name": "otgs/installer",
-        "version": "1.8.26",
-        "version_normalized": "1.8.26.0",
+        "version": "1.8.27",
+        "version_normalized": "1.8.27.0",
         "source": {
             "type": "git",
             "url": "ssh://git@git.onthegosystems.com:10022/installer/installer.git",
-            "reference": "e49df1b2298a1141dadaaa33e4d6af0ef753eadd"
+            "reference": "a2928e48602b7fb30515b3d05848dd3cf39a941b"
         },
         "require": {
             "composer/installers": "~1.0",
@@ -197,7 +197,7 @@
             "otgs/unit-tests-framework": "~1.2.0",
             "sebastian/phpcpd": "^3.0"
         },
-        "time": "2018-11-05T12:20:23+00:00",
+        "time": "2019-01-02T09:29:39+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -245,11 +245,6 @@
         "name": "roave/security-advisories",
         "version": "dev-master",
         "version_normalized": "9999999-dev",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/Roave/SecurityAdvisories.git",
-            "reference": "74a42b8d8d9f9cd672be58e7d1c65094da4ae971"
-        },
         "conflict": {
             "3f/pygmentize": "<1.2",
             "adodb/adodb-php": "<5.20.12",
@@ -449,12 +444,12 @@
     },
     {
         "name": "toolset/toolset-common",
-        "version": "dev-develop",
-        "version_normalized": "dev-develop",
+        "version": "3.3.4",
+        "version_normalized": "3.3.4.0",
         "source": {
             "type": "git",
             "url": "ssh://git@git.onthegosystems.com:10022/toolset/toolset-common.git",
-            "reference": "24f3bab8852f63576641e05d5be9163d67c188ff"
+            "reference": "e0f3723256cb94b54d7207b73c306959e5a57cc9"
         },
         "require": {
             "php": ">=5.2.0"
@@ -466,7 +461,7 @@
             "phpunit/php-token-stream": "<2.0",
             "sebastian/phpcpd": "^3.0"
         },
-        "time": "2018-12-18T11:47:40+00:00",
+        "time": "2019-01-02T14:46:13+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {

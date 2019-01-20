@@ -7,7 +7,6 @@
  *
  * @since 2.5.0
  */
-
 class Toolset_User_Editors_Editor_Avada
 	extends Toolset_User_Editors_Editor_Abstract {
 

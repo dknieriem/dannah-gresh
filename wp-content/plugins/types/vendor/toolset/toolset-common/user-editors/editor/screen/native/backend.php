@@ -9,22 +9,6 @@
 class Toolset_User_Editors_Editor_Screen_Native_Backend
 	extends Toolset_User_Editors_Editor_Screen_Abstract {
 
-	/**
-	 * @var Toolset_Constants
-	 */
-	protected $constants;
-
-	/**
-	 * Toolset_User_Editors_Editor_Screen_Native_Backend constructor.
-	 *
-	 * @param Toolset_Constants|null $constants
-	 */
-	public function __construct( Toolset_Constants $constants = null ) {
-		$this->constants = $constants
-			? $constants
-			: new Toolset_Constants();
-	}
-
 	public function initialize() {
 		parent::initialize();
 
