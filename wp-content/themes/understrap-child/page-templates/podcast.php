@@ -63,13 +63,18 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
                         <?php $query->the_post(); ?>
                         <div class="podcast-row">
                             <div class="podcast-row__summary collapsed" data-toggle="collapse" data-target="#details-<?php echo get_the_id(); ?>">
-                                
+                                <div class="podcast-row__date">
+                                    <?php echo get_the_date('M j, Y'); ?>
+                                </div>
                                 <h2 class="podcast-row__title"><?php the_title(); ?></h2>
                                 <img class="podcast-row__collapse-icon" src="<?php echo get_stylesheet_directory_uri(); ?>/img/collapse-icon.png" alt="">
                             </div>
                             <div class="podcast-row__meta">
                                 <?php $postId = get_the_id(); ?>
                                 <div id="details-<?php echo $postId ?>" class="podcast-row__details collapse">
+                                    <p class="podcast-row__date-mobile">
+                                        <?php echo get_the_date('M j, Y'); ?>
+                                    </p>
                                     <p class="podcast-row__description"><?php the_content(); ?></p>
 
                                     <?php $resources = get_post_meta( $postId, 'wpcf-related-resources', true );?>

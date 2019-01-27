@@ -32,6 +32,13 @@
             display:none;
         }
     }
+    &__date-mobile
+    {
+        @media (min-width: 769px) {
+            display:none;
+        }
+        color:#a9a9a9;
+    }
     &__title
     {
         font-family: $header-font;

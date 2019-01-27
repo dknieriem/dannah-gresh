@@ -11453,6 +11453,11 @@ ol li::before {
     @media (max-width: 768px) {
       .podcast-row__date {
         display: none; } }
+  .podcast-row__date-mobile {
+    color: #a9a9a9; }
+    @media (min-width: 769px) {
+      .podcast-row__date-mobile {
+        display: none; } }
   .podcast-row__title {
     font-family: "Prata";
     font-size: 1.3rem;
