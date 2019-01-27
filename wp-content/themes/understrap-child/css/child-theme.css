@@ -11433,6 +11433,9 @@ ol li::before {
   .podcast-row__meta {
     text-align: left;
     margin-left: 9rem; }
+    @media (max-width: 768px) {
+      .podcast-row__meta {
+        margin-left: 0rem; } }
   .podcast-row__date {
     display: block;
     font-size: 1rem;

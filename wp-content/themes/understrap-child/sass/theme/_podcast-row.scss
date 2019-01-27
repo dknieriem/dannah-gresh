@@ -6,11 +6,17 @@
     {
         display: flex; 
         flex-direction: row;
+        @media (max-width: 768px) {
+            // flex-direction: column;
+        }
     }   
     &__meta
     {
         text-align: left;
         margin-left:9rem;
+        @media (max-width: 768px) {
+            margin-left:0rem;
+        }
     }
     &__date
     {
