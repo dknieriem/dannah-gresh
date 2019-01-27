@@ -11411,6 +11411,10 @@ ol li::before {
   .podcast-intro__title {
     color: #e286a9;
     font-size: 3.5rem; }
+    @media (max-width: 768px) {
+      .podcast-intro__title {
+        margin-top: 1rem;
+        font-size: 4rem; } }
   .podcast-intro__post-image-wrapper {
     border-radius: 6px; }
   .podcast-intro__post-image {

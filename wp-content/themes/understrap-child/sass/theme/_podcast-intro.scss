@@ -32,6 +32,10 @@
     {
         color:$pink;
         font-size:3.5rem;
+        @media (max-width: 768px) {
+            margin-top:1rem;
+            font-size:4rem;
+        }
     }
     &__post-image-wrapper
     {
