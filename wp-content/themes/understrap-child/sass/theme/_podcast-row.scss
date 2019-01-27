@@ -25,6 +25,9 @@
         text-align: left;
         margin-bottom:.5rem;
         flex-basis: 9rem;
+        @media (max-width: 768px) {
+            display:none;
+        }
     }
     &__title
     {

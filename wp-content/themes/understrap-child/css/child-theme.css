@@ -11447,6 +11447,9 @@ ol li::before {
     margin-bottom: .5rem;
     -ms-flex-preferred-size: 9rem;
         flex-basis: 9rem; }
+    @media (max-width: 768px) {
+      .podcast-row__date {
+        display: none; } }
   .podcast-row__title {
     font-family: "Prata";
     font-size: 1.3rem;
