@@ -39,7 +39,7 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
     <section class="page-section">
         <div class="page-section__content-wrapper">
             <div class="row">
-                <div class="page-section__two-third-column text-center">
+                <div class="page-section__two-third-column">
                 <?php
                     if (have_posts()) {
                         while (have_posts()) {
