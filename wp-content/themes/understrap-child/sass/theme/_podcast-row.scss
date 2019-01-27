@@ -2,6 +2,9 @@
 {
     border-bottom: solid 1px #e2e2e2;
     padding: 2rem 0 1rem 0;
+    @media (max-width: 768px) {
+        padding: 3rem 0 2rem 0;
+    }
     &__summary
     {
         display: flex; 
@@ -35,6 +38,7 @@
         font-size:1.3rem;
         font-weight:600;
         color:$pink;
+        padding-right:2rem;
         
     }
     &__collapse-icon
@@ -45,6 +49,7 @@
         height:20px;
         margin-left:auto;
         transform: rotate(45deg);
+        
     }
     &__resources-header
     {

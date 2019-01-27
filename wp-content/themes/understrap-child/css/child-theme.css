@@ -11426,6 +11426,9 @@ ol li::before {
 .podcast-row {
   border-bottom: solid 1px #e2e2e2;
   padding: 2rem 0 1rem 0; }
+  @media (max-width: 768px) {
+    .podcast-row {
+      padding: 3rem 0 2rem 0; } }
   .podcast-row__summary {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -11454,7 +11457,8 @@ ol li::before {
     font-family: "Prata";
     font-size: 1.3rem;
     font-weight: 600;
-    color: #e286a9; }
+    color: #e286a9;
+    padding-right: 2rem; }
   .podcast-row__collapse-icon {
     -webkit-transition: all ease-out .25s;
     transition: all ease-out .25s;
