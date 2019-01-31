@@ -93,7 +93,7 @@ $currentTopic = get_query_var('topic', 0);
                         'hide_empty'       => true
                     ));
                     ?>
-                    <?php if ($terms) { ?>
+                    <?php if ($terms && ($podcastSlug == 'mom-moments-episode')) { ?>
                     <div class="row mt-4 mb-5">
                         
                         <div class="page-section__single-column ">
