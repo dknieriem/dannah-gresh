@@ -159,3 +159,8 @@ function responsive_embed($html, $url, $attr) {
     return $html!=='' ? '<div class="embed-container">'.$html.'</div>' : '';
 }
 
+function custom_query_vars_filter($vars) {
+    $vars[] .= 'topic';
+    return $vars;
+  }
+  add_filter( 'query_vars', 'custom_query_vars_filter' );

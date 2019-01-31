@@ -5,6 +5,9 @@ $container   = get_theme_mod( 'understrap_container_type' );
 $featuredImage = wp_get_attachment_url(get_post_thumbnail_id($post->ID, 'large'));
 $obj = get_post_type_object('mom-moments-episode');
 $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw") );
+$currentTopic = get_query_var('topic', 0);
+
+
 // $args = array(
 //     'post_type'        => 'podcast',
 //    'posts_per_page'   => 25,
@@ -41,8 +44,10 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
             <div class="row">
                 <div class="page-section__two-third-column">
                 <?php
+                
                     if (have_posts()) {
                         while (have_posts()) {
+                            
                             the_post();
                             ?>
                              
@@ -51,14 +56,57 @@ $podcastSlug = types_render_field( "page-podcast-slug", array( "output" => "raw"
                     }
                     ?>
                     <?php 
+
+                    if ($currentTopic)
+                    {
                         $args = array(
-                        'post_type'        => $podcastSlug,
-                        'posts_per_page'   => 25,
-                        'orderby' => 'post_date',
-                        'order' => 'DESC'
-                        );
-                        $query = new WP_Query( $args );
+                            'post_type'        => $podcastSlug,
+                            'posts_per_page'   => 25,
+                            'orderby' => 'post_date',
+                            'order' => 'DESC',
+                            'tax_query' => array(
+                                array (
+                                    'taxonomy' => 'topics',
+                                    'field' => 'slug',
+                                    'terms' => $currentTopic,
+                                )
+                            )
+                            );
+                            $query = new WP_Query( $args );
+                    }
+                    else
+                    {
+                        $args = array(
+                            'post_type'        => $podcastSlug,
+                            'posts_per_page'   => 25,
+                            'orderby' => 'post_date',
+                            'order' => 'DESC'
+                            );
+                            $query = new WP_Query( $args );
+                    }
+                        
                     ?>
+                    <?php 
+                    global $wp;
+                    $current_url = home_url( add_query_arg( array(), $wp->request ) );
+                    $terms = get_terms('topics', array(
+                        'hide_empty'       => true
+                    ));
+                    ?>
+                    <?php if ($terms) { ?>
+                    <div class="row mt-4 mb-5">
+                        
+                        <div class="page-section__single-column ">
+                        <a class="filter-button " href="<?php echo esc_url( remove_query_arg( 'topic')); ?>">All Topics</a>
+                            <?php
+                                foreach ( $terms as $term ) { ?>
+                                <a class="filter-button " href="<?php echo esc_url( add_query_arg( 'topic', $term->slug )); ?>"><?php echo $term->name; ?></a>
+                                <?php }
+                            ?>
+                        </div>
+                    </div>  
+                    <?php } ?>  
+
                     <?php while ( $query->have_posts() ) : the_post(); ?>
                         <?php $query->the_post(); ?>
                         <div class="podcast-row">
