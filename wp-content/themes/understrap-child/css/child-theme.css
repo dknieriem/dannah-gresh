@@ -11448,8 +11448,8 @@ ol li::before {
     font-size: 1rem;
     text-align: left;
     margin-bottom: .5rem;
-    -ms-flex-preferred-size: 9rem;
-        flex-basis: 9rem; }
+    -ms-flex-preferred-size: 150px;
+        flex-basis: 150px; }
     @media (max-width: 768px) {
       .podcast-row__date {
         display: none; } }
@@ -11463,7 +11463,8 @@ ol li::before {
     font-size: 1.3rem;
     font-weight: 600;
     color: #e286a9;
-    padding-right: 2rem; }
+    padding-right: 2rem;
+    width: 525px; }
   .podcast-row__collapse-icon {
     -webkit-transition: all ease-out .25s;
     transition: all ease-out .25s;

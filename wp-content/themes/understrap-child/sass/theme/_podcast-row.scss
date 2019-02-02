@@ -27,7 +27,7 @@
         font-size:1rem;
         text-align: left;
         margin-bottom:.5rem;
-        flex-basis: 9rem;
+        flex-basis: 150px;
         @media (max-width: 768px) {
             display:none;
         }
@@ -46,6 +46,7 @@
         font-weight:600;
         color:$pink;
         padding-right:2rem;
+        width:525px;
         
     }
     &__collapse-icon
