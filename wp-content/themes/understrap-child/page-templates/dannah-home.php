@@ -37,6 +37,11 @@ $container   = get_theme_mod( 'understrap_container_type' );
                     <h2 class="icon-item__title">Workshops</h2>
                     <p class="icon-item__content">Gain confidence to talk about sex and gender.</p>
                 </a>
+                <a href="<?php echo get_site_url();?>/podcasts/" class="icon-item">
+                    <img src="<?php echo get_site_url();?>/wp-content/uploads/2018/08/icon-podcasts.png" class="icon-item__icon" />
+                    <h2 class="icon-item__title">Podcasts</h2>
+                    <p class="icon-item__content">Download game-changing parenting advice</p>
+                </a>
             </div>
         </div>
     </section>
